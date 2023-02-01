@@ -4,7 +4,7 @@ body {
 
 nav {
     background-color: salmon;
-    padding: 20px 20px;
+    padding: 10px 10px;
     text-align: center;
     display: flex;
     justify-content: space-around;
@@ -39,17 +39,58 @@ nav {
 }
 
 .bloquePrincipal {
-    background-color: #fff;
     margin: 20px 0;
     text-align: center;
 }
 
-.bloquePrincipal p {
-    margin-top: 3px;
+.formas {
+    margin-top: 30px;
+    text-align: center;
+}
+
+.formas ol {
+    margin: 0;
+    display: inline-block;
+    text-align: left;
+}
+
+li {
+    margin-top: 5px;
+}
+
+a {
+    text-decoration: none;
 }
 
 .resaltado a{
     font-style: italic;
-    text-decoration: none;
     color: black;
+}
+
+.contenedorBoton {
+    margin-top: 60px;
+    text-align: center;
+}
+
+.botonR {
+    color: white;
+    background-color: salmon;
+    border-style: solid;
+    border-color: white;
+    padding: 10px 20px;
+    text-align: center;
+    display: inline-block;
+    font-size: 16px;
+    margin: 4px 2px;
+    cursor: pointer;
+}
+
+.botonR a {
+    color: white;
+}
+
+.botonR:hover {
+    background-color: #fff;
+    color: salmon;
+    border-color: salmon;
 }
