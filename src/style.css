@@ -1,0 +1,55 @@
+body {
+    font-family: Ubuntu;
+}
+
+nav {
+    background-color: salmon;
+    padding: 20px 20px;
+    text-align: center;
+    display: flex;
+    justify-content: space-around;
+}
+
+@media screen and (max-width: 768px) {
+    nav {
+        flex-direction: column;
+        padding: 10px;
+    }
+
+    .nav-link {
+        margin: 10px 0;
+    }
+}
+
+.nav-button {
+    color: #fff;
+    display: inline-block;
+    background-color: salmon;
+    text-decoration: none;
+    border-color: white;
+    border-width: 1px;
+    font-size: 20px;
+    font-family: Ubuntu;
+    padding: 10px 30px;
+}
+
+.nav-button:hover {
+    background-color: #fff;
+    color: salmon;
+}
+
+.bloquePrincipal {
+    background-color: #fff;
+    margin: 20px 0;
+    text-align: center;
+}
+
+.bloquePrincipal p {
+    margin-top: 3px;
+}
+
+.resaltado a{
+    font-style: italic;
+    text-decoration: none;
+    color: black;
+}
