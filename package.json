@@ -1,0 +1,35 @@
+{
+  "name": "autodescripcion",
+  "version": "1.0.0",
+  "description": "TFG basado en crear una aplicación capaz de crear audiodescripciones",
+  "main": "index.js",
+  "dependencies": {
+    "electron": "^22.1.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "start": "electron src/index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fapm4/AutoDescripcion.git"
+  },
+  "keywords": [
+    "electron",
+    "js",
+    "electronjs",
+    "accesible",
+    "accesibilidad",
+    "audiodescripcion",
+    "ciegos",
+    "cegera",
+    "discapacidad",
+    "visual"
+  ],
+  "author": "Francisco Alejandro Pérez Meneses",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/fapm4/AutoDescripcion/issues"
+  },
+  "homepage": "https://github.com/fapm4/AutoDescripcion#readme"
+}
