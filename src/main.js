@@ -16,6 +16,7 @@ require('electron-reload')(__dirname, {
 });
 
 let ipcMain = require('electron').ipcMain;
+let ipcRenderer = require('electron').ipcRenderer;
 
 /////////////////////////// Código ///////////////////////////
 
@@ -45,10 +46,5 @@ app.on('ready', () => {
 
     // Se crea el menú de la aplicación
     Menu.setApplicationMenu(Menu.buildFromTemplate([]));
-
-    ventanaPrincipal.webContents.send('eventoBotones', 'redirige');
 });
 
-function redirige(event){
-    console.log(event.currentTarget);
-}
