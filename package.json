@@ -4,12 +4,13 @@
   "description": "TFG basado en crear una aplicación capaz de crear audiodescripciones",
   "main": "index.js",
   "dependencies": {
-    "electron": "^22.1.0",
     "electron-reload": "^2.0.0-alpha.1"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "electron": "^22.2.0"
+  },
   "scripts": {
-    "start": "electron src/index.js"
+    "start": "electron src/main.js"
   },
   "repository": {
     "type": "git",

@@ -2,7 +2,7 @@
 
 /////////////////////////// Imports ///////////////////////////
 // Electron
-const { app, BrowserWindow, Menu} = require('electron');
+const {app, BrowserWindow, Menu} = require('electron');
 
 // URL
 const url = require('url');
@@ -14,6 +14,9 @@ const path = require('path');
 require('electron-reload')(__dirname, {
     electron: path.join(__dirname, '../node_modules', '.bin', 'electron')
 });
+
+let ipcMain = require('electron').ipcMain;
+
 /////////////////////////// Código ///////////////////////////
 
 // Ventana principal con alcance global
@@ -22,7 +25,16 @@ let ventanaPrincipal;
 // Cuando la aplicación esté lista
 app.on('ready', () => {
     // Se crea la ventana principal
-    ventanaPrincipal = new BrowserWindow({});
+    ventanaPrincipal = new BrowserWindow({
+        webPreferences: {
+            nodeIntegration: true,
+            contextIsolation: false,
+            preload: path.join(__dirname, 'js', 'preload.js'),
+            nativeWindowOpen: true,
+        }
+    });
+
+    ventanaPrincipal.openDevTools();
     
     // Se carga el archivo index.html
     ventanaPrincipal.loadURL(url.format({
@@ -33,4 +45,10 @@ app.on('ready', () => {
 
     // Se crea el menú de la aplicación
     Menu.setApplicationMenu(Menu.buildFromTemplate([]));
+
+    ventanaPrincipal.webContents.send('eventoBotones', 'redirige');
 });
+
+function redirige(event){
+    console.log(event.currentTarget);
+}
