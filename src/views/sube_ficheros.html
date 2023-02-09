@@ -2,7 +2,7 @@
 <head>
     <title>AutoDescripcion</title>
     <link rel="stylesheet" href="../style.css">
-    <script type ="text/script" src="../main.js"></script>
+    <script type ="text/javascript" src="../main.js"></script>
     <script type="text/javascript" src="../js/drag.js"></script>
 </head>
 <body>
@@ -26,8 +26,26 @@
         <div class="selecciona">
             <p>O selecciona desde aquí</p>
             <input type="file" name="file" id="file">
-            <br>
-            <button class="botonR">
+            
+            <p>Elige un modo de funcionamiento:</p>
+            <div class="opcion">
+                <ul>
+                    <li>
+                        <input type="radio" id="modo1" name="modo" value="modo1" checked>
+                        <label for="modo1">Modo 1: Se generará un formulario para introducir el texto</label>
+                    </li>
+                    <li>
+                        <input type="radio" id="modo2" name="modo" value="modo2">
+                        <label for="modo2">Modo 2: Grabar el contenido</label>
+                    </li>
+                    <li>
+                        <input type="radio" id="modo3" name="modo" value="modo3">
+                        <label for="modo3">Modo 3: Gerenación automática de la descripción</label>
+                    </li>
+                </ul>
+            </div>
+
+            <button class="botonR" onclick="procesa()">
                 Describe!
             </button>
         </div>
