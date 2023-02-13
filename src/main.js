@@ -2,7 +2,7 @@
 
 /////////////////////////// Imports ///////////////////////////
 // Electron
-const {app, BrowserWindow, Menu} = require('electron');
+const {app, BrowserWindow, Menu, ipcMain} = require('electron');
 
 // URL
 const url = require('url');
@@ -15,13 +15,31 @@ require('electron-reload')(__dirname, {
     electron: path.join(__dirname, '../node_modules', '.bin', 'electron')
 });
 
-let ipcMain = require('electron').ipcMain;
-let ipcRenderer = require('electron').ipcRenderer;
+require('./js/db.js');
+
 
 /////////////////////////// Código ///////////////////////////
 
 // Ventana principal con alcance global
 let ventanaPrincipal;
+
+const templateMenu = [
+    {
+        label: 'DevTools',
+        submenu: [
+            {
+                label: 'Mostrar/Ocultar DevTools',
+                accelerator: 'Ctrl+D',
+                click(item, focusedWindow) {
+                    focusedWindow.toggleDevTools();
+                }
+            },
+            {
+                role: 'reload'
+            }
+        ]
+    }
+];
 
 // Cuando la aplicación esté lista
 app.on('ready', () => {
@@ -30,12 +48,10 @@ app.on('ready', () => {
         webPreferences: {
             nodeIntegration: true,
             contextIsolation: false,
-            preload: path.join(__dirname, 'js', 'preload.js'),
             nativeWindowOpen: true,
         }
     });
 
-    ventanaPrincipal.openDevTools();
     
     // Se carga el archivo index.html
     ventanaPrincipal.loadURL(url.format({
@@ -44,7 +60,19 @@ app.on('ready', () => {
         slashes: true
     }));
 
+    ventanaPrincipal.webContents.on('did-finish-load', () => {
+        ventanaPrincipal.webContents.send('cargaFinalizada', 'Añadiendo eventos a los botones');
+    });
     // Se crea el menú de la aplicación
-    Menu.setApplicationMenu(Menu.buildFromTemplate([]));
+    Menu.setApplicationMenu(Menu.buildFromTemplate(templateMenu));
+
+    ipcMain.on('redirige', (event, arg) => {
+        ventanaPrincipal.loadURL(url.format({
+            pathname: path.join(__dirname, 'views', arg),
+            protocol: 'file',
+            slashes: true
+        }));
+        console.log('hola');
+    });
 });
 
