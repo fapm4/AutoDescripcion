@@ -2,8 +2,7 @@
 <head>
     <title>AutoDescripcion</title>
     <link rel="stylesheet" href="../style.css">
-    <script type ="text/javascript" src="../main.js"></script>
-    <script type="text/javascript" src="../js/drag.js"></script>
+    <script src="../js/renderer.js"></script>
 </head>
 <body>
     <div class="navbar">
@@ -31,20 +30,20 @@
             <div class="opcion">
                 <ul>
                     <li>
-                        <input type="radio" id="modo1" name="modo" value="modo1" checked>
+                        <input type="radio" name="modo" value="1" checked>
                         <label for="modo1">Modo 1: Se generará un formulario para introducir el texto</label>
                     </li>
                     <li>
-                        <input type="radio" id="modo2" name="modo" value="modo2">
+                        <input type="radio" name="modo" value="2">
                         <label for="modo2">Modo 2: Grabar el contenido</label>
                     </li>
                     <li>
-                        <input type="radio" id="modo3" name="modo" value="modo3">
+                        <input type="radio" name="modo" value="3">
                         <label for="modo3">Modo 3: Gerenación automática de la descripción</label>
                     </li>
                 </ul>
             </div>
-            <button class="botonR" onclick="procesa()">
+            <button class="botonR">
                 Describe!
             </button>
         </div>

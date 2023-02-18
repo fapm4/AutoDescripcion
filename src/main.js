@@ -11,12 +11,12 @@ const url = require('url');
 const path = require('path');
 
 // Electron Reload
-require('electron-reload')(__dirname, {
-    electron: path.join(__dirname, '../node_modules', '.bin', 'electron')
-});
-
-require('./js/db.js');
-
+if (process.env.NODE_ENV === 'development') {
+    require('electron-reload')(__dirname, {
+        electron: require(`${__dirname}/node_modules/electron`),
+        ignored: /node_modules|[/\\]\./
+    });
+}
 
 /////////////////////////// Código ///////////////////////////
 
@@ -51,7 +51,6 @@ app.on('ready', () => {
             nativeWindowOpen: true,
         }
     });
-
     
     // Se carga el archivo index.html
     ventanaPrincipal.loadURL(url.format({
@@ -72,7 +71,11 @@ app.on('ready', () => {
             protocol: 'file',
             slashes: true
         }));
-        console.log('hola');
+
+        if(arg == 'sube_ficheros.html'){
+            ventanaPrincipal.webContents.on('did-finish-load', () => {
+                ventanaPrincipal.webContents.send('redireccionFinalizada', 'Añadir evento asíncrono');
+            });
+        }
     });
 });
-
