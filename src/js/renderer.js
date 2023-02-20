@@ -1,4 +1,9 @@
+const { webContents } = require('electron');
+
 var ipcRenderer = require('electron').ipcRenderer;
+
+const remote = require('@electron/remote');
+const main = remote.require('./main');
 
 ipcRenderer.on('cargaFinalizada', (event, arg) => {
     const botones = document.querySelectorAll('.boton');
@@ -46,7 +51,8 @@ function subeFichero(){
     else{
         switch(modo[0].value){
             case '1':
-                    // Modo 1: Generar formulario con los espacioes
+                    // Modo 1: Generar formulario con los espacios
+                    main.addVideo(input.value);
                 break;
             case '2':
                     // Modo 2: Grabar audio
@@ -54,5 +60,9 @@ function subeFichero(){
             case '3':
                     // Modo 3: IA
                 break;
+            default:
+                alert('Error');
+                break;
+        }
     }
 }

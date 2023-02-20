@@ -3,10 +3,13 @@
   "version": "1.0.0",
   "description": "TFG basado en crear una aplicación capaz de crear audiodescripciones",
   "main": "index.js",
-  "dependencies": {},
+  "dependencies": {
+    "@electron/remote": "^2.0.9"
+  },
   "devDependencies": {
     "electron": "^22.3.0",
     "electron-reload": "^2.0.0-alpha.1",
+    "ffmpeg": "0.0.4",
     "promise-mysql": "^5.2.0"
   },
   "scripts": {

@@ -2,13 +2,17 @@
 
 /////////////////////////// Imports ///////////////////////////
 // Electron
-const {app, BrowserWindow, Menu, ipcMain} = require('electron');
+const {app, BrowserWindow, Menu, ipcMain, remote} = require('electron');
+
 
 // URL
 const url = require('url');
 
 // Path
 const path = require('path');
+
+var ipcRenderer = require('electron').ipcRenderer;
+
 
 // Electron Reload
 if (process.env.NODE_ENV === 'development') {
@@ -18,10 +22,13 @@ if (process.env.NODE_ENV === 'development') {
     });
 }
 
-/////////////////////////// Código ///////////////////////////
+var ffmpeg = require('ffmpeg');
 
+/////////////////////////// Código ///////////////////////////
 // Ventana principal con alcance global
 let ventanaPrincipal;
+
+require('@electron/remote/main').initialize();
 
 const templateMenu = [
     {
@@ -48,9 +55,11 @@ app.on('ready', () => {
         webPreferences: {
             nodeIntegration: true,
             contextIsolation: false,
-            nativeWindowOpen: true,
+            enableRemoteModule: true
         }
     });
+
+    require('@electron/remote/main').enable(ventanaPrincipal.webContents);
     
     // Se carga el archivo index.html
     ventanaPrincipal.loadURL(url.format({
@@ -79,3 +88,13 @@ app.on('ready', () => {
         }
     });
 });
+
+function addVideo(media){
+    const con = getConn();
+    console.log(media);
+}
+
+
+module.exports = {
+    addVideo
+};
