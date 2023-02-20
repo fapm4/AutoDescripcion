@@ -52,6 +52,7 @@ function subeFichero(){
         switch(modo[0].value){
             case '1':
                     // Modo 1: Generar formulario con los espacios
+                    console.log(input.value);
                     main.addVideo(input.value);
                 break;
             case '2':

@@ -11,8 +11,6 @@ const url = require('url');
 // Path
 const path = require('path');
 
-var ipcRenderer = require('electron').ipcRenderer;
-
 
 // Electron Reload
 if (process.env.NODE_ENV === 'development') {
@@ -22,7 +20,12 @@ if (process.env.NODE_ENV === 'development') {
     });
 }
 
+// FFMPeg.js
 var ffmpeg = require('ffmpeg');
+
+// DB
+
+const db = require('./js/db');
 
 /////////////////////////// Código ///////////////////////////
 // Ventana principal con alcance global
@@ -63,10 +66,13 @@ app.on('ready', () => {
     
     // Se carga el archivo index.html
     ventanaPrincipal.loadURL(url.format({
+        // Cambiar esto después
         pathname: path.join(__dirname, 'views', 'index.html'),
         protocol: 'file',
         slashes: true
     }));
+
+    ventanaPrincipal.openDevTools();
 
     ventanaPrincipal.webContents.on('did-finish-load', () => {
         ventanaPrincipal.webContents.send('cargaFinalizada', 'Añadiendo eventos a los botones');
@@ -90,8 +96,10 @@ app.on('ready', () => {
 });
 
 function addVideo(media){
-    const con = getConn();
-    console.log(media);
+    console.log('hola');
+    db.pito();
+    db.getConnection();
+
 }
 
 
