@@ -1,4 +1,4 @@
-const { webContents } = require('electron');
+const { webContents, dialog} = require('electron');
 
 var ipcRenderer = require('electron').ipcRenderer;
 
@@ -36,34 +36,34 @@ function redirige(event){
 }
 
 ipcRenderer.on('redireccionFinalizada', (event, arg) => {
-    const boton = document.querySelector('.botonR');
-    boton.addEventListener('click', subeFichero, true);
+    const botonR = document.querySelector('.botonR');
+    botonR.addEventListener('click', subeFichero, true);
 
+    const botonS = document.querySelector('.botonS');
+    botonS.addEventListener('click', () => ipcRenderer.send('requestFile'), true);
+});
+
+ipcRenderer.on('not-file-found', (event, arg) => {
+    alert('No se ha encontrado el fichero');
 });
 
 function subeFichero(){
-    let input = document.querySelector('#file');
     let modo = document.querySelectorAll('input[name=modo]:checked');
-    
-    if(input.value == ""){
-        alert('No has seleccionado ningún fichero');
-    }
-    else{
-        switch(modo[0].value){
-            case '1':
-                    // Modo 1: Generar formulario con los espacios
-                    console.log(input.value);
-                    main.addVideo(input.value);
-                break;
-            case '2':
-                    // Modo 2: Grabar audio
-                break;
-            case '3':
-                    // Modo 3: IA
-                break;
-            default:
-                alert('Error');
-                break;
-        }
+
+    switch(modo[0].value){
+        case '1':
+                // Modo 1: Generar formulario con los espacios
+                const botonS = document.querySelector('.botonS');
+                botonS.addEventListener('click', () => ipcRenderer.send('requestFile', '1'), true);
+            break;
+        case '2':
+                // Modo 2: Grabar audio
+            break;
+        case '3':
+                // Modo 3: IA
+            break;
+        default:
+            alert('Error');
+            break;
     }
 }
