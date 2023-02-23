@@ -4,6 +4,12 @@ var ipcRenderer = require('electron').ipcRenderer;
 
 const remote = require('@electron/remote');
 const main = remote.require('./main');
+let modo = document.querySelectorAll('input[name=modo]:checked');
+
+const ffmpegPath = require('ffmpeg-static-electron').path;
+const ffmpeg = require('fluent-ffmpeg');
+const ffprobe = require('node-ffprobe');
+ffmpeg.setFfmpegPath(ffmpegPath);
 
 ipcRenderer.on('cargaFinalizada', (event, arg) => {
     const botones = document.querySelectorAll('.boton');
@@ -36,34 +42,29 @@ function redirige(event){
 }
 
 ipcRenderer.on('redireccionFinalizada', (event, arg) => {
-    const botonR = document.querySelector('.botonR');
-    botonR.addEventListener('click', subeFichero, true);
-
     const botonS = document.querySelector('.botonS');
     botonS.addEventListener('click', () => ipcRenderer.send('requestFile'), true);
+
+    let botonR = document.querySelector('.botonR');
+    botonR.addEventListener('click', () => ipcRenderer.send('procesa'), true);
 });
+
+ipcRenderer.on('procesa-check', (event, arg) => {
+    if(arg == undefined){
+        alert('No has seleccionado ningún fichero');
+    }
+});
+
 
 ipcRenderer.on('not-file-found', (event, arg) => {
     alert('No se ha encontrado el fichero');
 });
 
-function subeFichero(){
-    let modo = document.querySelectorAll('input[name=modo]:checked');
+ipcRenderer.on('actualiza-label', (event, arg) => {
+    let label = document.querySelector('#fileName');
+    label.innerHTML = arg;
+});
 
-    switch(modo[0].value){
-        case '1':
-                // Modo 1: Generar formulario con los espacios
-                const botonS = document.querySelector('.botonS');
-                botonS.addEventListener('click', () => ipcRenderer.send('requestFile', '1'), true);
-            break;
-        case '2':
-                // Modo 2: Grabar audio
-            break;
-        case '3':
-                // Modo 3: IA
-            break;
-        default:
-            alert('Error');
-            break;
-    }
-}
+ipcRenderer.on('fichero_subido', (event, arg) => {
+    console.log('Fichero subido correctamente a la BBDD');
+});

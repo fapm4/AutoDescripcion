@@ -4,7 +4,6 @@
 // Electron
 const {app, BrowserWindow, Menu, ipcMain, remote, dialog} = require('electron');
 
-
 // URL
 const url = require('url');
 
@@ -20,8 +19,12 @@ if (process.env.NODE_ENV === 'development') {
     });
 }
 
-// FFMPeg.js
-var ffmpeg = require('ffmpeg');
+// FFMPeg
+const ffmpegPath = require('ffmpeg-static-electron').path;
+const ffmpeg = require('fluent-ffmpeg');
+const ffprobe = require('node-ffprobe');
+ffmpeg.setFfmpegPath(ffmpegPath);
+
 
 // DB
 const db = require('./js/db');
@@ -99,6 +102,7 @@ ipcMain.on('redirige', (event, arg) => {
 });
 
 ipcMain.on('requestFile', (event, arg) => {
+    console.log('argumento: ' + event);
     dialog.showOpenDialog({
         properties: ['openFile']
     }).then(result => {
@@ -106,7 +110,6 @@ ipcMain.on('requestFile', (event, arg) => {
         console.log(path);
 
         if(path == "" || path == null){
-            console.log('aqui');
             ventanaPrincipal.webContents.send('not-file-found','No has seleccionado ningún fichero');
         }
         else{
@@ -118,11 +121,12 @@ ipcMain.on('requestFile', (event, arg) => {
 });
 
 function getMediaName(media){
-    // Obtengo el nombre del fichero | /home/fapm4/Escritorio/AutoDescripcion/src/videos/home/fapm4/Escritorio/AutoDescripcion/README.md
     let media_name = media.split('/');
     media_name = media_name[media_name.length - 1];
     return "org_" + media_name;
 }
+
+var obj;
 
 async function addVideo(media){
     let media_name = getMediaName(media);
@@ -135,23 +139,41 @@ async function addVideo(media){
         // Lo guardo el FS
         const video = fs.readFileSync(media);
         let ruta = path.join(__dirname, 'videos', media_name);
-        
+
         fs.writeFile(ruta, video, (err) => {
             if (err) throw err;
             console.log('Video añadido al FS');
         });
+
+        ventanaPrincipal.webContents.send('actualiza-label', media_name.substring(4, media_name.length));
 
         // Guardo la referencia en la base de datos
         db.query('INSERT INTO video (name, ruta) VALUES (?, ?)', [media_name, ruta], (err, result) => {
             if (err) throw err;
             console.log('Video añadido a la base de datos');
         });
+
+        obj = {
+            media_name,
+            ruta
+        };
+
+        ventanaPrincipal.webContents.send('fichero_subido', obj);
     });
 }
+
+ipcMain.on('procesa', () => {
+    ventanaPrincipal.webContents.send('procesa-check', obj);
+});
 
 app.on('window-all-closed', () => {
     if (process.platform !== 'darwin') {
         app.quit();
+        db.query('DELETE FROM video', (err, result) => {
+            if (err) throw err;
+            console.log('Videos borrados de la base de datos');
+        });
+
         db.end((err => {
             if (err) throw err;
                 console.log('Conexión cerrada');

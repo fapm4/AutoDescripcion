@@ -5,12 +5,15 @@
   "main": "index.js",
   "dependencies": {
     "@electron/remote": "^2.0.9",
-    "mysql": "^2.18.1"
+    "ffmpeg-static-electron": "^2.0.3",
+    "ffprobe": "^1.1.2",
+    "fluent-ffmpeg": "^2.1.2",
+    "mysql": "^2.18.1",
+    "node-ffprobe": "^3.0.0"
   },
   "devDependencies": {
     "electron": "^22.3.0",
-    "electron-reload": "^2.0.0-alpha.1",
-    "ffmpeg": "0.0.4"
+    "electron-reload": "^2.0.0-alpha.1"
   },
   "scripts": {
     "start": "electron src/main.js"
