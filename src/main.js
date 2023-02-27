@@ -77,8 +77,6 @@ app.on('ready', () => {
         slashes: true
     }));
 
-    ventanaPrincipal.openDevTools();
-
     ventanaPrincipal.webContents.on('did-finish-load', () => {
         ventanaPrincipal.webContents.send('cargaFinalizada', 'Añadiendo eventos a los botones');
     });
@@ -94,6 +92,7 @@ ipcMain.on('redirige', (event, arg) => {
         slashes: true,
     }));
 
+    ventanaPrincipal.openDevTools();
     if(arg == 'sube_ficheros.html'){
         ventanaPrincipal.webContents.on('did-finish-load', () => {
             ventanaPrincipal.webContents.send('redireccionFinalizada', 'Añadir evento asíncrono');
