@@ -101,7 +101,6 @@ ipcMain.on('redirige', (event, arg) => {
 });
 
 ipcMain.on('requestFile', (event, arg) => {
-    console.log('argumento: ' + event);
     dialog.showOpenDialog({
         properties: ['openFile']
     }).then(result => {
@@ -160,6 +159,14 @@ async function addVideo(media){
         ventanaPrincipal.webContents.send('fichero_subido', obj);
     });
 }
+
+ipcMain.on('procesando-fichero', (event, arg) => {
+    ventanaPrincipal.loadURL(url.format({
+        pathname: path.join(__dirname, 'views', 'pantalla_carga.html'),
+        protocol: 'file',
+        slashes: true,
+    }));
+});
 
 ipcMain.on('procesa', () => {
     ventanaPrincipal.webContents.send('procesa-check', obj);
