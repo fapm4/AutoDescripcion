@@ -77,6 +77,8 @@ app.on('ready', () => {
         slashes: true
     }));
 
+    // Se carga la pantalla principal. Envío evento cuando se termine de cargar el DOM
+    // para añadir los eventos a los botones
     ventanaPrincipal.webContents.on('did-finish-load', () => {
         ventanaPrincipal.webContents.send('cargaFinalizada', 'Añadiendo eventos a los botones');
     });
@@ -85,6 +87,7 @@ app.on('ready', () => {
 
 });
 
+// 2. Una vez obtenga la ruta (pagina HTML), la renderizo
 ipcMain.on('redirige', (event, arg) => {
     ventanaPrincipal.loadURL(url.format({
         pathname: path.join(__dirname, 'views', arg),
@@ -92,14 +95,16 @@ ipcMain.on('redirige', (event, arg) => {
         slashes: true,
     }));
 
+    // 3. Si es la página de subir ficheros, añado el evento de subir fichero
     ventanaPrincipal.openDevTools();
     if(arg == 'sube_ficheros.html'){
         ventanaPrincipal.webContents.on('did-finish-load', () => {
-            ventanaPrincipal.webContents.send('redireccionFinalizada', 'Añadir evento asíncrono');
+            ventanaPrincipal.webContents.send('redireccion_subeFicheros', 'Añadir evento asíncrono');
         });
     }
 });
 
+// 4.1 Abre el diálogo para seleccionar el fichero
 ipcMain.on('requestFile', (event, arg) => {
     dialog.showOpenDialog({
         properties: ['openFile']
@@ -107,10 +112,12 @@ ipcMain.on('requestFile', (event, arg) => {
         const path = result.filePaths[0];
         console.log(path);
 
+        // 4.3 Si no se ha seleccionado ningún fichero, envío un mensaje de error
         if(path == "" || path == null){
             ventanaPrincipal.webContents.send('not-file-found','No has seleccionado ningún fichero');
         }
         else{
+            // Una vez se seleccione el fichero, lo almaceno en la base de datos y en el FS
             addVideo(result.filePaths[0]);
         }
     }).catch(err => {
@@ -118,6 +125,7 @@ ipcMain.on('requestFile', (event, arg) => {
     })
 });
 
+// Función auxiliar para obtener el nombre del fichero. Le añdo el prefijo "org_" para diferenciarlo
 function getMediaName(media){
     let media_name = media.split('/');
     media_name = media_name[media_name.length - 1];
@@ -126,6 +134,7 @@ function getMediaName(media){
 
 var obj;
 
+// Guardado del fichero
 async function addVideo(media){
     let media_name = getMediaName(media);
 
@@ -143,6 +152,7 @@ async function addVideo(media){
             console.log('Video añadido al FS');
         });
 
+        // Actualizo el label del HTML
         ventanaPrincipal.webContents.send('actualiza-label', media_name.substring(4, media_name.length));
 
         // Guardo la referencia en la base de datos
@@ -156,20 +166,34 @@ async function addVideo(media){
             ruta
         };
 
+        // 5. Una vez se haya subido el fichero, se envía un evento para indicarque se puede procesar
+        // No es necesario
         ventanaPrincipal.webContents.send('fichero_subido', obj);
     });
 }
 
-ipcMain.on('procesando-fichero', (event, arg) => {
+var modo;
+// 4.2 Cuando se clicke sobre el botón de describir, empiezo el proceso de descripción -> ffmpeg.js
+ipcMain.on('empieza_procesamiento', (event, arg) => {
+    modo = arg;
+    ventanaPrincipal.webContents.send('procesa-check', obj);
+});
+
+// 6. Recibo el evento de pantalla de carga y renderizo la pantalla de carga
+// Preguntar a sergio si es necesario
+ipcMain.on('pantalla_carga', (event, arg) => {
     ventanaPrincipal.loadURL(url.format({
         pathname: path.join(__dirname, 'views', 'pantalla_carga.html'),
         protocol: 'file',
         slashes: true,
     }));
+
+    // 6.1 Evento para mostrar el spinner
+    //ventanaPrincipal.webContents.send('pantalla_carga_lista', arg);
 });
 
-ipcMain.on('procesa', () => {
-    ventanaPrincipal.webContents.send('procesa-check', obj);
+ipcMain.on('audio_analizado', (event, arg) => {
+    console.log(modo);
 });
 
 app.on('window-all-closed', () => {

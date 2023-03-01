@@ -7,33 +7,59 @@ ffmpeg.setFfmpegPath(ffmpegPath);
 const { exec } = require('child_process');
 
 
+// 4.2 Si no se ha seleccionado ningún fichero, envío un mensaje de error
 ipcRenderer.on('procesa-check', (event, arg) => {
     if (arg == undefined) {
-        alert('No has seleccionado ningún fi2qchero');
+        alert('No has seleccionado ningún fichero');
     }
     else {
-        ipcRenderer.send('procesando', 'Procesando fichero...');
+        // Comienzo a procesar el fichero
         console.log('Procesando fichero...');
-
         let file = arg.ruta.split('/').pop().split('.')[0];
         const output = `/home/fapm4/Escritorio/AutoDescripcion/src/audios/${file}.wav`;
+        let ruta = arg.ruta;
+        let media_name = arg.media_name;
 
-        ffmpeg(arg.ruta)
-            .output(output)
-            .noVideo()
-            .audioCodec('pcm_s16le')
-            .audioChannels(1)
-            .on('end', () => {
-                console.log('Audio extraído correctamente');
-                getIntervals(output, '-30', (silences) => {
-                    console.log(`Se encontraron ${silences.length} silencios.`);
-                    console.log('Silencios: ', silences)
-                })
-            })
-            .run();
+        // 6. Mando un evento para mostrar la pantalla de carga
+        let datos_fichero = {
+            output,
+            ruta,
+            media_name,
+            modo
+        };
+        
+        ffmpeg(ruta)
+        .output(output)
+        .noVideo()
+        .audioCodec('pcm_s16le')
+        .audioChannels(1)
+        .on('end', () => {
+            console.log('Audio extraído correctamente');
+            getIntervals(output, '-30', (silencios) => {
+                let obj = {
+                    datos_fichero,
+                    silencios
+                };
+
+
+                console.log(`Se encontraron ${silencios.length} silencios.`);
+                console.log('Silencios: ', silencios);
+
+                ipcRenderer.send('audio_analizado', obj);
+            });
+        })
+        .run();
     }
 });
 
+ipcRenderer.on('pantalla_carga_lista', (event, arg) => {
+
+    console.log(arg);
+    // Saco el audio del vídeo y lo almaceno en wav
+
+});
+
+// Función auxiliar para obtener los silencios del audio
 function getIntervals(filePath, silenceThreshold, callback) {
     const cmd = `${ffmpegPath} -i ${filePath} -af "silencedetect=n=${silenceThreshold}dB:d=2.0" -f null -`;
 

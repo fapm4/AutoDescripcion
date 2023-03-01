@@ -4,8 +4,9 @@ var ipcRenderer = require('electron').ipcRenderer;
 
 const remote = require('@electron/remote');
 const main = remote.require('./main');
-let modo = document.querySelectorAll('input[name=modo]:checked');
+let modo = document.querySelector('input[name=modo]:checked');
 
+// 1. Añade a los botones el evento de redirección.
 ipcRenderer.on('cargaFinalizada', (event, arg) => {
     const botones = document.querySelectorAll('.boton');
     
@@ -14,8 +15,8 @@ ipcRenderer.on('cargaFinalizada', (event, arg) => {
     });
 });
 
+// Función que redirige a la página correspondiente
 function redirige(event){
-    
     const currentTarget = event.currentTarget;
     let ruta;
 
@@ -33,21 +34,30 @@ function redirige(event){
             prompt('Error');
     };
 
+    // Envío el nombre del fichero para redireccionar
     ipcRenderer.send('redirige', ruta);
 }
 
-ipcRenderer.on('redireccionFinalizada', (event, arg) => {
+// 4. Una vez se cargue la página de subir ficheros, añado el evento de subir fichero
+ipcRenderer.on('redireccion_subeFicheros', (event, arg) => {
+    //4.1 Cuando se pulse el botón de subir fichero, se abre el diálogo para seleccionar el fichero
     const botonS = document.querySelector('.botonS');
-    botonS.addEventListener('click', () => ipcRenderer.send('requestFile'), true);
+    if(botonS != undefined){
+        botonS.addEventListener('click', () => ipcRenderer.send('requestFile'), true);
+    }
 
+    //4.2 Cuando se pulse el botón de describir, empieza a procesar el fichero subido
     let botonR = document.querySelector('.botonR');
-    botonR.addEventListener('click', () => ipcRenderer.send('procesa'), true);
+    console.log(modo);
+    botonR.addEventListener('click', () => ipcRenderer.send('empieza_procesamiento', modo), true);
 });
 
+// 4.3 Si no se ha seleccionado ningún fichero, envío un mensaje de error
 ipcRenderer.on('not-file-found', (event, arg) => {
     alert('No se ha encontrado el fichero');
 });
 
+// Si no, actualiza el nombre del label con el nombre del fichero
 ipcRenderer.on('actualiza-label', (event, arg) => {
     let label = document.querySelector('#fileName');
     label.innerHTML = arg;
