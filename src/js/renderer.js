@@ -73,6 +73,14 @@ ipcRenderer.on('fichero_subido', (event, arg) => {
 let plyr = require('plyr');
 const player = new plyr('#player');
 
+
+function convierteTiempo(seconds) {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const remainingSeconds = seconds % 60;
+    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${remainingSeconds.toFixed(0).padStart(2, '0')}`;
+}
+
 ipcRenderer.on('mostrar_formulario', (event, arg) => {
     // Tengo que mostrar el video
     let video = document.querySelector('video');
@@ -88,14 +96,22 @@ ipcRenderer.on('mostrar_formulario', (event, arg) => {
         span.innerHTML = 'No se han encontrado silencios';
     }
     else{
+        // Por implementar:
+        // 1. Crear tabla con los silencios - Hecho
+        // 2. Crear botón de comprobar - Hacer
+        // 3. Crear botón de enviar - Hacer
         let tabla = document.createElement('table');
         tabla.id = 'tablaSilencios';
         tabla.innerHTML = '<tr><th>Inicio</th><th>Fin</th><th>Descripción</th></tr>';
         silencios.forEach(silencio => {
+            let start = convierteTiempo(silencio.start);
+            let end = convierteTiempo(silencio.end);
             let tr = document.createElement('tr');
-            tr.innerHTML = `<td>${silencio.inicio}</td><td>${silencio.fin}</td><td><input type="text" class="inputSilencio" id="${silencio.id}"></td>`;
+            tr.innerHTML = `<td>${start }</td><td>${end}</td><td><input type="text" class="inputSilencio" id="${silencio.id}"></td><td><button class="btnComprobar></button></td>`;
             tabla.appendChild(tr);
         });
         divForm.appendChild(tabla);
+
+        
     }
 });

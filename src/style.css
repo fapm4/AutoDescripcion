@@ -194,5 +194,39 @@ input[type='radio'] {
 #player {
     margin-top: 20px !important;
     width: 30% !important;
-    height: 30% !important;
+    height: 20% !important;
+}
+
+#tablaSilencios {
+    border-collapse: collapse;
+    width: 60%;
+    margin-top: 50px;
+    text-align: center;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  
+  #tablaSilencios th {
+    background-color: #eee;
+    color: #666;
+    font-weight: bold;
+    padding: 10px;
+    text-align: center;
+  }
+  
+  #tablaSilencios td {
+    padding: 10px;
+    border: 1px solid #ccc;
+  }
+  
+  .inputSilencio {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 5px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+  }
+
+.btnComprobar {
+    float: right;
 }
