@@ -4,8 +4,8 @@ var ipcRenderer = require('electron').ipcRenderer;
 
 const remote = require('@electron/remote');
 const main = remote.require('./main');
-let modo = document.querySelector('input[name=modo]:checked');
 
+/////////////////////////// Este código afecta a -> sube_ficheros.html e index.html ///////////////////////////
 // 1. Añade a los botones el evento de redirección.
 ipcRenderer.on('cargaFinalizada', (event, arg) => {
     const botones = document.querySelectorAll('.boton');
@@ -48,8 +48,10 @@ ipcRenderer.on('redireccion_subeFicheros', (event, arg) => {
 
     //4.2 Cuando se pulse el botón de describir, empieza a procesar el fichero subido
     let botonR = document.querySelector('.botonR');
-    console.log(modo);
-    botonR.addEventListener('click', () => ipcRenderer.send('empieza_procesamiento', modo), true);
+    if(botonR != undefined){
+        let modo = document.querySelector('input[name=modo]:checked');
+        botonR.addEventListener('click', () => ipcRenderer.send('empieza_procesamiento', modo.value), true);
+    }
 });
 
 // 4.3 Si no se ha seleccionado ningún fichero, envío un mensaje de error
@@ -65,4 +67,35 @@ ipcRenderer.on('actualiza-label', (event, arg) => {
 
 ipcRenderer.on('fichero_subido', (event, arg) => {
     console.log('Fichero subido correctamente a la BBDD');
+});
+
+/////////////////////////// Este código afecta a -> formulario_descripcion.html ///////////////////////////
+let plyr = require('plyr');
+const player = new plyr('#player');
+
+ipcRenderer.on('mostrar_formulario', (event, arg) => {
+    // Tengo que mostrar el video
+    let video = document.querySelector('video');
+    let divForm = document.querySelector('.form');
+    video.src = arg.datos_fichero.ruta;
+    console.log(arg);
+    console.log(video);
+
+    let silencios = arg.silencios;
+
+    if(silencios.length == 0){
+        let span = document.createElement('span');
+        span.innerHTML = 'No se han encontrado silencios';
+    }
+    else{
+        let tabla = document.createElement('table');
+        tabla.id = 'tablaSilencios';
+        tabla.innerHTML = '<tr><th>Inicio</th><th>Fin</th><th>Descripción</th></tr>';
+        silencios.forEach(silencio => {
+            let tr = document.createElement('tr');
+            tr.innerHTML = `<td>${silencio.inicio}</td><td>${silencio.fin}</td><td><input type="text" class="inputSilencio" id="${silencio.id}"></td>`;
+            tabla.appendChild(tr);
+        });
+        divForm.appendChild(tabla);
+    }
 });

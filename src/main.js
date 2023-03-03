@@ -175,7 +175,7 @@ async function addVideo(media){
 var modo;
 // 4.2 Cuando se clicke sobre el botón de describir, empiezo el proceso de descripción -> ffmpeg.js
 ipcMain.on('empieza_procesamiento', (event, arg) => {
-    modo = arg;
+    obj.modo = arg;
     ventanaPrincipal.webContents.send('procesa-check', obj);
 });
 
@@ -192,8 +192,20 @@ ipcMain.on('pantalla_carga', (event, arg) => {
     //ventanaPrincipal.webContents.send('pantalla_carga_lista', arg);
 });
 
+// 7. Recibo el evento de que el audio ya ha sido analizado
 ipcMain.on('audio_analizado', (event, arg) => {
-    console.log(modo);
+    ventanaPrincipal.loadURL(url.format({
+        pathname: path.join(__dirname, 'views', 'formulario_descripcion.html'),
+        protocol: 'file',
+        slashes: true,
+    }));
+
+    console.log(arg);
+    // 7.1 Creo el formulario
+    ventanaPrincipal.webContents.on('did-finish-load', () => {    
+        ventanaPrincipal.webContents.send('mostrar_formulario', arg);
+    });
+
 });
 
 app.on('window-all-closed', () => {

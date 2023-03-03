@@ -19,8 +19,9 @@ ipcRenderer.on('procesa-check', (event, arg) => {
         const output = `/home/fapm4/Escritorio/AutoDescripcion/src/audios/${file}.wav`;
         let ruta = arg.ruta;
         let media_name = arg.media_name;
+        let modo = arg.modo;
 
-        // 6. Mando un evento para mostrar la pantalla de carga
+        // 6. Mando un evento para mostrar la pantalla de carga - Por hacer
         let datos_fichero = {
             output,
             ruta,
@@ -41,11 +42,12 @@ ipcRenderer.on('procesa-check', (event, arg) => {
                     silencios
                 };
 
-
                 console.log(`Se encontraron ${silencios.length} silencios.`);
                 console.log('Silencios: ', silencios);
 
-                ipcRenderer.send('audio_analizado', obj);
+                // 7. Silencios detectados, enviamos evento para  cargar la pantalla del formulario
+                // para añadir el texto
+                ipcRenderer.send('audio_analizado', obj, arg.modo);
             });
         })
         .run();

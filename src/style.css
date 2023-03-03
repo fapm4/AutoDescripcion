@@ -190,4 +190,9 @@ input[type='radio'] {
         margin-top: 20px;
     }
 }
-  
+
+#player {
+    margin-top: 20px !important;
+    width: 30% !important;
+    height: 30% !important;
+}
