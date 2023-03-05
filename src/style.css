@@ -230,3 +230,20 @@ input[type='radio'] {
 .btnComprobar {
     float: right;
 }
+
+.divBotones {
+    display: flex;
+    margin: 0 5px;
+  }
+  
+  .btnComprobar {
+    margin-right: 5px;
+  }
+  
+  .spanBotones {
+    display: flex;
+    justify-content: center;
+    margin-top: 10px;
+  }
+  
+  

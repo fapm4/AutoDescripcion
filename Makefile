@@ -1,2 +1,2 @@
 all:
-	rm src/videos/* && rm src/audios/*
+	rm -rf src/contenido/*

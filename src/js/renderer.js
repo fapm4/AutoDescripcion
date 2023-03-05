@@ -4,6 +4,7 @@ var ipcRenderer = require('electron').ipcRenderer;
 
 const remote = require('@electron/remote');
 const main = remote.require('./main');
+const imageSoruce ="https://www.google.com/url?sa=i&url=https%3A%2F%2Fwww.spreadshirt.es%2Fshop%2Fdesign%2Fboton%2Bplay%2Bcamiseta%2Bpremium%2Bhombre-D5975f73a59248d6110152d16%3Fsellable%3D30xwlz15z4Upe0m9kzy3-812-7&psig=AOvVaw0yfJZRipPcZ0fKQVnSDetn&ust=1677955190722000&source=images&cd=vfe&ved=0CBAQjRxqFwoTCJiQtay0wP0CFQAAAAAdAAAAABAE";
 
 /////////////////////////// Este código afecta a -> sube_ficheros.html e index.html ///////////////////////////
 // 1. Añade a los botones el evento de redirección.
@@ -103,15 +104,68 @@ ipcRenderer.on('mostrar_formulario', (event, arg) => {
         let tabla = document.createElement('table');
         tabla.id = 'tablaSilencios';
         tabla.innerHTML = '<tr><th>Inicio</th><th>Fin</th><th>Descripción</th></tr>';
+        var i = 0;
         silencios.forEach(silencio => {
+            let idDescripcion = `desc_${i}`;
             let start = convierteTiempo(silencio.start);
             let end = convierteTiempo(silencio.end);
             let tr = document.createElement('tr');
-            tr.innerHTML = `<td>${start }</td><td>${end}</td><td><input type="text" class="inputSilencio" id="${silencio.id}"></td><td><button class="btnComprobar></button></td>`;
+            tr.className = idDescripcion;
+            tr.innerHTML = `<td>${start}</td><td>${end}</td><td><input type="text" class="inputSilencio"}"></td>`;
             tabla.appendChild(tr);
+            i += 1;
         });
         divForm.appendChild(tabla);
 
-        
+        // Creo los dos botones
+        let btnComprobar = document.createElement('button');
+        btnComprobar.innerHTML = 'Comprobar';
+
+        let btnGuardar = document.createElement('button');
+        btnGuardar.innerHTML = 'Guardar';
+
+        // Los meto al DOM
+        let divBotones = document.createElement('div');
+        divBotones.className = 'divBotones';
+        divBotones.appendChild(btnComprobar);
+        divBotones.appendChild(btnGuardar);
+        divForm.appendChild(divBotones);
+
+        // Añado el evento de comprobar
+        btnComprobar.addEventListener('click', () => compruebaSegundos(silencios, arg.datos_fichero.media_name), true);
     }
 });
+
+var comprobado = false;
+
+function queryAncestorSelector(node, selector){
+    // Obtengo el nodo padre
+    var parent = node.parentNode;
+
+    // Saco todos los nodos con mi selector
+    var all = document.querySelectorAll(selector);
+    var found = false;
+    while (parent !== document && !found) {
+        for (var i = 0; i < all.length && !found; i++) {
+            found= (all[i] === parent)?true:false;
+        }
+            parent= (!found)?parent.parentNode:parent;
+        }
+    return (found)?parent:null;
+}
+
+const say = require('say');
+
+function compruebaSegundos(silencios, file){
+    comprobado = true;
+    let inputs = document.querySelectorAll('.inputSilencio');
+
+    inputs.forEach(input => {
+        // Obtengo el tr, que tiene el id de la descripción
+        let tr = queryAncestorSelector(input, 'tr');
+        let idDesc = tr.className;
+        let desc = input.value;
+        console.log(desc);
+        say.speak(desc);
+    });
+}

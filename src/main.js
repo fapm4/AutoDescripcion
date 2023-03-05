@@ -110,7 +110,6 @@ ipcMain.on('requestFile', (event, arg) => {
         properties: ['openFile']
     }).then(result => {
         const path = result.filePaths[0];
-        console.log(path);
 
         // 4.3 Si no se ha seleccionado ningún fichero, envío un mensaje de error
         if(path == "" || path == null){
@@ -129,7 +128,7 @@ ipcMain.on('requestFile', (event, arg) => {
 function getMediaName(media){
     let media_name = media.split('/');
     media_name = media_name[media_name.length - 1];
-    return "org_" + media_name;
+    return media_name;
 }
 
 var obj;
@@ -141,24 +140,26 @@ async function addVideo(media){
     await db.connect((err) => {
         if (err) throw err;
         console.log('Conectado a la base de datos MySQL');
-        console.log(media);
 
         // Lo guardo el FS
         const video = fs.readFileSync(media);
-        let ruta = path.join(__dirname, 'videos', media_name);
+        
+        let ruta = path.join(__dirname, 'contenido', media_name.split('.')[0]);
+        fs.mkdir(ruta, {recursive: true}, (err) => {
+            if (err) throw err;
+        });
+        ruta = path.join(ruta, "org_" + media_name);
 
         fs.writeFile(ruta, video, (err) => {
             if (err) throw err;
-            console.log('Video añadido al FS');
         });
 
         // Actualizo el label del HTML
-        ventanaPrincipal.webContents.send('actualiza-label', media_name.substring(4, media_name.length));
+        ventanaPrincipal.webContents.send('actualiza-label', media_name);
 
         // Guardo la referencia en la base de datos
         db.query('INSERT INTO video (name, ruta) VALUES (?, ?)', [media_name, ruta], (err, result) => {
             if (err) throw err;
-            console.log('Video añadido a la base de datos');
         });
 
         obj = {
@@ -200,7 +201,6 @@ ipcMain.on('audio_analizado', (event, arg) => {
         slashes: true,
     }));
 
-    console.log(arg);
     // 7.1 Creo el formulario
     ventanaPrincipal.webContents.on('did-finish-load', () => {    
         ventanaPrincipal.webContents.send('mostrar_formulario', arg);
@@ -213,12 +213,10 @@ app.on('window-all-closed', () => {
         app.quit();
         db.query('DELETE FROM video', (err, result) => {
             if (err) throw err;
-            console.log('Videos borrados de la base de datos');
         });
 
         db.end((err => {
             if (err) throw err;
-                console.log('Conexión cerrada');
         }));
     }
 });
