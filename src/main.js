@@ -2,7 +2,7 @@
 
 /////////////////////////// Imports ///////////////////////////
 // Electron
-const {app, BrowserWindow, Menu, ipcMain, speechSynthesis, dialog} = require('electron');
+const {app, BrowserWindow, Menu, ipcMain, dialog} = require('electron');
 
 // URL
 const url = require('url');
@@ -192,15 +192,6 @@ ipcMain.on('pantalla_carga', (event, arg) => {
     // 6.1 Evento para mostrar el spinner
     //ventanaPrincipal.webContents.send('pantalla_carga_lista', arg);
 });
-
-ipcMain.on('get_voices', (event) => {
-    let synth = ventanaPrincipal.speechSynthesis;
-    const newVoices = synth.getVoices();
-    if (newVoices.length !== voices.length) {
-        event.sender.send('voices-changed', newVoices);
-    }
-});
-
 // 7. Recibo el evento de que el audio ya ha sido analizado
 ipcMain.on('audio_analizado', (event, arg) => {
     ventanaPrincipal.loadURL(url.format({

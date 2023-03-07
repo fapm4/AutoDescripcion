@@ -151,29 +151,14 @@ function queryAncestorSelector(node, selector){
     return (found)?parent:null;
 }
 
-function getVoices(){
-    return new Promise((resolve, reject) => {
-        const voices = speechSynthesis.getVoices();
-        if(voices.length){
-            resolve(voices);
-            return;
-        }
-        ipcRenderer.send('get_voices');
-        ipcRenderer.once('voices_changes', (event, voices) => {
-            resolve(voices);
-        });
-    });
-}
 
 function almacenaAudios(silencios, datos_fichero){
     comprobado = true;
     let inputs = document.querySelectorAll('.inputSilencio');
 
-    getVoices().then(voices => {
-        console.log(voices);
-    }).catch(err => {
-        console.log(err);
-    });
+    
+    responsiveVoice.speak('Hola Mundo', 'Spanish Female', {rate: 0.8});
+
 }
 
 // inputs.forEach(input => {
