@@ -1,11 +1,8 @@
-const { webContents, dialog} = require('electron');
-
 var ipcRenderer = require('electron').ipcRenderer;
 
 const remote = require('@electron/remote');
 const main = remote.require('./main');
 const imageSoruce ="https://www.google.com/url?sa=i&url=https%3A%2F%2Fwww.spreadshirt.es%2Fshop%2Fdesign%2Fboton%2Bplay%2Bcamiseta%2Bpremium%2Bhombre-D5975f73a59248d6110152d16%3Fsellable%3D30xwlz15z4Upe0m9kzy3-812-7&psig=AOvVaw0yfJZRipPcZ0fKQVnSDetn&ust=1677955190722000&source=images&cd=vfe&ved=0CBAQjRxqFwoTCJiQtay0wP0CFQAAAAAdAAAAABAE";
-
 /////////////////////////// Este código afecta a -> sube_ficheros.html e index.html ///////////////////////////
 // 1. Añade a los botones el evento de redirección.
 ipcRenderer.on('cargaFinalizada', (event, arg) => {
@@ -132,7 +129,7 @@ ipcRenderer.on('mostrar_formulario', (event, arg) => {
         divForm.appendChild(divBotones);
 
         // Añado el evento de comprobar
-        btnComprobar.addEventListener('click', () => compruebaSegundos(silencios, arg.datos_fichero.media_name), true);
+        btnComprobar.addEventListener('click', () => almacenaAudios(silencios, arg.datos_fichero), true);
     }
 });
 
@@ -154,18 +151,40 @@ function queryAncestorSelector(node, selector){
     return (found)?parent:null;
 }
 
-const say = require('say');
+function getVoices(){
+    return new Promise((resolve, reject) => {
+        const voices = speechSynthesis.getVoices();
+        if(voices.length){
+            resolve(voices);
+            return;
+        }
+        ipcRenderer.send('get_voices');
+        ipcRenderer.once('voices_changes', (event, voices) => {
+            resolve(voices);
+        });
+    });
+}
 
-function compruebaSegundos(silencios, file){
+function almacenaAudios(silencios, datos_fichero){
     comprobado = true;
     let inputs = document.querySelectorAll('.inputSilencio');
 
-    inputs.forEach(input => {
-        // Obtengo el tr, que tiene el id de la descripción
-        let tr = queryAncestorSelector(input, 'tr');
-        let idDesc = tr.className;
-        let desc = input.value;
-        console.log(desc);
-        say.speak(desc);
+    getVoices().then(voices => {
+        console.log(voices);
+    }).catch(err => {
+        console.log(err);
     });
 }
+
+// inputs.forEach(input => {
+//     // Obtengo el tr, que tiene el id de la descripción
+//     let tr = queryAncestorSelector(input, 'tr');
+//     let idDesc = tr.className;
+//     let desc = input.value;
+//     let output = `${datos_fichero.ruta.split('org_')[0]}${idDesc}.wav`;
+//     console.log(desc);
+
+//     var synth = window.speechSynthesis;
+//     var voices = synth.getVoices();
+//     console.log(voices);
+// });
