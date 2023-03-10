@@ -84,7 +84,6 @@ app.on('ready', () => {
     });
     // Se crea el menú de la aplicación
     Menu.setApplicationMenu(Menu.buildFromTemplate(templateMenu));
-
 });
 
 // 2. Una vez obtenga la ruta (pagina HTML), la renderizo
@@ -192,6 +191,7 @@ ipcMain.on('pantalla_carga', (event, arg) => {
     // 6.1 Evento para mostrar el spinner
     //ventanaPrincipal.webContents.send('pantalla_carga_lista', arg);
 });
+
 // 7. Recibo el evento de que el audio ya ha sido analizado
 ipcMain.on('audio_analizado', (event, arg) => {
     ventanaPrincipal.loadURL(url.format({
@@ -204,6 +204,15 @@ ipcMain.on('audio_analizado', (event, arg) => {
     ventanaPrincipal.webContents.on('did-finish-load', () => {
         ventanaPrincipal.webContents.send('mostrar_formulario', arg);
     });
+});
+
+ipcMain.on('guarda_audiodescripcion', (event, output, blob) => {
+    if(output){
+        fs.writeFileSync(output, Buffer.from(blob.arrayBuffer()));
+    }
+    else{
+
+    }
 });
 
 app.on('window-all-closed', () => {

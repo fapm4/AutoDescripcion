@@ -79,6 +79,7 @@ function convierteTiempo(seconds) {
     return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${remainingSeconds.toFixed(0).padStart(2, '0')}`;
 }
 
+// 7.1 Tras cargar la pantalla de formulario añado todos los elemnentos HTML dinámicos
 ipcRenderer.on('mostrar_formulario', (event, arg) => {
     // Tengo que mostrar el video
     let video = document.querySelector('video');
@@ -151,13 +152,25 @@ function queryAncestorSelector(node, selector){
     return (found)?parent:null;
 }
 
+const responsiveVoice = require('responsivevoice');
 
 function almacenaAudios(silencios, datos_fichero){
     comprobado = true;
     let inputs = document.querySelectorAll('.inputSilencio');
 
-    
-    responsiveVoice.speak('Hola Mundo', 'Spanish Female', {rate: 0.8});
+    inputs.forEach(input => {
+        let tr = queryAncestorSelector(input, 'tr');
+        let idDesc = tr.className;
+        let desc = input.value;
+        let output = `${datos_fichero.ruta.split('org_')[0]}${idDesc}.wav`;
+        console.log(desc);
+        responsiveVoice.speak(desc, 'Spanish Female', {
+            onend: function() {
+                const blob =  responsiveVoice.getBlob(desc, 'Spanish Female', 1);
+                console.log(blob);
+            }
+        });
+    });
 
 }
 
@@ -165,7 +178,7 @@ function almacenaAudios(silencios, datos_fichero){
 //     // Obtengo el tr, que tiene el id de la descripción
 //     let tr = queryAncestorSelector(input, 'tr');
 //     let idDesc = tr.className;
-//     let desc = input.value;
+//     let desc = input.value;1
 //     let output = `${datos_fichero.ruta.split('org_')[0]}${idDesc}.wav`;
 //     console.log(desc);
 
