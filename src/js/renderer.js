@@ -1,6 +1,7 @@
 var ipcRenderer = require('electron').ipcRenderer;
 
 const remote = require('@electron/remote');
+const { statSync } = require('original-fs');
 const main = remote.require('./main');
 const imageSoruce ="https://www.google.com/url?sa=i&url=https%3A%2F%2Fwww.spreadshirt.es%2Fshop%2Fdesign%2Fboton%2Bplay%2Bcamiseta%2Bpremium%2Bhombre-D5975f73a59248d6110152d16%3Fsellable%3D30xwlz15z4Upe0m9kzy3-812-7&psig=AOvVaw0yfJZRipPcZ0fKQVnSDetn&ust=1677955190722000&source=images&cd=vfe&ved=0CBAQjRxqFwoTCJiQtay0wP0CFQAAAAAdAAAAABAE";
 /////////////////////////// Este código afecta a -> sube_ficheros.html e index.html ///////////////////////////
@@ -152,8 +153,6 @@ function queryAncestorSelector(node, selector){
     return (found)?parent:null;
 }
 
-const responsiveVoice = require('responsivevoice');
-
 function almacenaAudios(silencios, datos_fichero){
     comprobado = true;
     let inputs = document.querySelectorAll('.inputSilencio');
@@ -164,15 +163,19 @@ function almacenaAudios(silencios, datos_fichero){
         let desc = input.value;
         let output = `${datos_fichero.ruta.split('org_')[0]}${idDesc}.wav`;
         console.log(desc);
-        responsiveVoice.speak(desc, 'Spanish Female', {
-            onend: function() {
-                const blob =  responsiveVoice.getBlob(desc, 'Spanish Female', 1);
-                console.log(blob);
-            }
-        });
-    });
 
+        let start = new Date().getTime();
+        responsiveVoice.speak(desc, 'Spanish Female', {rate: 1}, {pitch: 1.2});
+        while(responsiveVoice.isPlaying()){
+            console.log('Esperando a que termine de hablar');
+        }
+        let end = new Date().getTime();
+        let diff = end - start;
+        console.log(desc, start, end, diff / 1000);
+    });
 }
+
+// poner boton para añadir tiempo actual
 
 // inputs.forEach(input => {
 //     // Obtengo el tr, que tiene el id de la descripción

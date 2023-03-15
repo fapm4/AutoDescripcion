@@ -95,3 +95,7 @@ function getIntervals(filePath, silenceThreshold, callback) {
         callback(silences);
     });
 }
+
+ipcRenderer.on('guarda_descripcion', (event, arg) => {
+    console.log('jola');
+});

@@ -63,7 +63,8 @@ app.on('ready', () => {
         webPreferences: {
             nodeIntegration: true,
             contextIsolation: false,
-            enableRemoteModule: true
+            enableRemoteModule: true,
+            webSpeech: true
         }
     });
 
@@ -206,9 +207,9 @@ ipcMain.on('audio_analizado', (event, arg) => {
     });
 });
 
-ipcMain.on('guarda_audiodescripcion', (event, output, blob) => {
+ipcMain.on('guarda_audio', (event, output, fileBuffer) => {
     if(output){
-        fs.writeFileSync(output, Buffer.from(blob.arrayBuffer()));
+        fs.writeFileSync(output, fileBuffer);
     }
     else{
 
