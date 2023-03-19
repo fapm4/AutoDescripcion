@@ -1,25 +1,26 @@
 var ipcRenderer = require('electron').ipcRenderer;
 
 const remote = require('@electron/remote');
+const { spawn } = require('child_process');
 const { statSync } = require('original-fs');
 const main = remote.require('./main');
-const imageSoruce ="https://www.google.com/url?sa=i&url=https%3A%2F%2Fwww.spreadshirt.es%2Fshop%2Fdesign%2Fboton%2Bplay%2Bcamiseta%2Bpremium%2Bhombre-D5975f73a59248d6110152d16%3Fsellable%3D30xwlz15z4Upe0m9kzy3-812-7&psig=AOvVaw0yfJZRipPcZ0fKQVnSDetn&ust=1677955190722000&source=images&cd=vfe&ved=0CBAQjRxqFwoTCJiQtay0wP0CFQAAAAAdAAAAABAE";
+const imageSoruce = "https://www.google.com/url?sa=i&url=https%3A%2F%2Fwww.spreadshirt.es%2Fshop%2Fdesign%2Fboton%2Bplay%2Bcamiseta%2Bpremium%2Bhombre-D5975f73a59248d6110152d16%3Fsellable%3D30xwlz15z4Upe0m9kzy3-812-7&psig=AOvVaw0yfJZRipPcZ0fKQVnSDetn&ust=1677955190722000&source=images&cd=vfe&ved=0CBAQjRxqFwoTCJiQtay0wP0CFQAAAAAdAAAAABAE";
 /////////////////////////// Este código afecta a -> sube_ficheros.html e index.html ///////////////////////////
 // 1. Añade a los botones el evento de redirección.
 ipcRenderer.on('cargaFinalizada', (event, arg) => {
     const botones = document.querySelectorAll('.boton');
-    
+
     botones.forEach(boton => {
         boton.addEventListener('click', redirige, true);
     });
 });
 
 // Función que redirige a la página correspondiente
-function redirige(event){
+function redirige(event) {
     const currentTarget = event.currentTarget;
     let ruta;
 
-    switch(currentTarget.id){
+    switch (currentTarget.id) {
         case 'btnInicio':
             ruta = 'index.html';
             break;
@@ -41,13 +42,13 @@ function redirige(event){
 ipcRenderer.on('redireccion_subeFicheros', (event, arg) => {
     //4.1 Cuando se pulse el botón de subir fichero, se abre el diálogo para seleccionar el fichero
     const botonS = document.querySelector('.botonS');
-    if(botonS != undefined){
+    if (botonS != undefined) {
         botonS.addEventListener('click', () => ipcRenderer.send('requestFile'), true);
     }
 
     //4.2 Cuando se pulse el botón de describir, empieza a procesar el fichero subido
     let botonR = document.querySelector('.botonR');
-    if(botonR != undefined){
+    if (botonR != undefined) {
         let modo = document.querySelector('input[name=modo]:checked');
         botonR.addEventListener('click', () => ipcRenderer.send('empieza_procesamiento', modo.value), true);
     }
@@ -71,6 +72,7 @@ ipcRenderer.on('fichero_subido', (event, arg) => {
 /////////////////////////// Este código afecta a -> formulario_descripcion.html ///////////////////////////
 let plyr = require('plyr');
 const player = new plyr('#player');
+let voice;
 
 
 function convierteTiempo(seconds) {
@@ -86,16 +88,14 @@ ipcRenderer.on('mostrar_formulario', (event, arg) => {
     let video = document.querySelector('video');
     let divForm = document.querySelector('.form');
     video.src = arg.datos_fichero.ruta;
-    console.log(arg);
-    console.log(video);
 
     let silencios = arg.silencios;
 
-    if(silencios.length == 0){
+    if (silencios.length == 0) {
         let span = document.createElement('span');
         span.innerHTML = 'No se han encontrado silencios';
     }
-    else{
+    else {
         // Por implementar:
         // 1. Crear tabla con los silencios - Hecho
         // 2. Crear botón de comprobar - Hacer
@@ -130,14 +130,17 @@ ipcRenderer.on('mostrar_formulario', (event, arg) => {
         divBotones.appendChild(btnGuardar);
         divForm.appendChild(divBotones);
 
+        speechSynthesis.addEventListener('voiceschanged', () => {
+            voice = speechSynthesis.getVoices().filter(voice => voice.lang.startsWith('es') && voice.name.includes('Spain') && voice.name.includes('victor'));
+        });
+
         // Añado el evento de comprobar
-        btnComprobar.addEventListener('click', () => almacenaAudios(silencios, arg.datos_fichero), true);
+        btnComprobar.addEventListener('click', () => compruebaAudios(silencios, arg.datos_fichero), true);
     }
 });
 
-var comprobado = false;
 
-function queryAncestorSelector(node, selector){
+function queryAncestorSelector(node, selector) {
     // Obtengo el nodo padre
     var parent = node.parentNode;
 
@@ -146,33 +149,96 @@ function queryAncestorSelector(node, selector){
     var found = false;
     while (parent !== document && !found) {
         for (var i = 0; i < all.length && !found; i++) {
-            found= (all[i] === parent)?true:false;
+            found = (all[i] === parent) ? true : false;
         }
-            parent= (!found)?parent.parentNode:parent;
-        }
-    return (found)?parent:null;
+        parent = (!found) ? parent.parentNode : parent;
+    }
+    return (found) ? parent : null;
 }
 
-function almacenaAudios(silencios, datos_fichero){
+var comprobado = false;
+ 
+function compruebaAudios(silencios, datos_fichero) {
+    console.log('Comprobando audios...');
     comprobado = true;
     let inputs = document.querySelectorAll('.inputSilencio');
+    let contador = 0;
 
     inputs.forEach(input => {
+        console.log(input.value);
         let tr = queryAncestorSelector(input, 'tr');
         let idDesc = tr.className;
-        let desc = input.value;
-        let output = `${datos_fichero.ruta.split('org_')[0]}${idDesc}.wav`;
-        console.log(desc);
+        // let output = `${datos_fichero.ruta.split('org_')[0]}${idDesc}.wav`;
+        let correct = false;
 
-        let start = new Date().getTime();
-        responsiveVoice.speak(desc, 'Spanish Female', {rate: 1}, {pitch: 1.2});
-        while(responsiveVoice.isPlaying()){
-            console.log('Esperando a que termine de hablar');
-        }
-        let end = new Date().getTime();
-        let diff = end - start;
-        console.log(desc, start, end, diff / 1000);
+        const utterance = new SpeechSynthesisUtterance();
+        utterance.text = input.value;
+        utterance.lang = voice;
+        utterance.rate = 1;
+        utterance.pitch = 1;
+
+        let startTime;
+        utterance.addEventListener('start', () => {
+            startTime = new Date();
+        });
+
+        // Listen for the end event
+        utterance.addEventListener('end', () => {
+            const elapsed = (new Date() - startTime) / 1000;
+
+            if(elapsed > silencios[contador].duration){
+                console.log('La descripcion es mayor que el silencio');
+            }
+            else{
+                console.log('La descripcion es menor que el silencio');
+                correct = true;
+            }
+            añadirComprobacion(tr, correct);
+            contador += 1;
+        });
+
+        // Speak the text
+        speechSynthesis.speak(utterance);
     });
+}
+
+function añadirComprobacion(tr, correct){
+    // Añadir circulo para indicar que está bien o mal
+    console.log(tr);
+    let existe = tr.querySelector('.comprobacion');
+
+    let spanCorrecto = document.createElement('span');
+    spanCorrecto.title = 'La descripción se adecua al tiempo';
+    spanCorrecto.innerHTML = '🟢';
+
+    let spanIncorrecto = document.createElement('span');
+    spanIncorrecto.title = 'La descripción no se adecua al tiempo';
+    spanIncorrecto.innerHTML = '🔴';
+
+    if(existe != null){
+        if(existe.innerHTML == '🔴'){
+            if(correct){
+                existe.appendChild(spanCorrecto);
+            }
+        }
+        else if(existe.innerHTML == '🟢'){
+            if(!correct){
+                existe.appendChild(spanIncorrecto);
+            }
+        }
+    }
+    else{
+        let td = document.createElement('td');
+        td.className = "comprobacion";
+
+        if(correct){
+            td.appendChild(spanCorrecto);
+        }
+        else{
+            td.appendChild(spanIncorrecto);
+        }
+        tr.appendChild(td);
+    }
 }
 
 // poner boton para añadir tiempo actual

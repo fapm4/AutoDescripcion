@@ -38,6 +38,8 @@ let ventanaPrincipal;
 
 require('@electron/remote/main').initialize();
 
+app.commandLine.appendSwitch('enable-features', 'WebSpeechAPI');
+
 const templateMenu = [
     {
         label: 'DevTools',
@@ -56,6 +58,7 @@ const templateMenu = [
     }
 ];
 
+app.commandLine.appendSwitch('enable-speech-dispatcher');
 // Cuando la aplicación esté lista
 app.on('ready', () => {
     // Se crea la ventana principal
@@ -207,9 +210,9 @@ ipcMain.on('audio_analizado', (event, arg) => {
     });
 });
 
-ipcMain.on('guarda_audio', (event, output, fileBuffer) => {
+ipcMain.on('guarda_audio', (event, output, audioData) => {
     if(output){
-        fs.writeFileSync(output, fileBuffer);
+        fs.writeFile(output, audioData);
     }
     else{
 
