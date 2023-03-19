@@ -159,24 +159,26 @@ function queryAncestorSelector(node, selector) {
 var comprobado = false;
  
 function compruebaAudios(silencios, datos_fichero) {
+    comprobado = true;
     console.log('Comprobando audios...');
     comprobado = true;
     let inputs = document.querySelectorAll('.inputSilencio');
     let contador = 0;
 
     inputs.forEach(input => {
-        console.log(input.value);
+        if(input.value != ''){
+            console.log('hola1');
         let tr = queryAncestorSelector(input, 'tr');
         let idDesc = tr.className;
         // let output = `${datos_fichero.ruta.split('org_')[0]}${idDesc}.wav`;
         let correct = false;
-
+        console.log('hola2');
         const utterance = new SpeechSynthesisUtterance();
         utterance.text = input.value;
         utterance.lang = voice;
         utterance.rate = 1;
         utterance.pitch = 1;
-
+        console.log('hola3');
         let startTime;
         utterance.addEventListener('start', () => {
             startTime = new Date();
@@ -185,9 +187,11 @@ function compruebaAudios(silencios, datos_fichero) {
         // Listen for the end event
         utterance.addEventListener('end', () => {
             const elapsed = (new Date() - startTime) / 1000;
+    
 
             if(elapsed > silencios[contador].duration){
                 console.log('La descripcion es mayor que el silencio');
+                correct = false;
             }
             else{
                 console.log('La descripcion es menor que el silencio');
@@ -197,14 +201,14 @@ function compruebaAudios(silencios, datos_fichero) {
             contador += 1;
         });
 
-        // Speak the text
+        // Speak the utterance
         speechSynthesis.speak(utterance);
+        }
     });
 }
 
 function añadirComprobacion(tr, correct){
     // Añadir circulo para indicar que está bien o mal
-    console.log(tr);
     let existe = tr.querySelector('.comprobacion');
 
     let spanCorrecto = document.createElement('span');
@@ -218,6 +222,7 @@ function añadirComprobacion(tr, correct){
     if(existe != null){
         if(existe.innerHTML == '🔴'){
             if(correct){
+                console.log('jopa');
                 existe.appendChild(spanCorrecto);
             }
         }
@@ -230,13 +235,7 @@ function añadirComprobacion(tr, correct){
     else{
         let td = document.createElement('td');
         td.className = "comprobacion";
-
-        if(correct){
-            td.appendChild(spanCorrecto);
-        }
-        else{
-            td.appendChild(spanIncorrecto);
-        }
+        td.appendChild(correct ? spanCorrecto : spanIncorrecto);
         tr.appendChild(td);
     }
 }
