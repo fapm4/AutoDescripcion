@@ -139,6 +139,104 @@ ipcRenderer.on('mostrar_formulario', (event, arg) => {
     }
 });
 
+function compruebaAudios(silencios, datos_fichero) {
+    comprobado = true;
+    console.log('Comprobando audios...');
+    comprobado = true;
+    let inputs = document.querySelectorAll('.inputSilencio');
+    let contador = 0;
+
+    inputs.forEach(input => {
+        if (input.value != '') {
+            let tr = queryAncestorSelector(input, 'tr');
+            let idDesc = tr.className;
+            // let output = `${datos_fichero.ruta.split('org_')[0]}${idDesc}.wav`;
+            let correct = false;
+            const utterance = new SpeechSynthesisUtterance();
+            utterance.text = input.value;
+            utterance.lang = voice;
+            utterance.rate = 1;
+            utterance.pitch = 1;
+            let startTime;
+            utterance.addEventListener('start', () => {
+                startTime = new Date();
+            });
+
+            const audioContext = new AudioContext();
+            const dest = audioContext.createMediaStreamDestination();
+
+            // Connect the SpeechSynthesisUtterance to the MediaStreamDestination
+            const source = new MediaStream([dest.stream]).getAudioTracks()[0];
+            const rec = new MediaRecorder(dest.stream);
+
+            // Listen for the end event
+            utterance.addEventListener('end', () => {
+                const elapsed = (new Date() - startTime) / 1000;
+
+                correct = elapsed > silencios[contador].duration ? false : true;
+                añadirComprobacion(tr, correct);
+                contador += 1;
+
+            });
+
+            // Speak the utterance
+            speechSynthesis.speak(utterance);
+        }
+    });
+}
+
+function utteranceToStream(utterance) {
+    const stream = new ReadableStream({
+        start(controller) {
+            const encoder = new TextEncoder();
+            const text = utterance.text;
+            controller.enqueue(encoder.encode(text));
+            controller.close();
+        }
+    });
+    return stream;
+}
+
+function añadirComprobacion(tr, correct) {
+    // Añadir circulo para indicar que está bien o mal
+    let existe = tr.querySelector('.comprobacion');
+
+    let spanCorrecto = document.createElement('span');
+    spanCorrecto.title = 'La descripción se adecua al tiempo';
+    spanCorrecto.innerHTML = '🟢';
+
+    let spanIncorrecto = document.createElement('span');
+    spanIncorrecto.title = 'La descripción no se adecua al tiempo';
+    spanIncorrecto.innerHTML = '🔴';
+
+    // Si ya se ha comprado, actualizo el estado
+    if (existe != null) {
+        let spanExiste = existe.querySelector('span');
+        actualizaEstado(spanExiste, correct)
+    }
+    // Si no lo creo
+    else {
+        let td = document.createElement('td');
+        td.className = "comprobacion";
+        td.appendChild(correct ? spanCorrecto : spanIncorrecto);
+        tr.appendChild(td);
+    }
+}
+
+function actualizaEstado(spanExiste, correct) {
+    if (spanExiste.innerHTML == '🔴') {
+        if (correct) {
+            spanExiste.innerHTML = '🟢';
+            spanExiste.title = 'La descripción se adecua al tiempo';
+        }
+    }
+    else if (spanExiste.innerHTML == '🟢') {
+        if (!correct) {
+            spanExiste.innerHTML = '🔴';
+            spanExiste.title = 'La descripción no se adecua al tiempo';
+        }
+    }
+}
 
 function queryAncestorSelector(node, selector) {
     // Obtengo el nodo padre
@@ -157,100 +255,4 @@ function queryAncestorSelector(node, selector) {
 }
 
 var comprobado = false;
- 
-function compruebaAudios(silencios, datos_fichero) {
-    comprobado = true;
-    console.log('Comprobando audios...');
-    comprobado = true;
-    let inputs = document.querySelectorAll('.inputSilencio');
-    let contador = 0;
-
-    inputs.forEach(input => {
-        if(input.value != ''){
-            console.log('hola1');
-        let tr = queryAncestorSelector(input, 'tr');
-        let idDesc = tr.className;
-        // let output = `${datos_fichero.ruta.split('org_')[0]}${idDesc}.wav`;
-        let correct = false;
-        console.log('hola2');
-        const utterance = new SpeechSynthesisUtterance();
-        utterance.text = input.value;
-        utterance.lang = voice;
-        utterance.rate = 1;
-        utterance.pitch = 1;
-        console.log('hola3');
-        let startTime;
-        utterance.addEventListener('start', () => {
-            startTime = new Date();
-        });
-
-        // Listen for the end event
-        utterance.addEventListener('end', () => {
-            const elapsed = (new Date() - startTime) / 1000;
-    
-
-            if(elapsed > silencios[contador].duration){
-                console.log('La descripcion es mayor que el silencio');
-                correct = false;
-            }
-            else{
-                console.log('La descripcion es menor que el silencio');
-                correct = true;
-            }
-            añadirComprobacion(tr, correct);
-            contador += 1;
-        });
-
-        // Speak the utterance
-        speechSynthesis.speak(utterance);
-        }
-    });
-}
-
-function añadirComprobacion(tr, correct){
-    // Añadir circulo para indicar que está bien o mal
-    let existe = tr.querySelector('.comprobacion');
-
-    let spanCorrecto = document.createElement('span');
-    spanCorrecto.title = 'La descripción se adecua al tiempo';
-    spanCorrecto.innerHTML = '🟢';
-
-    let spanIncorrecto = document.createElement('span');
-    spanIncorrecto.title = 'La descripción no se adecua al tiempo';
-    spanIncorrecto.innerHTML = '🔴';
-
-    if(existe != null){
-        if(existe.innerHTML == '🔴'){
-            if(correct){
-                console.log('jopa');
-                existe.appendChild(spanCorrecto);
-            }
-        }
-        else if(existe.innerHTML == '🟢'){
-            if(!correct){
-                existe.appendChild(spanIncorrecto);
-            }
-        }
-    }
-    else{
-        let td = document.createElement('td');
-        td.className = "comprobacion";
-        td.appendChild(correct ? spanCorrecto : spanIncorrecto);
-        tr.appendChild(td);
-    }
-}
-
 // poner boton para añadir tiempo actual
-
-// inputs.forEach(input => {
-//     // Obtengo el tr, que tiene el id de la descripción
-//     let tr = queryAncestorSelector(input, 'tr');
-//     let idDesc = tr.className;
-//     let desc = input.value;1
-//     let output = `${datos_fichero.ruta.split('org_')[0]}${idDesc}.wav`;
-//     console.log(desc);
-
-//     var synth = window.speechSynthesis;
-//     var voices = synth.getVoices();
-//     console.log(voices);
-// });
