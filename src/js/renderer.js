@@ -1,8 +1,5 @@
 var ipcRenderer = require('electron').ipcRenderer;
-
 const remote = require('@electron/remote');
-const { spawn } = require('child_process');
-const { statSync } = require('original-fs');
 const main = remote.require('./main');
 const imageSoruce = "https://www.google.com/url?sa=i&url=https%3A%2F%2Fwww.spreadshirt.es%2Fshop%2Fdesign%2Fboton%2Bplay%2Bcamiseta%2Bpremium%2Bhombre-D5975f73a59248d6110152d16%3Fsellable%3D30xwlz15z4Upe0m9kzy3-812-7&psig=AOvVaw0yfJZRipPcZ0fKQVnSDetn&ust=1677955190722000&source=images&cd=vfe&ved=0CBAQjRxqFwoTCJiQtay0wP0CFQAAAAAdAAAAABAE";
 /////////////////////////// Este código afecta a -> sube_ficheros.html e index.html ///////////////////////////
@@ -98,7 +95,7 @@ ipcRenderer.on('mostrar_formulario', (event, arg) => {
     else {
         // Por implementar:
         // 1. Crear tabla con los silencios - Hecho
-        // 2. Crear botón de comprobar - Hacer
+        // 2. Crear botón de comprobar - Hecho
         // 3. Crear botón de enviar - Hacer
         let tabla = document.createElement('table');
         tabla.id = 'tablaSilencios';
@@ -136,6 +133,7 @@ ipcRenderer.on('mostrar_formulario', (event, arg) => {
 
         // Añado el evento de comprobar
         btnComprobar.addEventListener('click', () => compruebaAudios(silencios, arg.datos_fichero), true);
+        btnComprobar.addEventListener('click', () => guardaAudios(silencios, arg.datos_fichero), true);
     }
 });
 
@@ -146,55 +144,32 @@ function compruebaAudios(silencios, datos_fichero) {
     let inputs = document.querySelectorAll('.inputSilencio');
     let contador = 0;
 
-    inputs.forEach(input => {
+    inputs.forEach((input) => {
         if (input.value != '') {
             let tr = queryAncestorSelector(input, 'tr');
             let idDesc = tr.className;
-            // let output = `${datos_fichero.ruta.split('org_')[0]}${idDesc}.wav`;
-            let correct = false;
+
             const utterance = new SpeechSynthesisUtterance();
             utterance.text = input.value;
             utterance.lang = voice;
             utterance.rate = 1;
             utterance.pitch = 1;
+
             let startTime;
             utterance.addEventListener('start', () => {
                 startTime = new Date();
             });
 
-            const audioContext = new AudioContext();
-            const dest = audioContext.createMediaStreamDestination();
-
-            // Connect the SpeechSynthesisUtterance to the MediaStreamDestination
-            const source = new MediaStream([dest.stream]).getAudioTracks()[0];
-            const rec = new MediaRecorder(dest.stream);
-
-            // Listen for the end event
-            utterance.addEventListener('end', () => {
+            utterance.addEventListener('end', async () => {
                 const elapsed = (new Date() - startTime) / 1000;
-
-                correct = elapsed > silencios[contador].duration ? false : true;
+            
+                const correct = elapsed > silencios[contador].duration ? false : true;
                 añadirComprobacion(tr, correct);
                 contador += 1;
-
             });
-
-            // Speak the utterance
             speechSynthesis.speak(utterance);
         }
     });
-}
-
-function utteranceToStream(utterance) {
-    const stream = new ReadableStream({
-        start(controller) {
-            const encoder = new TextEncoder();
-            const text = utterance.text;
-            controller.enqueue(encoder.encode(text));
-            controller.close();
-        }
-    });
-    return stream;
 }
 
 function añadirComprobacion(tr, correct) {

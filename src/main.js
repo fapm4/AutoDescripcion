@@ -210,12 +210,16 @@ ipcMain.on('audio_analizado', (event, arg) => {
     });
 });
 
-ipcMain.on('guarda_audio', (event, output, audioData) => {
+
+ipcMain.on('guarda_audio', (event, output, buffer) => {
+    console.log('pepe');
     if(output){
-        fs.writeFile(output, audioData);
+        fs.writeFile(output, buffer, (err) => {
+            if (err) throw err;
+        });
     }
     else{
-
+        console.log('No se ha podido guardar el audio');
     }
 });
 
