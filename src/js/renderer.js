@@ -95,8 +95,7 @@ ipcRenderer.on('mostrar_formulario', (event, arg) => {
     else {
         // Por implementar:
         // 1. Crear tabla con los silencios - Hecho
-        // 2. Crear botón de comprobar - Hecho
-        // 3. Crear botón de enviar - Hacer
+        // 2. Crear botón de enviar - Hacer
         let tabla = document.createElement('table');
         tabla.id = 'tablaSilencios';
         tabla.innerHTML = '<tr><th>Inicio</th><th>Fin</th><th>Descripción</th></tr>';
@@ -114,17 +113,13 @@ ipcRenderer.on('mostrar_formulario', (event, arg) => {
         divForm.appendChild(tabla);
 
         // Creo los dos botones
-        let btnComprobar = document.createElement('button');
-        btnComprobar.innerHTML = 'Comprobar';
-
-        let btnGuardar = document.createElement('button');
-        btnGuardar.innerHTML = 'Guardar';
+        let btnEnviar = document.createElement('button');
+        btnEnviar.innerHTML = 'Enviar';
+        btnEnviar.className = 'botonR';
 
         // Los meto al DOM
         let divBotones = document.createElement('div');
-        divBotones.className = 'divBotones';
-        divBotones.appendChild(btnComprobar);
-        divBotones.appendChild(btnGuardar);
+        divBotones.appendChild(btnEnviar);
         divForm.appendChild(divBotones);
 
         speechSynthesis.addEventListener('voiceschanged', () => {
@@ -132,86 +127,124 @@ ipcRenderer.on('mostrar_formulario', (event, arg) => {
         });
 
         // Añado el evento de comprobar
-        btnComprobar.addEventListener('click', () => compruebaAudios(silencios, arg.datos_fichero), true);
-        btnComprobar.addEventListener('click', () => guardaAudios(silencios, arg.datos_fichero), true);
+        btnEnviar.addEventListener('click', () => guardaAudios(silencios, arg.datos_fichero), true);
     }
 });
 
-function compruebaAudios(silencios, datos_fichero) {
+function guardaAudios(silencios, datos_fichero) {
     comprobado = true;
     console.log('Comprobando audios...');
     comprobado = true;
     let inputs = document.querySelectorAll('.inputSilencio');
     let contador = 0;
 
-    inputs.forEach((input) => {
-        if (input.value != '') {
-            let tr = queryAncestorSelector(input, 'tr');
-            let idDesc = tr.className;
+    navigator.mediaDevices
+        .getUserMedia({ audio: true })
+        .then(function (stream) {
+            console.log(stream);
 
-            const utterance = new SpeechSynthesisUtterance();
-            utterance.text = input.value;
-            utterance.lang = voice;
-            utterance.rate = 1;
-            utterance.pitch = 1;
+            inputs.forEach((input) => {
+                if (input.value != '') {
+                    let tr = queryAncestorSelector(input, 'tr');
+                    let idDesc = tr.className;
+                    let output = `${datos_fichero.ruta.split('org_')[0]}${idDesc}.wav`;
+                    const utterance = new SpeechSynthesisUtterance();
+                    utterance.text = input.value;
+                    utterance.lang = voice;
+                    utterance.rate = 1;
+                    utterance.pitch = 1;
 
-            let startTime;
-            utterance.addEventListener('start', () => {
-                startTime = new Date();
+                    let startTime;
+                    utterance.addEventListener('start', () => {
+                        startTime = new Date();
+                    });
+
+                    utterance.addEventListener('end', async () => {
+                        const elapsed = (new Date() - startTime) / 1000;
+
+                        const correct = elapsed > silencios[contador].duration ? false : true;
+                        añadirComprobacion(tr, correct);
+                        contador += 1;
+
+                        // Comprobar si se han procesado todas las entradas de audio
+                        if (contador === inputs.length) {
+                            // Finalizar la grabación y guardar el archivo
+                            finalizarGrabacion(output);
+                        }
+                    });
+
+                    let chunks = [];
+                    const streamToBuffer = require('stream-to-buffer');
+                    // Iniciar la grabación y almacenar los datos en la variable 'chunks'
+                    const recorder = new MediaRecorder(stream);
+                    recorder.ondataavailable = (e) => chunks.push(e.data);
+                    recorder.onstop = () => finalizarGrabacion(output);
+                    recorder.start();
+
+                    speechSynthesis.speak(utterance);
+                    const finalizarGrabacion = async (output) => {
+                        if (!recorder.state === 'inactive') {
+                            recorder.stop();
+                        }
+                        const blob = new Blob(chunks, { type: 'audio/wav' });
+                        blob.arrayBuffer().then(function (buffer) {
+                            const data = Buffer.from(buffer);
+                            ipcRenderer.send('guarda_audio', output, data);
+                        });
+                    }
+
+                    // Llamar a finalizarGrabacion si utterance nunca se dispara
+                    setTimeout(() => {
+                        if (contador === inputs.length) {
+                            finalizarGrabacion(output);
+                        }
+                    }, 60000); // Esperar 1 minuto antes de llamar a finalizarGrabacion
+                }
             });
 
-            utterance.addEventListener('end', async () => {
-                const elapsed = (new Date() - startTime) / 1000;
-            
-                const correct = elapsed > silencios[contador].duration ? false : true;
-                añadirComprobacion(tr, correct);
-                contador += 1;
-            });
-            speechSynthesis.speak(utterance);
-        }
-    });
+        })
+        .catch(function (error) {
+            console.error('Error al obtener la MediaStream:', error);
+        });
 }
 
+
 function añadirComprobacion(tr, correct) {
-    // Añadir circulo para indicar que está bien o mal
     let existe = tr.querySelector('.comprobacion');
 
-    let spanCorrecto = document.createElement('span');
-    spanCorrecto.title = 'La descripción se adecua al tiempo';
-    spanCorrecto.innerHTML = '🟢';
+    let span = document.createElement('span');
+    span.title = correct ? 'La descripción se adecua al tiempo' : 'La descripción no se adecua al tiempo';
+    span.className = correct ? 'correcto' : 'incorrecto';
+    span.innerHTML = correct ? '🟢' : '🔴';
 
-    let spanIncorrecto = document.createElement('span');
-    spanIncorrecto.title = 'La descripción no se adecua al tiempo';
-    spanIncorrecto.innerHTML = '🔴';
-
-    // Si ya se ha comprado, actualizo el estado
-    if (existe != null) {
-        let spanExiste = existe.querySelector('span');
-        actualizaEstado(spanExiste, correct)
+    if (existe) {
+        actualizaEstado(existe.querySelector('span'), correct);
     }
-    // Si no lo creo
     else {
         let td = document.createElement('td');
-        td.className = "comprobacion";
-        td.appendChild(correct ? spanCorrecto : spanIncorrecto);
+        td.className = 'comprobacion';
+        td.appendChild(span);
         tr.appendChild(td);
     }
 }
 
 function actualizaEstado(spanExiste, correct) {
-    if (spanExiste.innerHTML == '🔴') {
+    if (spanExiste.innerHTML === '🔴') {
         if (correct) {
             spanExiste.innerHTML = '🟢';
             spanExiste.title = 'La descripción se adecua al tiempo';
+            span.className = 'correcto';
         }
     }
-    else if (spanExiste.innerHTML == '🟢') {
+    else if (spanExiste.innerHTML === '🟢') {
         if (!correct) {
             spanExiste.innerHTML = '🔴';
             spanExiste.title = 'La descripción no se adecua al tiempo';
+            span.className = 'incorrecto';
         }
     }
 }
+
 
 function queryAncestorSelector(node, selector) {
     // Obtengo el nodo padre
