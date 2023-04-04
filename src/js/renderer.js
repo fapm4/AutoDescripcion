@@ -136,78 +136,81 @@ function guardaAudios(silencios, datos_fichero) {
     console.log('Comprobando audios...');
     comprobado = true;
     let inputs = document.querySelectorAll('.inputSilencio');
-    let contador = 0;
+    let contadorInputs = 0;
+    let contadorErrores = 0;
 
-    navigator.mediaDevices
-        .getUserMedia({ audio: true })
-        .then(function (stream) {
-            console.log(stream);
+    inputs.forEach((input) => {
+        let tr = queryAncestorSelector(input, 'tr');
+        if (input.value == '' || input.value == null) {
+            añadirComprobacion(tr, false);
+            contadorErrores += 1;
+        }
+        else {
+            let idDesc = tr.className;
+            let output = `${datos_fichero.ruta.split('org_')[0]}${idDesc}.wav`;
+            const utterance = new SpeechSynthesisUtterance();
+            utterance.text = input.value;
+            utterance.lang = voice;
+            utterance.rate = 1;
+            utterance.pitch = 1;
 
-            inputs.forEach((input) => {
-                if (input.value != '') {
-                    let tr = queryAncestorSelector(input, 'tr');
-                    let idDesc = tr.className;
-                    let output = `${datos_fichero.ruta.split('org_')[0]}${idDesc}.wav`;
-                    const utterance = new SpeechSynthesisUtterance();
-                    utterance.text = input.value;
-                    utterance.lang = voice;
-                    utterance.rate = 1;
-                    utterance.pitch = 1;
+            let startTime;
+            utterance.addEventListener('start', () => {
+                startTime = new Date();
+                console.log('Empezando a hablar...');
 
-                    let startTime;
-                    utterance.addEventListener('start', () => {
-                        startTime = new Date();
-                    });
-
-                    utterance.addEventListener('end', async () => {
-                        const elapsed = (new Date() - startTime) / 1000;
-
-                        const correct = elapsed > silencios[contador].duration ? false : true;
-                        añadirComprobacion(tr, correct);
-                        contador += 1;
-
-                        // Comprobar si se han procesado todas las entradas de audio
-                        if (contador === inputs.length) {
-                            // Finalizar la grabación y guardar el archivo
-                            finalizarGrabacion(output);
-                        }
-                    });
-
-                    let chunks = [];
-                    const streamToBuffer = require('stream-to-buffer');
-                    // Iniciar la grabación y almacenar los datos en la variable 'chunks'
-                    const recorder = new MediaRecorder(stream);
-                    recorder.ondataavailable = (e) => chunks.push(e.data);
-                    recorder.onstop = () => finalizarGrabacion(output);
-                    recorder.start();
-
-                    speechSynthesis.speak(utterance);
-                    const finalizarGrabacion = async (output) => {
-                        if (!recorder.state === 'inactive') {
-                            recorder.stop();
-                        }
-                        const blob = new Blob(chunks, { type: 'audio/wav' });
-                        blob.arrayBuffer().then(function (buffer) {
-                            const data = Buffer.from(buffer);
-                            ipcRenderer.send('guarda_audio', output, data);
-                        });
-                    }
-
-                    // Llamar a finalizarGrabacion si utterance nunca se dispara
-                    setTimeout(() => {
-                        if (contador === inputs.length) {
-                            finalizarGrabacion(output);
-                        }
-                    }, 60000); // Esperar 1 minuto antes de llamar a finalizarGrabacion
-                }
             });
 
-        })
-        .catch(function (error) {
-            console.error('Error al obtener la MediaStream:', error);
-        });
+            utterance.addEventListener('end', () => {
+                console.log('Terminando de hablar...');
+                const elapsed = (new Date() - startTime) / 1000;
+                const correct = elapsed > silencios[contadorInputs].duration ? false : true;
+                contadorErrores += añadirComprobacion(tr, correct);
+                contadorInputs += 1;
+            });
+            speechSynthesis.speak(utterance);
+        }
+    });
+
+    if(contadorErrores > 0){
+        Swal.fire({
+            title: '¡Atención!',
+            text: 'Hay errores en la descripción de los silencios. Por favor, revisa los campos en rojo',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Enviar',
+            cancelButtonText: 'Cancelar'
+          }).then((result) => {
+            if(result.value){
+              // El usuario hizo clic en "Enviar"
+              console.log('puta mierda');
+            } 
+            else {
+              // El usuario hizo clic en "Cancelar"
+                console.log('el pepeº');
+            }
+          });
+    }
 }
 
+function createWavHeader(dataLength) {
+    const headerLength = 44;
+    const buffer = Buffer.alloc(headerLength);
+    buffer.write('RIFF', 0);
+    buffer.writeUInt32LE(headerLength + dataLength - 8, 4);
+    buffer.write('WAVE', 8);
+    buffer.write('fmt ', 12);
+    buffer.writeUInt32LE(16, 16);
+    buffer.writeUInt16LE(1, 20);
+    buffer.writeUInt16LE(1, 22);
+    buffer.writeUInt32LE(44100, 24);
+    buffer.writeUInt32LE(44100, 28);
+    buffer.writeUInt16LE(1, 32);
+    buffer.writeUInt16LE(8, 34);
+    buffer.write('data', 36);
+    buffer.writeUInt32LE(dataLength, 40);
+    return buffer;
+}
 
 function añadirComprobacion(tr, correct) {
     let existe = tr.querySelector('.comprobacion');
@@ -218,13 +221,20 @@ function añadirComprobacion(tr, correct) {
     span.innerHTML = correct ? '🟢' : '🔴';
 
     if (existe) {
-        actualizaEstado(existe.querySelector('span'), correct);
+        return actualizaEstado(existe.querySelector('span'), correct);
     }
     else {
         let td = document.createElement('td');
         td.className = 'comprobacion';
         td.appendChild(span);
         tr.appendChild(td);
+
+        if(span.className === 'correcto'){
+            return 0;
+        }
+        else{
+            return 1;
+        }
     }
 }
 
@@ -233,14 +243,16 @@ function actualizaEstado(spanExiste, correct) {
         if (correct) {
             spanExiste.innerHTML = '🟢';
             spanExiste.title = 'La descripción se adecua al tiempo';
-            span.className = 'correcto';
+            spanExiste.className = 'correcto';
+            return 0;
         }
     }
     else if (spanExiste.innerHTML === '🟢') {
         if (!correct) {
             spanExiste.innerHTML = '🔴';
             spanExiste.title = 'La descripción no se adecua al tiempo';
-            span.className = 'incorrecto';
+            spanExiste.className = 'incorrecto';
+            return 1;
         }
     }
 }

@@ -2,7 +2,7 @@
 
 /////////////////////////// Imports ///////////////////////////
 // Electron
-const { app, BrowserWindow, Menu, ipcMain, dialog } = require('electron');
+const {app, BrowserWindow, Menu, ipcMain, dialog} = require('electron');
 
 // URL
 const url = require('url');
@@ -72,7 +72,7 @@ app.on('ready', () => {
     });
 
     require('@electron/remote/main').enable(ventanaPrincipal.webContents);
-
+    
     // Se carga el archivo index.html
     ventanaPrincipal.loadURL(url.format({
         // Cambiar esto después
@@ -100,7 +100,7 @@ ipcMain.on('redirige', (event, arg) => {
 
     // 3. Si es la página de subir ficheros, añado el evento de subir fichero
     ventanaPrincipal.openDevTools();
-    if (arg == 'sube_ficheros.html') {
+    if(arg == 'sube_ficheros.html'){
         ventanaPrincipal.webContents.on('did-finish-load', () => {
             ventanaPrincipal.webContents.send('redireccion_subeFicheros', 'Añadir evento asíncrono');
         });
@@ -115,10 +115,10 @@ ipcMain.on('requestFile', (event, arg) => {
         const path = result.filePaths[0];
 
         // 4.3 Si no se ha seleccionado ningún fichero, envío un mensaje de error
-        if (path == "" || path == null) {
-            ventanaPrincipal.webContents.send('not-file-found', 'No has seleccionado ningún fichero');
+        if(path == "" || path == null){
+            ventanaPrincipal.webContents.send('not-file-found','No has seleccionado ningún fichero');
         }
-        else {
+        else{
             // Una vez se seleccione el fichero, lo almaceno en la base de datos y en el FS
             addVideo(result.filePaths[0]);
         }
@@ -128,7 +128,7 @@ ipcMain.on('requestFile', (event, arg) => {
 });
 
 // Función auxiliar para obtener el nombre del fichero. Le añdo el prefijo "org_" para diferenciarlo
-function getMediaName(media) {
+function getMediaName(media){
     let media_name = media.split('/');
     media_name = media_name[media_name.length - 1];
     return media_name;
@@ -137,7 +137,7 @@ function getMediaName(media) {
 var obj;
 
 // Guardado del fichero
-async function addVideo(media) {
+async function addVideo(media){
     let media_name = getMediaName(media);
 
     await db.connect((err) => {
@@ -146,9 +146,9 @@ async function addVideo(media) {
 
         // Lo guardo el FS
         const video = fs.readFileSync(media);
-
+        
         let ruta = path.join(__dirname, 'contenido', media_name.split('.')[0]);
-        fs.mkdir(ruta, { recursive: true }, (err) => {
+        fs.mkdir(ruta, {recursive: true}, (err) => {
             if (err) throw err;
         });
         ruta = path.join(ruta, "org_" + media_name);
@@ -211,15 +211,16 @@ ipcMain.on('audio_analizado', (event, arg) => {
 });
 
 
-ipcMain.on('guarda_audio', (event, output, blob) => {
+ipcMain.on('guarda_audio', (event, output, buffer) => {
     console.log('pepe');
-    fs.writeFile(output, blob, (err) => {
-        if (err) {
-            console.error('Error al guardar el archivo:', err);
-            return;
-        }
-        console.log('El archivo se ha guardado correctamente');
-    });
+    if(output){
+        fs.writeFile(output, buffer, (err) => {
+            if (err) throw err;
+        });
+    }
+    else{
+        console.log('No se ha podido guardar el audio');
+    }
 });
 
 app.on('window-all-closed', () => {
