@@ -148,6 +148,7 @@ async function addVideo(media){
         const video = fs.readFileSync(media);
         
         let ruta = path.join(__dirname, 'contenido', media_name.split('.')[0]);
+        ruta.replace('Escritorio', 'Desktop');
         fs.mkdir(ruta, {recursive: true}, (err) => {
             if (err) throw err;
         });

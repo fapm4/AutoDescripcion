@@ -154,6 +154,20 @@ function guardaAudios(silencios, datos_fichero) {
             utterance.rate = 1;
             utterance.pitch = 1;
 
+            const audioContext = new AudioContext();
+            const mediaStreamDestination = audioContext.createMediaStreamDestination();
+            const audioStream = mediaStreamDestination.stream;
+            utterance.outputStream = audioStream;
+
+            let mediaRecorder;
+
+            if (audioStream !== undefined) {
+                mediaRecorder = new MediaRecorder(audioStream);
+            } else {
+                console.log('No se ha podido crear el audioStream');
+            }
+
+
             let startTime;
             utterance.addEventListener('start', () => {
                 startTime = new Date();
@@ -167,12 +181,33 @@ function guardaAudios(silencios, datos_fichero) {
                 const correct = elapsed > silencios[contadorInputs].duration ? false : true;
                 contadorErrores += añadirComprobacion(tr, correct);
                 contadorInputs += 1;
+
+                if (mediaRecorder && mediaRecorder.state === 'recording') {
+                    mediaRecorder.stop();
+                } else {
+                    console.log('No se puede detener el MediaRecorder porque ya está inactivo');
+                }
+
+                const promise = new Promise((resolve) => {
+                    mediaRecorder.addEventListener('dataavailable', (event) => {
+                        const audioBlob = event.data;
+                        console.log(audioBlob);
+                        resolve();
+                    });
+                });
+                promise.then(() => {
+                    console.log('Grabación de audio completada');
+                });
+
             });
+
             speechSynthesis.speak(utterance);
+
+            mediaRecorder.start();
         }
     });
 
-    if(contadorErrores > 0){
+    if (contadorErrores > 0) {
         Swal.fire({
             title: '¡Atención!',
             text: 'Hay errores en la descripción de los silencios. Por favor, revisa los campos en rojo',
@@ -180,36 +215,20 @@ function guardaAudios(silencios, datos_fichero) {
             showCancelButton: true,
             confirmButtonText: 'Enviar',
             cancelButtonText: 'Cancelar'
-          }).then((result) => {
-            if(result.value){
-              // El usuario hizo clic en "Enviar"
-              console.log('puta mierda');
-            } 
-            else {
-              // El usuario hizo clic en "Cancelar"
-                console.log('el pepeº');
+        }).then((result) => {
+            if (result.value) {
+                // El usuario hizo clic en "Enviar"
+                console.log('Listo para enviar.');
             }
-          });
+            else {
+                // El usuario hizo clic en "Cancelar"
+                console.log('El usuario canceló el envío.');
+            }
+        });
     }
-}
-
-function createWavHeader(dataLength) {
-    const headerLength = 44;
-    const buffer = Buffer.alloc(headerLength);
-    buffer.write('RIFF', 0);
-    buffer.writeUInt32LE(headerLength + dataLength - 8, 4);
-    buffer.write('WAVE', 8);
-    buffer.write('fmt ', 12);
-    buffer.writeUInt32LE(16, 16);
-    buffer.writeUInt16LE(1, 20);
-    buffer.writeUInt16LE(1, 22);
-    buffer.writeUInt32LE(44100, 24);
-    buffer.writeUInt32LE(44100, 28);
-    buffer.writeUInt16LE(1, 32);
-    buffer.writeUInt16LE(8, 34);
-    buffer.write('data', 36);
-    buffer.writeUInt32LE(dataLength, 40);
-    return buffer;
+    else {
+        console.log('Listo para enviar.');
+    }
 }
 
 function añadirComprobacion(tr, correct) {
@@ -229,10 +248,10 @@ function añadirComprobacion(tr, correct) {
         td.appendChild(span);
         tr.appendChild(td);
 
-        if(span.className === 'correcto'){
+        if (span.className === 'correcto') {
             return 0;
         }
-        else{
+        else {
             return 1;
         }
     }
