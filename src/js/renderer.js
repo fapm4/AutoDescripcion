@@ -152,7 +152,7 @@ function compruebaAudios(silencios, datos_fichero) {
                     contadorErrores += 1;
                 } else {
                     let idDesc = tr.className;
-                    let output = `${datos_fichero.ruta.split('org_')[0]}${idDesc}.wav`;
+                    let output = `${datos_fichero.ruta.split('org_')[0]}${idDesc}.blob`;
                     const utterance = new SpeechSynthesisUtterance();
                     utterance.text = input.value;
                     utterance.lang = voice;
@@ -161,33 +161,34 @@ function compruebaAudios(silencios, datos_fichero) {
 
                     let startTime;
                     utterance.addEventListener('start', () => {
-                        recorder.start();
-                        audioChunks = [];
                         startTime = new Date();
                     });
 
-                    let promesa = new Promise((resolve, reject) => {
-                        utterance.addEventListener('end', () => {
-                            const elapsed = (new Date() - startTime) / 1000;
-                            const correct = elapsed > silencios[contadorInputs].duration ? false : true;
-                            contadorErrores += añadirComprobacion(tr, correct);
-                            contadorInputs += 1;
-                            recorder.stop();
-                            resolve();
+                    utterance.addEventListener('end', () => {
+                        const elapsed = (new Date() - startTime) / 1000;
+                        const correct = elapsed > silencios[contadorInputs].duration ? fals : true;
+                        contadorErrores += añadirComprobacion(tr, correct);
+                        contadorInputs += 1;
+                        recorder.stop();
+                        // resolve();
+                    });
+
+                    // promesas.push(promesa);
+                    promesa = new Promise((resolve, reject) => {
+                        recorder.addEventListener('dataavailable', e => {
+                            audioChunks.push(e.data);
+                            if(recorder.state == 'inactive'){
+                                let blob = new Blob(audioChunks, { type: 'audio/mpeg-3' });
+                                audioBlobs.push([blob, output]);
+                                resolve(audioBlobs);
+                            }
                         });
                     });
 
                     promesas.push(promesa);
-                    promesa = new Promise((resolve, reject) => {
-                        recorder.addEventListener('dataavailable', e => {
-                            audioChunks.push(e.data);
-                            let blob = new Blob(audioChunks, { type: 'audio/wav; codecs=MS_PCM' });
-                            audioBlobs.push([blob, output]);
-                            resolve(audioBlobs);
-                        });
-                    });
-                    promesas.push(promesa);
                     speechSynthesis.speak(utterance);
+                    audioChunks = [];
+                    recorder.start();
                 }
             });
 
@@ -225,43 +226,25 @@ function compruebaAudios(silencios, datos_fichero) {
 function guardarAudios(audioBlobs) {
     // Filtra los objetos undefined y toma el primero
     let filtered = audioBlobs.filter(blob => blob != undefined)[0];
-
+    console.log(filtered);
     for (let i = 0; i < filtered.length; i++) {
         let blob = filtered[i][0];
         let output = filtered[i][1];
 
-        try {
-            guardarArchivo(blob, output);
-        }
-        catch (error) {
-            console.error('Error al guardar el archivo', error);
-        }
+        const fileReader = new FileReader();
+        fileReader.onload = () => {
+            const buffer = Buffer.from(new Uint8Array(fileReader.result));
+            fs.writeFile(output, buffer, function (error) {
+                if (error) {
+                    console.error('Error al guardar el archivo', error);
+                } else {
+                    console.log('Archivo guardado correctamente');
+                    ipcRenderer.send('guarda_audio');
+                }
+            });
+        };
 
-        ipcRenderer.send('guarda_audio');
-    }
-}
-
-const wavefile = require('wavefile');
-// Función para guardar un objeto Blob como un archivo de audio .wav
-async function guardarArchivo(blob, ruta) {
-    try {
-
-        let buffer = Buffer.from(await blob.arrayBuffer());
-        let wav = new wavefile.WaveFile();
-        wav.fromScratch(1, 44100, '16', buffer);
-        let outputBuffer = wav.toBuffer();
-
-        // Escribe el Buffer en un archivo
-        fs.writeFile(ruta, outputBuffer, function (error) {
-            if (error) {
-                console.error('Error al guardar el archivo', error);
-            } else {
-                console.log('Archivo guardado correctamente');
-            }
-        });
-
-    } catch (error) {
-        console.error('Error al leer el Blob con FileReader', error);
+        fileReader.readAsArrayBuffer(blob);
     }
 }
 
