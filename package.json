@@ -15,6 +15,7 @@
     "mysql": "^2.18.1",
     "node-ffprobe": "^3.0.0",
     "plyr": "^3.7.3",
+    "speech-synthesis-recorder": "^1.2.1",
     "sweetalert": "^2.1.2",
     "wavefile": "^11.0.0"
   },

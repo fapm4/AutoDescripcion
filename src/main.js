@@ -2,7 +2,7 @@
 
 /////////////////////////// Imports ///////////////////////////
 // Electron
-const { app, BrowserWindow, Menu, ipcMain, dialog } = require('electron');
+const { app, BrowserWindow, Menu, ipcMain, dialog, desktopCapturer } = require('electron');
 
 // URL
 const url = require('url');
@@ -39,6 +39,7 @@ let ventanaPrincipal;
 require('@electron/remote/main').initialize();
 
 app.commandLine.appendSwitch('enable-features', 'WebSpeechAPI');
+app.commandLine.appendSwitch('enable-features', 'MediaRecorderAPI');
 
 const templateMenu = [
     {
@@ -211,6 +212,23 @@ ipcMain.on('audio_analizado', (event, arg) => {
     });
 });
 
+
+ipcMain.on('get_sources', async (event) => {
+    try {
+        console.log('pepe');
+        const sources = desktopCapturer.getSources({ types: ['window', 'screen'] })
+        .then(async sources => {
+            for (const source of sources) {
+                console.log(source.name);
+                if (source.name === 'AutoDescripcion') {
+                    
+                }
+            }
+        });
+    } catch (error) {
+        console.log(error);
+    }
+});
 // Escucha el evento 'guarda_audio' desde el proceso de renderizado
 ipcMain.on('guarda_audio', (event, arg) => {
     console.log('pepe');
