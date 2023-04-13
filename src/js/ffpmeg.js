@@ -15,8 +15,9 @@ ipcRenderer.on('procesa-check', (event, arg) => {
     else {
         // Comienzo a procesar el fichero
         console.log('Procesando fichero...');
-        let file = arg.ruta.split('/').pop().split('.')[0];
-        const output = `/home/fapm4/Escritorio/AutoDescripcion/src/contenido/${file.substring(4, file.length)}/${file}.wav`;
+        let file = arg.ruta.split('\\').pop().split('.')[0];
+        const output = `C:\\Users\\francip\\Desktop\\Repos\\AutoDescripcion\\src\\contenido\\${file.substring(4, file.length)}\\${file}.wav`;
+        // const output = `/home/fapm4/Escritorio/AutoDescripcion/src/contenido/${file.substring(4, file.length)}/${file}.wav`;
         let ruta = arg.ruta;
         let media_name = arg.media_name;
         let modo = arg.modo;

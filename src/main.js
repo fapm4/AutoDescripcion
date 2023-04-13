@@ -70,7 +70,9 @@ app.on('ready', () => {
             contextIsolation: false,
             enableRemoteModule: true,
             webSpeech: true
-        }
+        },
+        width: 1024,
+        height: 768,
     });
 
     require('@electron/remote/main').enable(ventanaPrincipal.webContents);
@@ -122,6 +124,7 @@ ipcMain.on('requestFile', (event, arg) => {
         }
         else {
             // Una vez se seleccione el fichero, lo almaceno en la base de datos y en el FS
+            ventanaPrincipal.webContents.send('file-found', 'Fichero encontrado');
             addVideo(result.filePaths[0]);
         }
     }).catch(err => {
@@ -131,13 +134,13 @@ ipcMain.on('requestFile', (event, arg) => {
 
 // Función auxiliar para obtener el nombre del fichero. Le añdo el prefijo "org_" para diferenciarlo
 function getMediaName(media) {
-    let media_name = media.split('/');
+    let media_name = media.split('\\');
     media_name = media_name[media_name.length - 1];
     return media_name;
 }
 
 var obj;
-
+app.disableHardwareAcceleration()
 // Guardado del fichero
 async function addVideo(media) {
     let media_name = getMediaName(media);
@@ -215,13 +218,11 @@ ipcMain.on('audio_analizado', (event, arg) => {
 
 ipcMain.on('get_sources', async (event) => {
     try {
-        console.log('pepe');
         const sources = desktopCapturer.getSources({ types: ['window', 'screen'] })
         .then(async sources => {
             for (const source of sources) {
-                console.log(source.name);
-                if (source.name === 'AutoDescripcion') {
-                    
+                if(source.id === 'window:200922:0'){
+                    ventanaPrincipal.webContents.send('sources', source);
                 }
             }
         });
