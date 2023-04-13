@@ -82,7 +82,10 @@ function getIntervals(filePath, silenceThreshold, callback) {
         let silences = [];
         var obj;
 
-        for (var i = 0; i < silenceStart.length; i++) {
+        console.log(silenceStart);
+        console.log(silenceEnd);
+
+        for (var i = 0; i < silenceStart.length && i < silenceEnd.length; i++) {
             obj = {
                 start: silenceStart[i].split(' ')[1],
                 end: silenceEnd[i].split(' ')[1],

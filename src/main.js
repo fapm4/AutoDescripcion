@@ -2,7 +2,7 @@
 
 /////////////////////////// Imports ///////////////////////////
 // Electron
-const {app, BrowserWindow, Menu, ipcMain, dialog} = require('electron');
+const { app, BrowserWindow, Menu, ipcMain, dialog, desktopCapturer } = require('electron');
 
 // URL
 const url = require('url');
@@ -38,6 +38,9 @@ let ventanaPrincipal;
 
 require('@electron/remote/main').initialize();
 
+app.commandLine.appendSwitch('enable-features', 'WebSpeechAPI');
+app.commandLine.appendSwitch('enable-features', 'MediaRecorderAPI');
+
 const templateMenu = [
     {
         label: 'DevTools',
@@ -56,6 +59,8 @@ const templateMenu = [
     }
 ];
 
+app.commandLine.appendSwitch('enable-speech-dispatcher');
+
 // Cuando la aplicación esté lista
 app.on('ready', () => {
     // Se crea la ventana principal
@@ -69,7 +74,7 @@ app.on('ready', () => {
     });
 
     require('@electron/remote/main').enable(ventanaPrincipal.webContents);
-    
+
     // Se carga el archivo index.html
     ventanaPrincipal.loadURL(url.format({
         // Cambiar esto después
@@ -97,7 +102,7 @@ ipcMain.on('redirige', (event, arg) => {
 
     // 3. Si es la página de subir ficheros, añado el evento de subir fichero
     ventanaPrincipal.openDevTools();
-    if(arg == 'sube_ficheros.html'){
+    if (arg == 'sube_ficheros.html') {
         ventanaPrincipal.webContents.on('did-finish-load', () => {
             ventanaPrincipal.webContents.send('redireccion_subeFicheros', 'Añadir evento asíncrono');
         });
@@ -112,10 +117,10 @@ ipcMain.on('requestFile', (event, arg) => {
         const path = result.filePaths[0];
 
         // 4.3 Si no se ha seleccionado ningún fichero, envío un mensaje de error
-        if(path == "" || path == null){
-            ventanaPrincipal.webContents.send('not-file-found','No has seleccionado ningún fichero');
+        if (path == "" || path == null) {
+            ventanaPrincipal.webContents.send('not-file-found', 'No has seleccionado ningún fichero');
         }
-        else{
+        else {
             // Una vez se seleccione el fichero, lo almaceno en la base de datos y en el FS
             addVideo(result.filePaths[0]);
         }
@@ -125,7 +130,7 @@ ipcMain.on('requestFile', (event, arg) => {
 });
 
 // Función auxiliar para obtener el nombre del fichero. Le añdo el prefijo "org_" para diferenciarlo
-function getMediaName(media){
+function getMediaName(media) {
     let media_name = media.split('/');
     media_name = media_name[media_name.length - 1];
     return media_name;
@@ -134,7 +139,7 @@ function getMediaName(media){
 var obj;
 
 // Guardado del fichero
-async function addVideo(media){
+async function addVideo(media) {
     let media_name = getMediaName(media);
 
     await db.connect((err) => {
@@ -143,9 +148,9 @@ async function addVideo(media){
 
         // Lo guardo el FS
         const video = fs.readFileSync(media);
-        
+
         let ruta = path.join(__dirname, 'contenido', media_name.split('.')[0]);
-        fs.mkdir(ruta, {recursive: true}, (err) => {
+        fs.mkdir(ruta, { recursive: true }, (err) => {
             if (err) throw err;
         });
         ruta = path.join(ruta, "org_" + media_name);
@@ -207,14 +212,28 @@ ipcMain.on('audio_analizado', (event, arg) => {
     });
 });
 
-ipcMain.on('guarda_audio', (event, output, fileBuffer) => {
-    if(output){
-        fs.writeFileSync(output, fileBuffer);
-    }
-    else{
 
+ipcMain.on('get_sources', async (event) => {
+    try {
+        console.log('pepe');
+        const sources = desktopCapturer.getSources({ types: ['window', 'screen'] })
+        .then(async sources => {
+            for (const source of sources) {
+                console.log(source.name);
+                if (source.name === 'AutoDescripcion') {
+                    
+                }
+            }
+        });
+    } catch (error) {
+        console.log(error);
     }
 });
+// Escucha el evento 'guarda_audio' desde el proceso de renderizado
+ipcMain.on('guarda_audio', (event, arg) => {
+    console.log('pepe');
+});
+
 
 app.on('window-all-closed', () => {
     if (process.platform !== 'darwin') {
