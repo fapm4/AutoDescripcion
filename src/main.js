@@ -140,7 +140,7 @@ function getMediaName(media) {
 }
 
 var obj;
-app.disableHardwareAcceleration()
+// app.disableHardwareAcceleration()
 // Guardado del fichero
 async function addVideo(media) {
     let media_name = getMediaName(media);
@@ -215,25 +215,28 @@ ipcMain.on('audio_analizado', (event, arg) => {
     });
 });
 
+ipcMain.on('cambia_archivo_js_grabacion', (event, arg) => {
+    ventanaPrincipal.webContents.send('cambiar_archivo', arg);
+});
 
-ipcMain.on('get_sources', async (event) => {
-    try {
-        const sources = desktopCapturer.getSources({ types: ['window', 'screen'] })
-        .then(async sources => {
-            for (const source of sources) {
-                if(source.id === 'window:200922:0'){
-                    ventanaPrincipal.webContents.send('sources', source);
-                }
-            }
-        });
-    } catch (error) {
-        console.log(error);
-    }
-});
+// ipcMain.on('get_sources', async (event) => {
+//     try {
+//         const sources = desktopCapturer.getSources({ types: ['window', 'screen'] })
+//         .then(async sources => {
+//             for (const source of sources) {
+//                 if(source.id === 'window:200922:0'){
+//                     ventanaPrincipal.webContents.send('sources', source);
+//                 }
+//             }
+//         });
+//     } catch (error) {
+//         console.log(error);
+//     }
+// });
 // Escucha el evento 'guarda_audio' desde el proceso de renderizado
-ipcMain.on('guarda_audio', (event, arg) => {
-    console.log('pepe');
-});
+// ipcMain.on('guarda_audio', (event, arg) => {
+//     console.log('pepe');
+// });
 
 
 app.on('window-all-closed', () => {

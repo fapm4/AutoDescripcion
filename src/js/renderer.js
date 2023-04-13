@@ -47,10 +47,15 @@ ipcRenderer.on('redireccion_subeFicheros', (event, arg) => {
 ipcRenderer.on('file-found', (event, arg) => {
     //4.2 Cuando se pulse el botón de describir, empieza a procesar el fichero subido
     let botonR = document.querySelector('.botonR');
-    if (botonR != undefined) {
-        let modo = document.querySelector('input[name=modo]:checked');
-        botonR.addEventListener('click', () => ipcRenderer.send('empieza_procesamiento', modo.value), true);
-    }
+    let radios = document.querySelectorAll('input[name=modo]');
+    let modo;
+    radios.forEach(radio => {
+        radio.addEventListener('change', () => {
+            modo = radio.value;
+        });
+    });
+
+    botonR.addEventListener('click', () => ipcRenderer.send('empieza_procesamiento', modo), true);
 });
 
 // 4.3 Si no se ha seleccionado ningún fichero, envío un mensaje de error
@@ -89,6 +94,7 @@ ipcRenderer.on('mostrar_formulario', (event, arg) => {
     let video = document.querySelector('video');
     let divForm = document.querySelector('.form');
     let modo = arg.datos_fichero.modo;
+
     video.src = arg.datos_fichero.ruta;
 
     silencios = arg.silencios;
@@ -108,7 +114,7 @@ ipcRenderer.on('mostrar_formulario', (event, arg) => {
         tabla.innerHTML = '<tr><th>Inicio</th><th>Fin</th><th>Descripción</th></tr>';
         var i = 0;
         silencios.forEach(silencio => {
-            let idDescripcion = `desc_${i}`;
+            let idDescripcion = `desc${i}`;
             let start = convierteTiempo(silencio.start);
             let end = convierteTiempo(silencio.end);
             let tr = document.createElement('tr');
@@ -120,34 +126,36 @@ ipcRenderer.on('mostrar_formulario', (event, arg) => {
             tdEnd.innerHTML = end;
             tr.appendChild(tdStart);
             tr.appendChild(tdEnd);
-            
+
             let tdInput = document.createElement('td');
             // El usuario ha elegido la opción de describir manualmente
-            if(modo == 1){
+            if (modo == 1) {
                 let input = document.createElement('input');
                 input.type = 'text';
                 input.className = 'inputSilencio';
                 tdInput.appendChild(input);
             }
             // El usuario ha elegido la opción de describir con voz
-            else{
+            else {
                 let span = document.createElement('span');
                 span.clasName = "botonesVoz";
 
                 let btnGrabar = document.createElement('button');
-                btnGrabar.id = "btnGrabar";
-                btnGrabar.className = 'btnGrabar';
+                btnGrabar.id = `${idDescripcion}_grabar`;
+                btnGrabar.className = 'btnGrabar botonR';
                 btnGrabar.innerHTML = 'Grabar';
 
                 let btnParar = document.createElement('button');
-                btnGrabar.id = "btnParar";
-                btnParar.className = 'btnParar';
+                btnParar.id = `${idDescripcion}_parar`;
+                btnParar.className = 'btnParar botonR';
                 btnParar.innerHTML = 'Parar';
 
                 span.appendChild(btnGrabar);
                 span.appendChild(btnParar);
 
                 tdInput.appendChild(span);
+                // btnGrabar.addEventListener('click', function(event){grabarVoz(event, silencios, datos_fichero)}, false);
+                // btnParar.addEventListener('click', function(event){pararVoz(event, silencios, datos_fichero)}, true);
             }
             tr.appendChild(tdInput);
             tabla.appendChild(tr);
@@ -159,18 +167,27 @@ ipcRenderer.on('mostrar_formulario', (event, arg) => {
         let btnEnviar = document.createElement('button');
         btnEnviar.innerHTML = 'Enviar';
         btnEnviar.className = 'botonR';
+        btnEnviar.id = 'btnEnviar';
 
         // Los meto al DOM
         let divBotones = document.createElement('div');
         divBotones.appendChild(btnEnviar);
         divForm.appendChild(divBotones);
 
-        speechSynthesis.addEventListener('voiceschanged', () => {
-            voice = speechSynthesis.getVoices().filter(voice => voice.lang.startsWith('es') && voice.name.includes('Spain') && voice.name.includes('victor'));
-        });
+        if (modo == 2) {
+            args = {
+                silencios,
+                datos_fichero
+            }
+            ipcRenderer.send('cambia_archivo_js_grabacion', args);
+        }
 
-        // Añado el evento de comprobar
-        btnEnviar.addEventListener('click', () => compruebaAudios(silencios, datos_fichero), true);
+        // speechSynthesis.addEventListener('voiceschanged', () => {
+        //     voice = speechSynthesis.getVoices().filter(voice => voice.lang.startsWith('es') && voice.name.includes('Spain') && voice.name.includes('victor'));
+        // });
+
+        // // Añado el evento de comprobar
+        // btnEnviar.addEventListener('click', () => compruebaAudios(silencios, datos_fichero), true);
     }
 });
 

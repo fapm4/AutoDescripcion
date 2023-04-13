@@ -16,8 +16,10 @@ ipcRenderer.on('procesa-check', (event, arg) => {
         // Comienzo a procesar el fichero
         console.log('Procesando fichero...');
         let file = arg.ruta.split('\\').pop().split('.')[0];
-        const output = `C:\\Users\\francip\\Desktop\\Repos\\AutoDescripcion\\src\\contenido\\${file.substring(4, file.length)}\\${file}.wav`;
-        // const output = `/home/fapm4/Escritorio/AutoDescripcion/src/contenido/${file.substring(4, file.length)}/${file}.wav`;
+
+        // Mi PC
+        const output = `C:\\Users\\panch\\Desktop\\TFG\\AutoDescripcion\\src\\contenido\\${file.substring(4, file.length)}\\${file}.wav`;
+        // const output = `C:\\Users\\francip\\Desktop\\Repos\\AutoDescripcion\\src\\contenido\\${file.substring(4, file.length)}\\${file}.wav`;
         let ruta = arg.ruta;
         let media_name = arg.media_name;
         let modo = arg.modo;
@@ -29,29 +31,29 @@ ipcRenderer.on('procesa-check', (event, arg) => {
             media_name,
             modo
         };
-        
+
         ffmpeg(ruta)
-        .output(output)
-        .noVideo()
-        .audioCodec('pcm_s16le')
-        .audioChannels(1)
-        .on('end', () => {
-            console.log('Audio extraído correctamente');
-            getIntervals(output, '-30', (silencios) => {
-                let obj = {
-                    datos_fichero,
-                    silencios
-                };
+            .output(output)
+            .noVideo()
+            .audioCodec('pcm_s16le')
+            .audioChannels(1)
+            .on('end', () => {
+                console.log('Audio extraído correctamente');
+                getIntervals(output, '-30', (silencios) => {
+                    let obj = {
+                        datos_fichero,
+                        silencios
+                    };
 
-                console.log(`Se encontraron ${silencios.length} silencios.`);
-                console.log('Silencios: ', silencios);
+                    console.log(`Se encontraron ${silencios.length} silencios.`);
+                    console.log('Silencios: ', silencios);
 
-                // 7. Silencios detectados, enviamos evento para  cargar la pantalla del formulario
-                // para añadir el texto
-                ipcRenderer.send('audio_analizado', obj, arg.modo);
-            });
-        })
-        .run();
+                    // 7. Silencios detectados, enviamos evento para  cargar la pantalla del formulario
+                    // para añadir el texto
+                    ipcRenderer.send('audio_analizado', obj, arg.modo);
+                });
+            })
+            .run();
     }
 });
 
