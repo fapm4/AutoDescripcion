@@ -86,6 +86,10 @@ a {
     cursor: pointer;
 }
 
+.btnPlay {
+    font-size: 14px;
+}
+
 .botonR:hover {
     background-color: #fff;
     color: salmon;

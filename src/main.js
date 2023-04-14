@@ -219,6 +219,10 @@ ipcMain.on('cambia_archivo_js_grabacion', (event, arg) => {
     ventanaPrincipal.webContents.send('cambiar_archivo', arg);
 });
 
+ipcMain.on('listo_para_concatenar', (event, arg) => {
+    ventanaPrincipal.webContents.send('concatenar', arg);
+});
+
 // ipcMain.on('get_sources', async (event) => {
 //     try {
 //         const sources = desktopCapturer.getSources({ types: ['window', 'screen'] })

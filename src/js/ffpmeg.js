@@ -18,8 +18,8 @@ ipcRenderer.on('procesa-check', (event, arg) => {
         let file = arg.ruta.split('\\').pop().split('.')[0];
 
         // Mi PC
-        const output = `C:\\Users\\panch\\Desktop\\TFG\\AutoDescripcion\\src\\contenido\\${file.substring(4, file.length)}\\${file}.wav`;
-        // const output = `C:\\Users\\francip\\Desktop\\Repos\\AutoDescripcion\\src\\contenido\\${file.substring(4, file.length)}\\${file}.wav`;
+        // const output = `C:\\Users\\panch\\Desktop\\TFG\\AutoDescripcion\\src\\contenido\\${file.substring(4, file.length)}\\${file}.wav`;
+        const output = `C:\\Users\\francip\\Desktop\\Repos\\AutoDescripcion\\src\\contenido\\${file.substring(4, file.length)}\\${file}.wav`;
         let ruta = arg.ruta;
         let media_name = arg.media_name;
         let modo = arg.modo;
@@ -102,6 +102,6 @@ function getIntervals(filePath, silenceThreshold, callback) {
     });
 }
 
-ipcRenderer.on('guarda_descripcion', (event, arg) => {
-    console.log('jola');
+ipcRenderer.on('concatenar', (event, arg) => {
+    console.log(arg);
 });

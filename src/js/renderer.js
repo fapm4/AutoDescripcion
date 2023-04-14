@@ -85,9 +85,7 @@ function convierteTiempo(seconds) {
     const remainingSeconds = seconds % 60;
     return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${remainingSeconds.toFixed(0).padStart(2, '0')}`;
 }
-
-let silencios;
-let datos_fichero;
+;
 // 7.1 Tras cargar la pantalla de formulario añado todos los elemnentos HTML dinámicos
 ipcRenderer.on('mostrar_formulario', (event, arg) => {
     // Tengo que mostrar el video
@@ -128,6 +126,7 @@ ipcRenderer.on('mostrar_formulario', (event, arg) => {
             tr.appendChild(tdEnd);
 
             let tdInput = document.createElement('td');
+            tdInput.className = 'input';
             // El usuario ha elegido la opción de describir manualmente
             if (modo == 1) {
                 let input = document.createElement('input');
@@ -150,8 +149,13 @@ ipcRenderer.on('mostrar_formulario', (event, arg) => {
                 btnParar.className = 'btnParar botonR';
                 btnParar.innerHTML = 'Parar';
 
+                let btnPlay = document.createElement('button');
+                btnPlay.className = 'btnPlay botonR';
+                btnPlay.innerHTML = "⏵︎";
+
                 span.appendChild(btnGrabar);
                 span.appendChild(btnParar);
+                span.appendChild(btnPlay);
 
                 tdInput.appendChild(span);
                 // btnGrabar.addEventListener('click', function(event){grabarVoz(event, silencios, datos_fichero)}, false);
