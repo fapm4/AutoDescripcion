@@ -2,6 +2,8 @@ const ffmpegPath = require('ffmpeg-static-electron').path;
 const ffmpeg = require('fluent-ffmpeg');
 const ffprobe = require('node-ffprobe');
 ffmpeg.setFfmpegPath(ffmpegPath);
+const { exec } = require('child_process');
+const { get } = require('https');
 
 let recorder;
 let audioChunks = [];
@@ -119,6 +121,7 @@ function pararVoz(event) {
     }
 }
 // New-Alias -Name ns -Value C:\Users\francip\Desktop\Repos\AutoDescripcion\script.ps1
+// New-Alias -Name ns -Value C:\Users\panch\Desktop\TFG\AutoDescripcion\script.ps1
 function createAudioBuffer(blob) {
     return new Promise((resolve, reject) => {
         const context = new AudioContext();
@@ -134,14 +137,19 @@ function createAudioBuffer(blob) {
     });
 }
 
+function getIndex(output) {
+    let filename = output.split('\\').pop();
+    const regex = /desc(\d+)\.blob/;
+    const match = filename.match(regex);
+    const indice = match[1];
+    return indice;
+}
+
 // True si es mayor
 // False si es menor
 function compruebaSilencios(output, blob) {
     return new Promise((resolve, reject) => {
-        let filename = output.split('\\').pop();
-        const regex = /desc(\d+)\.blob/;
-        const match = filename.match(regex);
-        const indice = match[1];
+        const indice = getIndex(output)
         const silenceDuration = silencios[indice].duration;
         createAudioBuffer(blob)
             .then(audioBuffer => {
@@ -160,37 +168,72 @@ function blobToArrayBuffer(blob) {
     });
 }
 
-function almacenaWav(blob, output) {
-    blobToArrayBuffer(blob)
-        .then(arrayBuffer => {
-            return new Promise((resolve, reject) => {
-                fs.writeFile(output, Buffer.from(arrayBuffer), (err) => {
-                    if (err) reject(err);
-                    else {
-                        const convertWAV = `${ffmpegPath} -i ${output} ${output.split('.blob')[0]}.wav`;
-                        exec(convertWAV, (err, stdout, stderr) => {
-                            if (err) {
-                                console.error(err);
-                                return;
-                            } else {
-                                resolve();
-                            }
-                        });
+function compruebaExistente(output) {
+    return new Promise((resolve, reject) => {
+        try {
+            const exists = `del ${output} ${output.split('.blob')[0]}.wav}`;
+            exec(exists, (err, stdout, stderr) => {
+                resolve();
+            });
+        }
+        catch (err) {
+            resolve();
+        }
+    });
+}
+
+function creaWav(output, arrayBuffer) {
+    return new Promise((resolve, reject) => {
+        fs.writeFile(output, Buffer.from(arrayBuffer), (err) => {
+            if (err) reject(err);
+            else {
+                const convertWAV = `${ffmpegPath} -i ${output} ${output.split('.blob')[0]}.wav`;
+                exec(convertWAV, (err, stdout, stderr) => {
+                    if (err) {
+                        console.error(err);
+                        return;
+                    } else {
+                        resolve();
                     }
                 });
-            });
-        })
-        .then(() => {
-            console.log('WAV creado correctamente');
-            const deleteBlob = `del ${output}`;
-            exec(deleteBlob, (err, stdout, stderr) => {
-                if (err) {
-                    console.error(err);
-                    return;
-                }
-            });
-        })
-        .catch(err => console.log(err));
+            }
+        });
+    });
+}
+
+function almacenaWav(blob, output) {
+    let obj = {
+        datos_fichero,
+        silencios,
+    };
+    
+    return new Promise((resolve, reject) => {
+        blobToArrayBuffer(blob)
+            .then(arrayBuffer => {
+                compruebaExistente(output)
+                    .then(() => {
+                        creaWav(output, arrayBuffer)
+                            .then(() => {
+                                ipcRenderer.send('listo_para_concatenar', obj);
+                                resolve();
+                                // Borrar más adelante
+                                // const deleteBlob = `del ${output}`;
+                                // console.log('Borrando blob...');
+                                // console.log(deleteBlob);
+                                // exec(deleteBlob, (err, stdout, stderr) => {
+                                //     if (err) {
+                                //         console.error(err);
+                                //         return;
+                                //     }
+                                //     else {
+                                //         resolve();
+                                //     }
+                                // });
+                            })
+                    });
+            })
+            .catch(err => console.log(err));
+    });
 }
 
 function comprobarGrabaciones(event) {
@@ -235,12 +278,6 @@ function comprobarGrabaciones(event) {
             almacenaWav(blob, output);
         }
     });
-
-    // Concatenar con el original
-    let obj = {
-        datos_fichero,
-        silencios,
-    };
-    
-    ipcRenderer.send('listo_para_concatenar', obj);
 }
+
+module.exports = getIndex;
