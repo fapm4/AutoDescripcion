@@ -3,7 +3,7 @@ const ffmpeg = require('fluent-ffmpeg');
 const ffprobe = require('node-ffprobe');
 ffmpeg.setFfmpegPath(ffmpegPath);
 const { exec } = require('child_process');
-const { get } = require('https');
+const { spawn } = require('child_process');
 
 let recorder;
 let audioChunks = [];
@@ -139,11 +139,12 @@ function createAudioBuffer(blob) {
 
 function getIndex(output) {
     let filename = output.split('\\').pop();
-    const regex = /desc(\d+)\.blob/;
+    const regex = /desc(\d+)\./;
     const match = filename.match(regex);
     const indice = match[1];
     return indice;
 }
+
 
 // True si es mayor
 // False si es menor
@@ -202,11 +203,6 @@ function creaWav(output, arrayBuffer) {
 }
 
 function almacenaWav(blob, output) {
-    let obj = {
-        datos_fichero,
-        silencios,
-    };
-    
     return new Promise((resolve, reject) => {
         blobToArrayBuffer(blob)
             .then(arrayBuffer => {
@@ -214,7 +210,6 @@ function almacenaWav(blob, output) {
                     .then(() => {
                         creaWav(output, arrayBuffer)
                             .then(() => {
-                                ipcRenderer.send('listo_para_concatenar', obj);
                                 resolve();
                                 // Borrar más adelante
                                 // const deleteBlob = `del ${output}`;
@@ -236,7 +231,74 @@ function almacenaWav(blob, output) {
     });
 }
 
-function comprobarGrabaciones(event) {
+function convierteTiempo(seconds) {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const remainingSeconds = seconds % 60;
+    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${remainingSeconds.toFixed(0).padStart(2, '0')}`;
+}
+
+function tiempoEnMilisegundos(tiempo) {
+    let partes = tiempo.split(':');
+    let horas = parseInt(partes[0]);
+    let minutos = parseInt(partes[1]);
+    let segundos = parseInt(partes[2]);
+
+    return (horas * 3600 + minutos * 60 + segundos) * 1000;
+}
+
+let concatenando = false;
+async function concatena(audio_path) {
+
+    while (concatenando) {
+        await new Promise(resolve => setTimeout(resolve, 500));
+    }
+
+    concatenando = true;
+
+    let ruta_video = datos_fichero.ruta;
+    let ruta_video_output = ruta_video.replace('org_', 'mod_');
+    let audio = audio_path.replace('blob', 'wav');
+    console.log("Audio: ", audio);
+
+    let indice = getIndex(audio);
+
+    if (indice != 0) {
+        ruta_video = ruta_video_output;
+    }
+    else {
+        console.log('TU PUTA MADRE');
+    }
+
+    try {
+        let start = tiempoEnMilisegundos(convierteTiempo(silencios[indice].start));
+        console.log('Procesando audio: ', audio);
+        console.log('Ruta video: ', ruta_video);
+        console.log('Ruta video output: ', ruta_video_output);
+
+        const concatena = `${ffmpegPath} -i ${ruta_video} -i ${audio} -filter_complex "[1:a]adelay=${start}|${start}[a1];[0:a][a1]amix=inputs=2[a]" -map 0:v -map "[a]" -c:v copy -c:a aac -strict experimental -shortest ${ruta_video_output}`;
+        console.log(concatena);
+        await new Promise((resolve, reject) => {
+            exec(concatena, (err, stdout, stderr) => {
+                if (err) {
+                    console.error(err);
+                    reject(err);
+                }
+                else {
+                    console.log('Audio concatenado correctamente.');
+                    resolve();
+                }
+            });
+        });
+
+        concatenando = false;
+    }
+    catch (err) {
+        console.log(err);
+    }
+}
+
+async function comprobarGrabaciones(event) {
     let btn = event.currentTarget;
     let id = btn.id;
 
@@ -252,32 +314,32 @@ function comprobarGrabaciones(event) {
         return;
     }
 
-    audioBlobs.forEach(data => {
+    setTimeout(1000);
+    audioBlobs = audioBlobs.filter(array => array.length === 3);
+
+    const promesas = audioBlobs.map(data => {
         let blob = data[0];
         let output = data[1];
         let estado = data[2];
 
         if (estado == false) {
-            Swal.fire({
+            const result = Swal.fire({
                 title: '¡Atención!',
                 text: 'Hay grabaciones que superan el tiempo de silencio. ¿Desea enviarlas de todas formas?',
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonText: 'Enviar',
                 cancelButtonText: 'Cancelar'
-            }).then((result) => {
-                if (result.value) {
-                    almacenaWav(blob, output);
-                }
-                else {
-                    return;
-                }
             });
+
+            if (!result.value) {
+                return Promise.resolve();
+            }
         }
-        else {
-            almacenaWav(blob, output);
-        }
+
+        return almacenaWav(blob, output).then(() => concatena(output));
     });
+
+    await Promise.all(promesas);
 }
 
-module.exports = getIndex;
