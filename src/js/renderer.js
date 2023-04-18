@@ -4,21 +4,18 @@ const fs = require('fs');
 const main = remote.require('./main');
 const imageSoruce = "https://www.google.com/url?sa=i&url=https%3A%2F%2Fwww.spreadshirt.es%2Fshop%2Fdesign%2Fboton%2Bplay%2Bcamiseta%2Bpremium%2Bhombre-D5975f73a59248d6110152d16%3Fsellable%3D30xwlz15z4Upe0m9kzy3-812-7&psig=AOvVaw0yfJZRipPcZ0fKQVnSDetn&ust=1677955190722000&source=images&cd=vfe&ved=0CBAQjRxqFwoTCJiQtay0wP0CFQAAAAAdAAAAABAE";
 /////////////////////////// Este código afecta a -> sube_ficheros.html e index.html ///////////////////////////
+
 // 1. Añado evento a los botones de la página index.html
 ipcRenderer.on('carga_finalizada', (event, arg) => {
+    // Saco los botones de Inicio, Informaciónn y Describir
     const botones = document.querySelectorAll('.boton');
-    
+
     botones.forEach(boton => {
         boton.addEventListener('click', redirige, true);
     });
-
-    // const btnConf = document.querySelector('#btnConf');
-    // if(btnConf != undefined){
-    //     btnConf.addEventListener('click', () => ipcRenderer.send('establecer_conf'), true);
-    // }
 });
 
-// Función que redirige a la página correspondiente
+// 1.1 Función que redirige a la página correspondiente
 function redirige(event) {
     const currentTarget = event.currentTarget;
     let ruta;
@@ -28,7 +25,7 @@ function redirige(event) {
             ruta = 'index.html';
             break;
         case 'btnInfo':
-            ruta = 'info.html';
+            ruta = 'index.html';
             break;
         case 'btnDescr':
             ruta = 'sube_ficheros.html';
@@ -38,17 +35,113 @@ function redirige(event) {
     };
 
     // Envío el nombre del fichero para redireccionar
-    ipcRenderer.send('redirige', ruta);
+    ipcRenderer.send('redirige_pagina', ruta);
 }
 
-// 4. Una vez se cargue la página de subir ficheros, añado el evento de subir fichero
-ipcRenderer.on('redireccion_subeFicheros', (event, arg) => {
-    //4.1 Cuando se pulse el botón de subir fichero, se abre el diálogo para seleccionar el fichero
+// 2. Una vez se cargue la página de subir ficheros, añado el evento de subir fichero
+ipcRenderer.on('subir_ficheros', (event, arg) => {
+
+    // 2.1 Evento para el botón de configuración
+    const btnConf = document.querySelector('#btnConf');
+    if (btnConf != undefined) {
+        btnConf.addEventListener('click', () => ipcRenderer.send('cargar_pantalla_configuracion'), true);
+    }
+
+    // 2.2 Cuando se pulse el botón de subir fichero, se abre el diálogo para seleccionar el fichero
     const botonS = document.querySelector('.botonS');
     if (botonS != undefined) {
         botonS.addEventListener('click', () => ipcRenderer.send('requestFile'), true);
     }
 });
+
+function checkThreshold(){
+    
+}
+// 2.1 Cuando se pulse el botón de configuración, se abre la pantalla de configuración
+ipcRenderer.on('pantalla_configuracion_cargada', async (event, arg) => {
+
+    // 2.1.1 Controlar el threshold
+    let radios = document.querySelectorAll('input[name=threshold]');
+    let thresh_value;
+
+    radios.forEach(radio => {
+        radio.addEventListener('change', () => {
+            thresh_value = radio.value;
+            if (thresh_value == 2) {
+                // Tengo que añadir el input para establecer el threshold
+                let input = document.createElement('input');
+                input.type = 'text';
+                input.id = 'threshold_value';
+                input.placeholder = '';
+                input.style = 'margin-left: 10px; margin-right: 10px;';
+
+                let li = queryAncestorSelector(radio, 'li');
+                li.appendChild(input);
+            } else {
+                let input = document.querySelector('#threshold_value');
+                if (input != undefined) {
+                    input.style.display = 'none';
+                }
+            }
+        });
+    });
+
+    let elegidoIdioma;
+    let elegidoGenero;
+
+    // Idioma
+    let idioma = document.querySelector('#idioma');
+
+    let selectIdioma = document.createElement('select');
+    selectIdioma.id = 'selectIdioma';
+
+    let optionI = document.createElement('option');
+    optionI.value = 'es-ES';
+    optionI.innerHTML = 'Español';
+
+    selectIdioma.appendChild(optionI);
+    idioma.appendChild(selectIdioma);
+
+    elegidoIdioma = selectIdioma[selectIdioma.selectedIndex].innerHTML;
+    selectIdioma.addEventListener('change', (event) => {
+        elegidoIdioma = event.target.value;
+    });
+
+    // Genero
+    let genero = document.querySelector('#genero');
+
+    let selectGenero = document.createElement('select');
+    selectGenero.id = 'selectGenero';
+
+    let optionM = document.createElement('option');
+    optionM.id = 'optionM';
+    optionM.innerHTML = 'Mujer';
+    optionM.value = 'Mujer';
+
+    let optionH = document.createElement('option');
+    optionH.id = 'optionH';
+    optionH.innerHTML = 'Hombre';
+    optionH.value = 'Hombre';
+
+    selectGenero.append(optionM, optionH);
+    genero.appendChild(selectGenero);
+
+    elegidoGenero = selectGenero[selectGenero.selectedIndex].innerHTML;
+
+    selectGenero.addEventListener('change', (event) => {
+        elegidoIdioma = event.target.value;
+    });
+    
+    let divListado = document.createElement('div');
+    divListado.id = 'divListado';
+
+    divListado.innerHTML = `Genero: ${elegidoGenero} - Idioma: ${elegidoIdioma}`;
+
+    let divVoces = queryAncestorSelector(selectGenero, 'div');
+    divVoces.appendChild(divListado);
+});
+
+
 ipcRenderer.on('file-found', (event, arg) => {
     //4.2 Cuando se pulse el botón de describir, empieza a procesar el fichero subido
     let botonR = document.querySelector('.botonR');

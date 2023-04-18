@@ -159,6 +159,22 @@ a {
     text-align: center;
 }
 
+.btnGuardar {
+    margin-top: 30px;
+}
+
+.configuraciones {
+    margin-top: 10px;
+    text-align: center;
+}
+
+#threshold_value {
+    margin: 10px 0;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    cursor: pointer;
+}
 
 input[type='radio'] {
     accent-color: salmon;

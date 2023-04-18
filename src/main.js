@@ -95,23 +95,36 @@ app.on('ready', () => {
     Menu.setApplicationMenu(Menu.buildFromTemplate(templateMenu));
 });
 
-// 2. Una vez obtenga la ruta (pagina HTML), la renderizo
-ipcMain.on('redirige', (event, arg) => {
+// 2. Partiendo de la página de index.html, se redirige a la página de subir ficheros, inicio o información
+ipcMain.on('redirige_pagina', (event, arg) => {
+    console.log(arg);
     ventanaPrincipal.loadURL(url.format({
         pathname: path.join(__dirname, 'views', arg),
         protocol: 'file',
         slashes: true,
     }));
 
-    // 3. Si es la página de subir ficheros, añado el evento de subir fichero
+    // Si es la página de subir ficheros, se añade un evento para que se pueda subir el fichero
     ventanaPrincipal.openDevTools();
     if (arg == 'sube_ficheros.html') {
         ventanaPrincipal.webContents.on('did-finish-load', () => {
-            ventanaPrincipal.webContents.send('redireccion_subeFicheros', 'Añadir evento asíncrono');
+            ventanaPrincipal.webContents.send('subir_ficheros', 'Añadir evento asíncrono');
         });
     }
 });
 
+
+ipcMain.on('cargar_pantalla_configuracion', (event, arg) => {
+    ventanaPrincipal.loadURL(url.format({
+        pathname: path.join(__dirname, 'views', 'configuracion.html'),
+        protocol: 'file',
+        slashes: true,
+    }));
+
+    ventanaPrincipal.webContents.on('did-finish-load', () => {
+        ventanaPrincipal.webContents.send('pantalla_configuracion_cargada', 'Añadir evento asíncrono');
+    });
+});
 // 4.1 Abre el diálogo para seleccionar el fichero
 ipcMain.on('requestFile', (event, arg) => {
     dialog.showOpenDialog({
