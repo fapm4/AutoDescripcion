@@ -155,6 +155,11 @@ a {
     background-color: #FFEBE9;
 }
 
+#btnConf {
+    text-align: center;
+}
+
+
 input[type='radio'] {
     accent-color: salmon;
     ;

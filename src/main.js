@@ -33,7 +33,6 @@ const db = require('./js/db');
 const fs = require('fs');
 
 /////////////////////////// Código ///////////////////////////
-// Ventana principal con alcance global
 let ventanaPrincipal;
 
 require('@electron/remote/main').initialize();
@@ -61,9 +60,11 @@ const templateMenu = [
 
 app.commandLine.appendSwitch('enable-speech-dispatcher');
 
-// Cuando la aplicación esté lista
+// Tareas del código:
+// 1. Crear y cargar la ventana principal
+
 app.on('ready', () => {
-    // Se crea la ventana principal
+    // Cuando la aplicación esté lista se crea la ventana principal
     ventanaPrincipal = new BrowserWindow({
         webPreferences: {
             nodeIntegration: true,
@@ -85,10 +86,10 @@ app.on('ready', () => {
         slashes: true
     }));
 
-    // Se carga la pantalla principal. Envío evento cuando se termine de cargar el DOM
-    // para añadir los eventos a los botones
+    // Cuando se haya cargado por completo el fichero HTML, mando un evento para añadir los eventos a los botones
+    // del index.html
     ventanaPrincipal.webContents.on('did-finish-load', () => {
-        ventanaPrincipal.webContents.send('cargaFinalizada', 'Añadiendo eventos a los botones');
+        ventanaPrincipal.webContents.send('carga_finalizada', 'Añadiendo eventos a los botones');
     });
     // Se crea el menú de la aplicación
     Menu.setApplicationMenu(Menu.buildFromTemplate(templateMenu));
