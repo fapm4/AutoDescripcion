@@ -1,9 +1,9 @@
 var ipcRenderer = require('electron').ipcRenderer;
-
 const ffmpegPath = require('ffmpeg-static-electron').path;
 const ffmpeg = require('fluent-ffmpeg');
 const ffprobe = require('node-ffprobe');
 ffmpeg.setFfmpegPath(ffmpegPath);
+const path = require('path')
 const { exec } = require('child_process');
 
 
@@ -101,7 +101,3 @@ function getIntervals(filePath, silenceThreshold, callback) {
         callback(silences);
     });
 }
-
-ipcRenderer.on('concatenar', (event, arg) => {
-    console.log(arg);
-});
