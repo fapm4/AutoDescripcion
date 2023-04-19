@@ -32,7 +32,7 @@ function grabarVoz(event) {
     let btn = event.currentTarget;
 
     btnGrabarApretado = btn;
-
+    audioChunks = [];
     navigator.mediaDevices.getUserMedia({ audio: true })
         .then(stream => {
             recorder = new MediaRecorder(stream);
@@ -43,22 +43,23 @@ function grabarVoz(event) {
         });
 }
 
-function reproducirAudio(buffer) {
-    const context = new AudioContext();
-    const source = context.createBufferSource();
-    source.buffer = buffer;
-    source.connect(context.destination);
-    source.start();
-}
-
 function actualizaEstado(estado, buffer, id) {
     let tr = document.querySelector(`.${id}`);
     let td = tr.querySelector('.input');
     let span = td.querySelector('span');
     let btnPlay = span.querySelector('.btnPlay');
 
-    // Añado la reproducción
-    btnPlay.addEventListener('click', () => reproducirAudio(buffer), false);
+    const context = new AudioContext();
+    let source = context.createBufferSource();
+
+    btnPlay.addEventListener('click', () => {
+        if (buffer) {
+            source.buffer = buffer;
+            source.connect(context.destination);
+            source.start();
+        }
+        source = null;
+    });
 
     let existeComp = tr.querySelector('.comprobacion');
     if (existeComp != null) {
@@ -79,9 +80,8 @@ function actualizaEstado(estado, buffer, id) {
     }
 }
 
-async function pararVoz(event) {
+function pararVoz(event) {
     let btn = event.currentTarget;
-
     // Si no se ha dado a grabar, no hago nada
     if (btnGrabarApretado == null) {
         console.log('Apreta un botón de grabar primero');
@@ -89,23 +89,21 @@ async function pararVoz(event) {
     }
     // Si el botón de parar y grabar es el mismo
     if (btnGrabarApretado.id.split('_')[0] == btn.id.split('_')[0]) {
-        console.log('Parando...');
-        let output = datos_fichero.output.split('org')[0] + btn.id.split("_")[0] + '.blob'
         recorder.stop();
+        console.log('Parando...');
+        let output = datos_fichero.output.split('org')[0] + btn.id.split("_")[0] + '.blob';
         recorder.ondataavailable = async e => {
             btnGrabarApretado.classList.toggle('botonR');
             btnGrabarApretado.classList.toggle('botonR_i');
             audioChunks.push(e.data);
             if (recorder.state == 'inactive') {
                 let blob = new Blob(audioChunks, { type: 'audio/wav' });
-                audioBlobs.push([blob, output]);
-                audioChunks = [];
-                await compruebaSilencios(output, blob).then(result => {
-                    let estado = result[0];
-                    let buffer = result[1];
-                    audioBlobs.push([blob, output, estado]);
-                    actualizaEstado(estado, buffer, btn.id.split('_')[0]);
-                });
+                let result = await compruebaSilencios(output, blob);
+                let estado = result[0];
+                let buffer = result[1];
+                console.log(buffer);
+                actualizaEstado(estado, buffer, btn.id.split('_')[0]);
+                audioBlobs.push([blob, output, estado]);
             }
         }
     }
@@ -142,16 +140,17 @@ function getIndex(output) {
 
 // True si es mayor
 // False si es menor
-function compruebaSilencios(output, blob) {
-    return new Promise((resolve, reject) => {
-        const indice = getIndex(output)
-        const silenceDuration = silencios[indice].duration;
-        createAudioBuffer(blob)
-            .then(audioBuffer => {
-                resolve([audioBuffer.duration > silenceDuration ? false : true, audioBuffer]);
-            })
-            .catch(err => console.log(err));
-    });
+async function compruebaSilencios(output, blob) {
+    const indice = getIndex(output)
+    const silenceDuration = silencios[indice].duration;
+
+    try {
+        const audioBuffer = await createAudioBuffer(blob);
+        return [audioBuffer.duration > silenceDuration ? false : true, audioBuffer];
+    }
+    catch (err) {
+        console.log(err);
+    }
 }
 
 function blobToArrayBuffer(blob) {
@@ -214,13 +213,6 @@ async function almacenaWav(blob, output) {
     }
 }
 
-function convierteTiempo(seconds) {
-    const hours = Math.floor(seconds / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
-    const remainingSeconds = seconds % 60;
-    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${remainingSeconds.toFixed(0).padStart(2, '0')}`;
-}
-
 function tiempoEnMilisegundos(tiempo) {
     let partes = tiempo.split(':');
     let horas = parseInt(partes[0]);
@@ -230,131 +222,91 @@ function tiempoEnMilisegundos(tiempo) {
     return (horas * 3600 + minutos * 60 + segundos) * 1000;
 }
 
-function concatena(audio_path) {
+function concatena(audios) {
     let ruta_video = datos_fichero.ruta;
     let ruta_video_output = ruta_video.replace('org_', 'mod_');
-    let audio = audio_path.replace('blob', 'mp3');
 
-    let indice = getIndex(audio);
+    let filtro = "";
+    for (let i = 0; i < audios.length; i++) {
+        let indice = getIndex(audios[i][1]);
+        let start = tiempoEnMilisegundos(silencios[indice].start);
 
-    if (indice != 0) {
-        ruta_video = ruta_video_output;
+        filtro += `[${i}:a]adelay=${start}|${start}[a${i}];`;
     }
 
+    filtro += `[${audios.map((_, i) => `a${i}`).join('][')}]amix=inputs=${audios.length}[a]`;
 
 
-    console.log("Ruta video: " + ruta_video);
-    console.log("Ruta video output: " + ruta_video_output);
-    console.log("Audio: " + audio);
-
-    let start = tiempoEnMilisegundos(convierteTiempo(silencios[indice].start));
 
     const args = [
         '-i', ruta_video,
-        '-i', audio,
-        '-filter_complex', `[1:a]adelay=${start}|${start}[a1];[0:a][a1]amix=inputs=2[a]`,
-        '-y',
-        ,'loglevel verbose',
+        ...audios.map(audio => ['-i', audio[1]]).flat(),
+        '-filter_complex', filtro,
         '-map', '0:v',
         '-map', '[a]',
-        '-c:v', 'copy',
         '-c:a', 'aac',
         '-strict', 'experimental',
+        '-y',
         '-shortest', ruta_video_output
     ];
 
+    console.log(args);
     const ffmpeg = spawn(ffmpegPath, args);
 
     return new Promise((resolve, reject) => {
+        ffmpeg.stdout.on('data', (data) => {
+            console.log(`stdout: ${data}`);
+        });
+
+        ffmpeg.stderr.on('data', (data) => {
+            console.error(`stderr: ${data}`);
+        });
         ffmpeg.on('close', (code) => {
             if (code !== 0) {
                 console.error(`ffmpeg process exited with code ${code}`);
                 reject(`ffmpeg process exited with code ${code}`);
             } else {
-                console.log(`-- ${audio} concatenado con ${ruta_video} --`);
+                console.log(`Tracks inserted into video`);
                 resolve();
             }
         });
     });
 
-    // const concatena = `${ffmpegPath} -i ${ruta_video} -i ${audio} -filter_complex "[1:a]adelay=${start}|${start}[a1];[0:a][a1]amix=inputs=2[a]" -map 0:v -map "[a]" -c:v copy -c:a aac -strict experimental -shortest ${ruta_video_output}`;
-    // console.log(concatena);
+    // console.log("Ruta video: " + ruta_video);
+    // console.log("Ruta video output: " + ruta_video_output);
+    // console.log("Audio: " + audio);
+
+    // let start = tiempoEnMilisegundos(silencios[indice].start);
+
+
     // return new Promise((resolve, reject) => {
-    //     exec(concatena, (err, stdout, stderr) => {
-    //         if (err) {
-    //             console.error(err);
-    //             reject(err);
-    //         }
-    //         else {
-    //             console.log(`-- ${audio} concatenado con ${ruta_video} --`)
+    //     ffmpeg()
+    //         .input(ruta_video)
+    //         .input(audio)
+    //         .complexFilter(filtro)
+    //         .outputOptions([
+    //             '-map', '0:v',
+    //             '-map', '[a]',
+    //             '-c:v', 'copy',
+    //             '-c:a', 'aac',
+    //             '-strict', 'experimental',
+    //             '-shortest',
+    //             '-threads 4'
+    //         ])
+    //         .on('start', (commandLine) => {
+    //             console.log('Spawned Ffmpeg with command: ' + commandLine);
+    //         })
+    //         .on('error', (err) => {
+    //             console.log('An error occurred: ' + err.message);
+    //         })
+    //         .on('end', () => {
+    //             console.log('Processing finished !');
     //             resolve();
-    //         }
-    //     });
+    //         })
+    //         .save(ruta_video_output)
+    //         .run();
     // });
 }
-
-// async function concatena() {
-//     return new Promise(async (resolve, reject) => {
-//         let carpeta = path.dirname(datos_fichero.ruta);
-//         let output_path = datos_fichero.output.replace('org_', 'mod_');
-//         let source_path = datos_fichero.ruta;
-
-//         let archivosWav = [];
-//         fs.readdir(carpeta, (err, files) => {
-//             archivosWav = files.filter(f => f.includes('.wav') && f.startsWith('desc'));
-//             if (archivosWav != null && archivosWav.length > 0) {
-//                 archivosWav.forEach(wav => {
-//                     let ruta_wav = `${carpeta}\\${wav}`;
-//                     let indice = getIndex(ruta_wav);
-//                     let start = tiempoEnMilisegundos(convierteTiempo(silencios[indice].start));
-
-//                     if (indice > 0) {
-//                         source_path = output_path;
-//                     }
-
-//                     console.log(source_path, ruta_wav, output_path, start);
-//                     const filtro = `"[1:a]adelay=${start}|${start}[a1];[0:a][a1]amix=inputs=2[a]"`;
-//                     ffmpeg()
-//                         .input(source_path)
-//                         .input(ruta_wav)
-//                         .complexFilter(filtro)
-//                         .outputOptions([
-//                             '-map 0:v',
-//                             '-map "[a]"',
-//                             '-c:v copy',
-//                             '-c:a aac',
-//                             '-strict experimental',
-//                             '-shortest'
-//                         ])
-//                         .output(output_path)
-//                         .on('start', (commandLine) => {
-//                             console.log('Spawned Ffmpeg with command: ' + commandLine);
-//                         })
-//                         .on('error', (err) => {
-//                             console.log('An error occurred: ' + err.message);
-//                         })
-//                         .on('end', () => {
-//                             console.log('Processing finished !');
-//                         })
-//                         .run();
-
-
-//                     // const concatena = `${ffmpegPath} -i ${source_path} -i ${ruta_wav} -filter_complex "[1:a]adelay=${start}|${start}[a1];[0:a][a1]amix=inputs=2[a]" -map 0:v -map "[a]" -c:v copy -c:a aac -strict experimental -shortest ${output_path}`;
-//                     // console.log(concatena);
-//                     // exec(concatena, (err, stdout, stderr) => {
-//                     //     if (err) {
-//                     //         console.error(err);
-//                     //         reject(err);
-//                     //     }
-//                     //     else {
-//                     //         resolve();
-//                     //     }
-//                     // });
-//                 });
-//             }
-//         });
-//     });
-// }
 
 async function comprobarGrabaciones(event) {
     try {
@@ -375,7 +327,6 @@ async function comprobarGrabaciones(event) {
 
         audioBlobs = audioBlobs.filter(array => array.length === 3);
         var i = 0;
-
         for (i = 0; i < audioBlobs.length; i++) {
             let data = audioBlobs[i];
             let blob = data[0];
@@ -402,14 +353,14 @@ async function comprobarGrabaciones(event) {
 
             try {
                 await almacenaWav(blob, output);
-
-                await concatena(output).then(() => {
-                    console.log('--------------------------------');
-                });
             } catch (error) {
                 console.error(error);
             }
         }
+
+        await concatena(audioBlobs).then(() => {
+            console.log('-------------------------------------------');
+        });
     }
     catch (err) {
         console.log(err);

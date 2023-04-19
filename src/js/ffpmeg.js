@@ -16,8 +16,8 @@ ipcRenderer.once('busca_silencios', (event, arg) => {
     let nombreFichero = arg.ruta.split('\\').pop().split('.')[0];
     let threshold_value = arg.threshold_value;
     // Mi PC
-    // const output = `C:\\Users\\panch\\Desktop\\TFG\\AutoDescripcion\\src\\contenido\\${file.substring(4, file.length)}\\${file}.wav`;
-    const output = `C:\\Users\\francip\\Desktop\\Repos\\AutoDescripcion\\src\\contenido\\${nombreFichero.substring(4, nombreFichero.length)}\\${nombreFichero}.mp3`;
+    const output = `C:\\Users\\panch\\Desktop\\TFG\\AutoDescripcion\\src\\contenido\\${nombreFichero.substring(4, nombreFichero.length)}\\${nombreFichero}.mp3`;
+    // const output = `C:\\Users\\francip\\Desktop\\Repos\\AutoDescripcion\\src\\contenido\\${nombreFichero.substring(4, nombreFichero.length)}\\${nombreFichero}.mp3`;
     let ruta = arg.ruta;
     let media_name = arg.media_name;
     let modo = arg.modo;
@@ -43,8 +43,8 @@ ipcRenderer.once('busca_silencios', (event, arg) => {
                     silencios
                 };
 
-                console.log(`Se encontraron ${silencios.length} silencios.`);
-                console.log('Silencios: ', silencios);
+                // console.log(`Se encontraron ${silencios.length} silencios.`);
+                // console.log('Silencios: ', silencios);
 
                 // 7. Silencios detectados, enviamos evento para  cargar la pantalla del formulario
                 // para añadir el texto
