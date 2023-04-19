@@ -2,10 +2,13 @@
 
 <head>
     <title>AutoDescripcion</title>
-    <link rel="stylesheet" href="../style.css">
     <script src="../js/renderer.js"></script>
+    <script src="../js/configurar.js"></script>
+    <script src="../js/ffpmeg.js"></script>
+    <script src="../js/procesa_grabacion.js"></script>
+    <link rel="stylesheet" href="../style.css">
+    <script src="https://unpkg.com/sweetalert2@9.5.3/dist/sweetalert2.all.min.js"></script>
 </head>
-
 <body>
     <div class="navbar">
         <nav class="nav">
@@ -23,7 +26,6 @@
                 En esta sección podrás establecer las diferentes configuraciones para usar la aplicación.
                 El treshold es el porcentaje de similitud que se debe alcanzar para que se considere que
                 la voz es la misma.
-
             </p>
             <div class="configuraciones">
                 <div class="threshold">
@@ -41,6 +43,7 @@
                         </ul>
                     </div>
                 </div>
+                <hr>
                 <div class="voces">
                     <h1>Voces</h1>
                     <div class="opcion">
@@ -48,8 +51,8 @@
                             <li id="idioma">
                                 <span>Idioma</span>
                             </li>
-                            <li id="genero">
-                                <span>Género</span>
+                            <li id="liVoces">
+                                <span>Voces</span>
                             </li>
                         </ul>
                     </div>

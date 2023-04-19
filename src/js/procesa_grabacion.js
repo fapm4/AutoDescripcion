@@ -1,9 +1,4 @@
-const ffmpegPath = require('ffmpeg-static-electron').path;
-const ffmpeg = require('fluent-ffmpeg');
-ffmpeg.setFfmpegPath(ffmpegPath);
-const { exec } = require('child_process');
 const { spawn } = require('child_process');
-const path = require('path');
 
 let recorder;
 let audioChunks = [];
@@ -121,17 +116,6 @@ async function pararVoz(event) {
 }
 // New-Alias -Name ns -Value C:\Users\francip\Desktop\Repos\AutoDescripcion\script.ps1
 // New-Alias -Name ns -Value C:\Users\panch\Desktop\TFG\AutoDescripcion\script.ps1
-
-window.addEventListener('load', function () {
-    const cmd = 'del .\\src\\contenido\\IMG_5721\\desc.*';
-    exec(cmd, (err, stdout, stderr) => {
-        if (err) {
-            console.error(err);
-            return;
-        }
-        console.log(stdout);
-    });
-});
 
 function createAudioBuffer(blob) {
     return new Promise((resolve, reject) => {

@@ -5,8 +5,13 @@ const main = remote.require('./main');
 const imageSoruce = "https://www.google.com/url?sa=i&url=https%3A%2F%2Fwww.spreadshirt.es%2Fshop%2Fdesign%2Fboton%2Bplay%2Bcamiseta%2Bpremium%2Bhombre-D5975f73a59248d6110152d16%3Fsellable%3D30xwlz15z4Upe0m9kzy3-812-7&psig=AOvVaw0yfJZRipPcZ0fKQVnSDetn&ust=1677955190722000&source=images&cd=vfe&ved=0CBAQjRxqFwoTCJiQtay0wP0CFQAAAAAdAAAAABAE";
 /////////////////////////// Este código afecta a -> sube_ficheros.html e index.html ///////////////////////////
 
+let esperandoVoces;
 // 1. Añado evento a los botones de la página index.html
-ipcRenderer.on('carga_finalizada', (event, arg) => {
+ipcRenderer.once('carga_finalizada', (event, arg) => {
+    speechSynthesis.addEventListener('voiceschanged', () => {
+        esperandoVoces = speechSynthesis.getVoices();
+    });
+
     // Saco los botones de Inicio, Informaciónn y Describir
     const botones = document.querySelectorAll('.boton');
 
@@ -39,142 +44,111 @@ function redirige(event) {
 }
 
 // 2. Una vez se cargue la página de subir ficheros, añado el evento de subir fichero
+let modo;
 ipcRenderer.on('subir_ficheros', (event, arg) => {
-
-    // 2.1 Evento para el botón de configuración
-    const btnConf = document.querySelector('#btnConf');
-    if (btnConf != undefined) {
-        btnConf.addEventListener('click', () => ipcRenderer.send('cargar_pantalla_configuracion'), true);
-    }
-
     // 2.2 Cuando se pulse el botón de subir fichero, se abre el diálogo para seleccionar el fichero
     const botonS = document.querySelector('.botonS');
     if (botonS != undefined) {
-        botonS.addEventListener('click', () => ipcRenderer.send('requestFile'), true);
+        botonS.addEventListener('click', () => ipcRenderer.send('pedir_fichero'), true);
     }
 });
 
-function checkThreshold(){
-    
-}
-// 2.1 Cuando se pulse el botón de configuración, se abre la pantalla de configuración
-ipcRenderer.on('pantalla_configuracion_cargada', async (event, arg) => {
-
-    // 2.1.1 Controlar el threshold
-    let radios = document.querySelectorAll('input[name=threshold]');
-    let thresh_value;
-
-    radios.forEach(radio => {
-        radio.addEventListener('change', () => {
-            thresh_value = radio.value;
-            if (thresh_value == 2) {
-                // Tengo que añadir el input para establecer el threshold
-                let input = document.createElement('input');
-                input.type = 'text';
-                input.id = 'threshold_value';
-                input.placeholder = '';
-                input.style = 'margin-left: 10px; margin-right: 10px;';
-
-                let li = queryAncestorSelector(radio, 'li');
-                li.appendChild(input);
-            } else {
-                let input = document.querySelector('#threshold_value');
-                if (input != undefined) {
-                    input.style.display = 'none';
-                }
-            }
-        });
-    });
-
-    let elegidoIdioma;
-    let elegidoGenero;
-
-    // Idioma
-    let idioma = document.querySelector('#idioma');
-
-    let selectIdioma = document.createElement('select');
-    selectIdioma.id = 'selectIdioma';
-
-    let optionI = document.createElement('option');
-    optionI.value = 'es-ES';
-    optionI.innerHTML = 'Español';
-
-    selectIdioma.appendChild(optionI);
-    idioma.appendChild(selectIdioma);
-
-    elegidoIdioma = selectIdioma[selectIdioma.selectedIndex].innerHTML;
-    selectIdioma.addEventListener('change', (event) => {
-        elegidoIdioma = event.target.value;
-    });
-
-    // Genero
-    let genero = document.querySelector('#genero');
-
-    let selectGenero = document.createElement('select');
-    selectGenero.id = 'selectGenero';
-
-    let optionM = document.createElement('option');
-    optionM.id = 'optionM';
-    optionM.innerHTML = 'Mujer';
-    optionM.value = 'Mujer';
-
-    let optionH = document.createElement('option');
-    optionH.id = 'optionH';
-    optionH.innerHTML = 'Hombre';
-    optionH.value = 'Hombre';
-
-    selectGenero.append(optionM, optionH);
-    genero.appendChild(selectGenero);
-
-    elegidoGenero = selectGenero[selectGenero.selectedIndex].innerHTML;
-
-    selectGenero.addEventListener('change', (event) => {
-        elegidoIdioma = event.target.value;
-    });
-    
-    let divListado = document.createElement('div');
-    divListado.id = 'divListado';
-
-    divListado.innerHTML = `Genero: ${elegidoGenero} - Idioma: ${elegidoIdioma}`;
-
-    let divVoces = queryAncestorSelector(selectGenero, 'div');
-    divVoces.appendChild(divListado);
-});
-
-
-ipcRenderer.on('file-found', (event, arg) => {
-    //4.2 Cuando se pulse el botón de describir, empieza a procesar el fichero subido
-    let botonR = document.querySelector('.botonR');
+ipcRenderer.on('fichero_seleccionado', (event, arg) => {
+    const btnConf = document.querySelector('#btnConf');
     let radios = document.querySelectorAll('input[name=modo]');
-    let modo;
-    radios.forEach(radio => {
-        radio.addEventListener('change', () => {
-            modo = radio.value;
-        });
-    });
+    if (radios != undefined) {
+        modo = document.querySelector('input[name=modo]:checked').value;
 
-    botonR.addEventListener('click', () => ipcRenderer.send('empieza_procesamiento', modo), true);
+        radios.forEach(radio => {
+            radio.addEventListener('change', () => {
+                modo = radio.value;
+            });
+        });
+    }
+
+    btnConf.addEventListener('click', () => ipcRenderer.send('cargar_pantalla_configuracion', modo), true);
 });
+
+// ipcRenderer.on('fichero_seleccionado', (event, arg) => {
+//     console.log('hola');
+//     let threshold;
+//     let voz;
+//     if (arg != undefined) {
+//         threshold = arg.threshold_value;
+//         voz = arg.elegidoIdioma;
+//     }
+//     else {
+//         threshold = 0.5;
+//         voz = "Microsoft Zira Desktop - English (United States)";
+//         const btnConf = document.querySelector('#btnConf');
+
+//         if (btnConf != undefined) {
+//             if (esperandoVoces == undefined) {
+//                 speechSynthesis.addEventListener('voiceschanged', () => {
+//                     esperandoVoces = speechSynthesis.getVoices();
+//                     let label = document.querySelector('#fileName');
+//                     let fichero = label.innerHTML;
+//                     btnConf.addEventListener('click', () => ipcRenderer.send('cargar_pantalla_configuracion', fichero), true);
+//                 });
+//             }
+//         }
+//     }
+//     // 2.1 Evento para el botón de configuración
+
+//     let radios = document.querySelectorAll('input[name=modo]');
+//     if (radios != undefined) {
+//         modo = document.querySelector('input[name=modo]:checked').value;
+
+//         radios.forEach(radio => {
+//             radio.addEventListener('change', () => {
+//                 modo = radio.value;
+//             });
+//         });
+//     }
+
+//     let botonR = document.querySelector('#btnProcesar');
+//     botonR.addEventListener('click', () => {
+//         let label = document.querySelector('#fileName');
+//         let fichero = label.innerHTML;
+
+//         if (fichero == undefined || fichero == '') {
+//             Swal.fire({
+//                 title: 'Oops...',
+//                 text: 'No has seleccionado ningún fichero',
+//                 icon: 'error',
+//                 confirmButtonText: 'Volver'
+//             });
+//         }
+//         else {
+//             let obj = {
+//                 modo,
+//                 threshold,
+//                 voz
+//             };
+
+//             ipcRenderer.send('empezar_procesamiento', obj);
+//         }
+
+//     }, true);
+// });
 
 // 4.3 Si no se ha seleccionado ningún fichero, envío un mensaje de error
-ipcRenderer.on('not-file-found', (event, arg) => {
-    alert('No se ha encontrado el fichero');
+ipcRenderer.on('no_fichero_seleccionado', (event, arg) => {
+    Swal.fire({
+        icon: 'error',
+        title: 'Oops...',
+        text: 'No has seleccionado ningún fichero',
+    });
 });
 
 // Si no, actualiza el nombre del label con el nombre del fichero
-ipcRenderer.on('actualiza-label', (event, arg) => {
+ipcRenderer.on('actualiza_etiqueta', (event, arg) => {
     let label = document.querySelector('#fileName');
     label.innerHTML = arg;
 });
-
-ipcRenderer.on('fichero_subido', (event, arg) => {
-    console.log('Fichero subido correctamente a la BBDD');
-});
-
 /////////////////////////// Este código afecta a -> formulario_descripcion.html ///////////////////////////
 let plyr = require('plyr');
 const player = new plyr('#player');
-let voice;
 
 
 function convierteTiempo(seconds) {
@@ -183,7 +157,7 @@ function convierteTiempo(seconds) {
     const remainingSeconds = seconds % 60;
     return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${remainingSeconds.toFixed(0).padStart(2, '0')}`;
 }
-;
+
 // 7.1 Tras cargar la pantalla de formulario añado todos los elemnentos HTML dinámicos
 ipcRenderer.on('mostrar_formulario', (event, arg) => {
     // Tengo que mostrar el video
@@ -197,8 +171,11 @@ ipcRenderer.on('mostrar_formulario', (event, arg) => {
     datos_fichero = arg.datos_fichero;
 
     if (silencios.length == 0) {
-        let span = document.createElement('span');
-        span.innerHTML = 'No se han encontrado silencios';
+        Swal.fire({
+            icon: 'warning',
+            title: 'Oops...',
+            text: 'No se han encontrado silencios en el fichero',
+        });
         // Opción de añadir manualmente
     }
     else {
@@ -211,8 +188,8 @@ ipcRenderer.on('mostrar_formulario', (event, arg) => {
         var i = 0;
         silencios.forEach(silencio => {
             let idDescripcion = `desc${i}`;
-            let start = convierteTiempo(silencio.start);
-            let end = convierteTiempo(silencio.end);
+            let start = silencio.start;
+            let end = silencio.end;
             let tr = document.createElement('tr');
             tr.className = idDescripcion;
 
@@ -283,6 +260,9 @@ ipcRenderer.on('mostrar_formulario', (event, arg) => {
             }
             ipcRenderer.send('cambia_archivo_js_grabacion', args);
         }
+        else{
+
+        }
 
         // speechSynthesis.addEventListener('voiceschanged', () => {
         //     voice = speechSynthesis.getVoices().filter(voice => voice.lang.startsWith('es') && voice.name.includes('Spain') && voice.name.includes('victor'));
@@ -293,171 +273,171 @@ ipcRenderer.on('mostrar_formulario', (event, arg) => {
     }
 });
 
-function compruebaAudios(silencios, datos_fichero) {
-    var audioBlobs = [];
-    let audioChunks = [];
-    let promesas = [];
-    console.log('Comprobando audios...');
-    let inputs = document.querySelectorAll('.inputSilencio');
-    let contadorInputs = 0;
-    let contadorErrores = 0;
+// function compruebaAudios(silencios, datos_fichero) {
+//     var audioBlobs = [];
+//     let audioChunks = [];
+//     let promesas = [];
+//     console.log('Comprobando audios...');
+//     let inputs = document.querySelectorAll('.inputSilencio');
+//     let contadorInputs = 0;
+//     let contadorErrores = 0;
 
-    navigator.mediaDevices.getUserMedia({ audio: true })
-        .then(stream => {
-            inputs.forEach((input) => {
-                audioChunks = [];
-                let recorder = new MediaRecorder(stream);
+//     navigator.mediaDevices.getUserMedia({ audio: true })
+//         .then(stream => {
+//             inputs.forEach((input) => {
+//                 audioChunks = [];
+//                 let recorder = new MediaRecorder(stream);
 
-                let tr = queryAncestorSelector(input, 'tr');
-                if (input.value == '' || input.value == null) {
-                    añadirComprobacion(tr, false);
-                    contadorErrores += 1;
-                } else {
-                    let idDesc = tr.className;
-                    let output = `${datos_fichero.ruta.split('org_')[0]}${idDesc}.blob`;
-                    const utterance = new SpeechSynthesisUtterance();
-                    utterance.text = input.value;
-                    utterance.lang = voice;
-                    utterance.rate = 1;
-                    utterance.pitch = 1;
+//                 let tr = queryAncestorSelector(input, 'tr');
+//                 if (input.value == '' || input.value == null) {
+//                     añadirComprobacion(tr, false);
+//                     contadorErrores += 1;
+//                 } else {
+//                     let idDesc = tr.className;
+//                     let output = `${datos_fichero.ruta.split('org_')[0]}${idDesc}.blob`;
+//                     const utterance = new SpeechSynthesisUtterance();
+//                     utterance.text = input.value;
+//                     utterance.lang = voice;
+//                     utterance.rate = 1;
+//                     utterance.pitch = 1;
 
-                    let startTime;
-                    utterance.addEventListener('start', () => {
-                        startTime = new Date();
-                    });
+//                     let startTime;
+//                     utterance.addEventListener('start', () => {
+//                         startTime = new Date();
+//                     });
 
-                    utterance.addEventListener('end', () => {
-                        const elapsed = (new Date() - startTime) / 1000;
-                        const correct = elapsed > silencios[contadorInputs].duration ? false : true;
-                        contadorErrores += añadirComprobacion(tr, correct);
-                        contadorInputs += 1;
-                        recorder.stop();
-                        // resolve();
-                    });
+//                     utterance.addEventListener('end', () => {
+//                         const elapsed = (new Date() - startTime) / 1000;
+//                         const correct = elapsed > silencios[contadorInputs].duration ? false : true;
+//                         contadorErrores += añadirComprobacion(tr, correct);
+//                         contadorInputs += 1;
+//                         recorder.stop();
+//                         // resolve();
+//                     });
 
-                    // promesas.push(promesa);
-                    promesa = new Promise((resolve, reject) => {
-                        recorder.addEventListener('dataavailable', e => {
-                            audioChunks.push(e.data);
-                            if (recorder.state == 'inactive') {
-                                let blob = new Blob(audioChunks, { type: 'audio/webm; codecs=opus' });
-                                audioBlobs.push([blob, output]);
-                                resolve(audioBlobs);
-                                chunks = [];
-                            }
-                        });
-                    });
+//                     // promesas.push(promesa);
+//                     promesa = new Promise((resolve, reject) => {
+//                         recorder.addEventListener('dataavailable', e => {
+//                             audioChunks.push(e.data);
+//                             if (recorder.state == 'inactive') {
+//                                 let blob = new Blob(audioChunks, { type: 'audio/webm; codecs=opus' });
+//                                 audioBlobs.push([blob, output]);
+//                                 resolve(audioBlobs);
+//                                 chunks = [];
+//                             }
+//                         });
+//                     });
 
-                    promesas.push(promesa);
-                    speechSynthesis.speak(utterance);
-                    recorder.start();
-                }
-            });
+//                     promesas.push(promesa);
+//                     speechSynthesis.speak(utterance);
+//                     recorder.start();
+//                 }
+//             });
 
-            return Promise.all(promesas);
-        })
-        .then(audioBlobs => {
-            if (contadorErrores > 0) {
-                Swal.fire({
-                    title: '¡Atención!',
-                    text: 'Hay errores en la descripción de los silencios. Por favor, revisa los campos en rojo',
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonText: 'Enviar',
-                    cancelButtonText: 'Cancelar'
-                }).then((result) => {
-                    if (result.value) {
-                        // El usuario hizo clic en "Enviar"
-                        console.log('Listo para enviar.');
-                        guardarAudios(audioBlobs);
-                    }
-                    else {
-                        // El usuario hizo clic en "Cancelar"
-                        console.log('El usuario canceló el envío.');
-                    }
-                });
-            }
-            else {
-                console.log('Listo para enviar.');
-                guardarAudios(audioBlobs);
-            }
-        })
-        .catch(err => console.log(err));
-}
+//             return Promise.all(promesas);
+//         })
+//         .then(audioBlobs => {
+//             if (contadorErrores > 0) {
+//                 Swal.fire({
+//                     title: '¡Atención!',
+//                     text: 'Hay errores en la descripción de los silencios. Por favor, revisa los campos en rojo',
+//                     icon: 'warning',
+//                     showCancelButton: true,
+//                     confirmButtonText: 'Enviar',
+//                     cancelButtonText: 'Cancelar'
+//                 }).then((result) => {
+//                     if (result.value) {
+//                         // El usuario hizo clic en "Enviar"
+//                         console.log('Listo para enviar.');
+//                         guardarAudios(audioBlobs);
+//                     }
+//                     else {
+//                         // El usuario hizo clic en "Cancelar"
+//                         console.log('El usuario canceló el envío.');
+//                     }
+//                 });
+//             }
+//             else {
+//                 console.log('Listo para enviar.');
+//                 guardarAudios(audioBlobs);
+//             }
+//         })
+//         .catch(err => console.log(err));
+// }
 
-function blobToArrayBuffer(blob) {
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = reject;
-        reader.readAsArrayBuffer(blob);
-    });
-}
+// function blobToArrayBuffer(blob) {
+//     return new Promise((resolve, reject) => {
+//         const reader = new FileReader();
+//         reader.onload = () => resolve(reader.result);
+//         reader.onerror = reject;
+//         reader.readAsArrayBuffer(blob);
+//     });
+// }
 
-function guardarAudios(audioBlobs) {
-    // Filtra los objetos undefined y toma el primero
-    let filtered = audioBlobs.filter(blob => blob != undefined)[0];
-    console.log(filtered);
+// function guardarAudios(audioBlobs) {
+//     // Filtra los objetos undefined y toma el primero
+//     let filtered = audioBlobs.filter(blob => blob != undefined)[0];
+//     console.log(filtered);
 
-    for (let i = 0; i < filtered.length; i++) {
-        let blob = filtered[i][0];
-        let output = filtered[i][1];
+//     for (let i = 0; i < filtered.length; i++) {
+//         let blob = filtered[i][0];
+//         let output = filtered[i][1];
 
-        blobToArrayBuffer(blob).then(arrayBuffer => {
-            fs.writeFile(output, Buffer.from(arrayBuffer), (err) => {
-                if (err) console.log(err);
-                else {
-                    console.log('Archivo guardado correctamente')
-                }
-            });
-        });
-    }
-}
+//         blobToArrayBuffer(blob).then(arrayBuffer => {
+//             fs.writeFile(output, Buffer.from(arrayBuffer), (err) => {
+//                 if (err) console.log(err);
+//                 else {
+//                     console.log('Archivo guardado correctamente')
+//                 }
+//             });
+//         });
+//     }
+// }
 
-function añadirComprobacion(tr, correct) {
-    let existe = tr.querySelector('.comprobacion');
+// function añadirComprobacion(tr, correct) {
+//     let existe = tr.querySelector('.comprobacion');
 
-    let span = document.createElement('span');
-    span.title = correct ? 'La descripción se adecua al tiempo' : 'La descripción no se adecua al tiempo';
-    span.className = correct ? 'correcto' : 'incorrecto';
-    span.innerHTML = correct ? '🟢' : '🔴';
+//     let span = document.createElement('span');
+//     span.title = correct ? 'La descripción se adecua al tiempo' : 'La descripción no se adecua al tiempo';
+//     span.className = correct ? 'correcto' : 'incorrecto';
+//     span.innerHTML = correct ? '🟢' : '🔴';
 
-    if (existe) {
-        return actualizaEstado(existe.querySelector('span'), correct);
-    }
-    else {
-        let td = document.createElement('td');
-        td.className = 'comprobacion';
-        td.appendChild(span);
-        tr.appendChild(td);
+//     if (existe) {
+//         return actualizaEstado(existe.querySelector('span'), correct);
+//     }
+//     else {
+//         let td = document.createElement('td');
+//         td.className = 'comprobacion';
+//         td.appendChild(span);
+//         tr.appendChild(td);
 
-        if (span.className === 'correcto') {
-            return 0;
-        }
-        else {
-            return 1;
-        }
-    }
-}
+//         if (span.className === 'correcto') {
+//             return 0;
+//         }
+//         else {
+//             return 1;
+//         }
+//     }
+// }
 
-function actualizaEstado(spanExiste, correct) {
-    if (spanExiste.innerHTML === '🔴') {
-        if (correct) {
-            spanExiste.innerHTML = '🟢';
-            spanExiste.title = 'La descripción se adecua al tiempo';
-            spanExiste.className = 'correcto';
-            return 0;
-        }
-    }
-    else if (spanExiste.innerHTML === '🟢') {
-        if (!correct) {
-            spanExiste.innerHTML = '🔴';
-            spanExiste.title = 'La descripción no se adecua al tiempo';
-            spanExiste.className = 'incorrecto';
-            return 1;
-        }
-    }
-}
+// function actualizaEstado(spanExiste, correct) {
+//     if (spanExiste.innerHTML === '🔴') {
+//         if (correct) {
+//             spanExiste.innerHTML = '🟢';
+//             spanExiste.title = 'La descripción se adecua al tiempo';
+//             spanExiste.className = 'correcto';
+//             return 0;
+//         }
+//     }
+//     else if (spanExiste.innerHTML === '🟢') {
+//         if (!correct) {
+//             spanExiste.innerHTML = '🔴';
+//             spanExiste.title = 'La descripción no se adecua al tiempo';
+//             spanExiste.className = 'incorrecto';
+//             return 1;
+//         }
+//     }
+// }
 
 function queryAncestorSelector(node, selector) {
     // Obtengo el nodo padre
@@ -474,6 +454,8 @@ function queryAncestorSelector(node, selector) {
     }
     return (found) ? parent : null;
 }
+
+module.exports.queryAncestorSelector = queryAncestorSelector;
 
 var comprobado = false;
 // poner boton para añadir tiempo actual

@@ -97,7 +97,6 @@ app.on('ready', () => {
 
 // 2. Partiendo de la página de index.html, se redirige a la página de subir ficheros, inicio o información
 ipcMain.on('redirige_pagina', (event, arg) => {
-    console.log(arg);
     ventanaPrincipal.loadURL(url.format({
         pathname: path.join(__dirname, 'views', arg),
         protocol: 'file',
@@ -108,12 +107,12 @@ ipcMain.on('redirige_pagina', (event, arg) => {
     ventanaPrincipal.openDevTools();
     if (arg == 'sube_ficheros.html') {
         ventanaPrincipal.webContents.on('did-finish-load', () => {
-            ventanaPrincipal.webContents.send('subir_ficheros', 'Añadir evento asíncrono');
+            ventanaPrincipal.webContents.send('subir_ficheros');
         });
     }
 });
 
-
+var obj;
 ipcMain.on('cargar_pantalla_configuracion', (event, arg) => {
     ventanaPrincipal.loadURL(url.format({
         pathname: path.join(__dirname, 'views', 'configuracion.html'),
@@ -121,12 +120,36 @@ ipcMain.on('cargar_pantalla_configuracion', (event, arg) => {
         slashes: true,
     }));
 
+    obj.modo = arg;
     ventanaPrincipal.webContents.on('did-finish-load', () => {
-        ventanaPrincipal.webContents.send('pantalla_configuracion_cargada', 'Añadir evento asíncrono');
+        ventanaPrincipal.webContents.send('pantalla_configuracion_cargada', obj.modo);
     });
 });
+
+// ipcMain.on('configuracion_guardada', (event, arg) => {
+//     ventanaPrincipal.loadURL(url.format({
+//         pathname: path.join(__dirname, 'views', 'sube_ficheros.html'),
+//         protocol: 'file',
+//         slashes: true,
+//     }));
+
+//     // Si es la página de subir ficheros, se añade un evento para que se pueda subir el fichero
+//     ventanaPrincipal.openDevTools();
+//     let threshold_value = arg.threshold_value;
+//     let elegidoIdioma = arg.elegidoIdioma;
+
+//     ventanaPrincipal.webContents.on('did-finish-load', () => {
+//         let obj = {
+//             elegidoIdioma,
+//             threshold_value
+//         };
+
+//         ventanaPrincipal.webContents.send('subir_ficheros', obj);
+//     });
+// });
+
 // 4.1 Abre el diálogo para seleccionar el fichero
-ipcMain.on('requestFile', (event, arg) => {
+ipcMain.on('pedir_fichero', (event, arg) => {
     dialog.showOpenDialog({
         properties: ['openFile']
     }).then(result => {
@@ -134,11 +157,11 @@ ipcMain.on('requestFile', (event, arg) => {
 
         // 4.3 Si no se ha seleccionado ningún fichero, envío un mensaje de error
         if (path == "" || path == null) {
-            ventanaPrincipal.webContents.send('not-file-found', 'No has seleccionado ningún fichero');
+            ventanaPrincipal.webContents.send('no_fichero_seleccionado', 'No has seleccionado ningún fichero');
         }
         else {
             // Una vez se seleccione el fichero, lo almaceno en la base de datos y en el FS
-            ventanaPrincipal.webContents.send('file-found', 'Fichero encontrado');
+            ventanaPrincipal.webContents.send('fichero_seleccionado', 'Fichero seleccionado correctamente');
             addVideo(result.filePaths[0]);
         }
     }).catch(err => {
@@ -152,18 +175,12 @@ function getMediaName(media) {
     media_name = media_name[media_name.length - 1];
     return media_name;
 }
-
-var obj;
 // app.disableHardwareAcceleration()
 // Guardado del fichero
 async function addVideo(media) {
     let media_name = getMediaName(media);
 
     await db.connect((err) => {
-        if (err) throw err;
-        console.log('Conectado a la base de datos MySQL');
-
-        // Lo guardo el FS
         const video = fs.readFileSync(media);
 
         let ruta = path.join(__dirname, 'contenido', media_name.split('.')[0]);
@@ -177,7 +194,7 @@ async function addVideo(media) {
         });
 
         // Actualizo el label del HTML
-        ventanaPrincipal.webContents.send('actualiza-label', media_name);
+        ventanaPrincipal.webContents.send('actualiza_etiqueta', media_name);
 
         // Guardo la referencia en la base de datos
         db.query('INSERT INTO video (name, ruta) VALUES (?, ?)', [media_name, ruta], (err, result) => {
@@ -188,18 +205,17 @@ async function addVideo(media) {
             media_name,
             ruta
         };
-
-        // 5. Una vez se haya subido el fichero, se envía un evento para indicarque se puede procesar
-        // No es necesario
-        ventanaPrincipal.webContents.send('fichero_subido', obj);
     });
 }
 
-var modo;
 // 4.2 Cuando se clicke sobre el botón de describir, empiezo el proceso de descripción -> ffmpeg.js
-ipcMain.on('empieza_procesamiento', (event, arg) => {
-    obj.modo = arg;
-    ventanaPrincipal.webContents.send('procesa-check', obj);
+ipcMain.on('empezar_procesamiento', (event, arg) => {
+    if(arg.length != 0){
+        obj.threshold_value = arg.threshold_value;
+        obj.idioma = arg.elegidoIdioma;
+    }
+
+    ventanaPrincipal.webContents.send('busca_silencios', obj);
 });
 
 // 6. Recibo el evento de pantalla de carga y renderizo la pantalla de carga
@@ -223,6 +239,7 @@ ipcMain.on('audio_analizado', (event, arg) => {
         slashes: true,
     }));
 
+    console.log(arg);
     // 7.1 Creo el formulario
     ventanaPrincipal.webContents.on('did-finish-load', () => {
         ventanaPrincipal.webContents.send('mostrar_formulario', arg);
