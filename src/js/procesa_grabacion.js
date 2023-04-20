@@ -213,6 +213,8 @@ async function almacenaWav(blob, output) {
     }
 }
 
+
+
 function tiempoEnMilisegundos(tiempo) {
     let partes = tiempo.split(':');
     let horas = parseInt(partes[0]);
@@ -226,51 +228,93 @@ function concatena(audios) {
     let ruta_video = datos_fichero.ruta;
     let ruta_video_output = ruta_video.replace('org_', 'mod_');
 
-    let filtro = "";
+    let inputs = '';
+    let filter = '';
+    let preFiltro = '';
     for (let i = 0; i < audios.length; i++) {
         let indice = getIndex(audios[i][1]);
         let start = tiempoEnMilisegundos(silencios[indice].start);
 
-        filtro += `[${i}:a]adelay=${start}|${start}[a${i}];`;
+        inputs += ` -i ${audios[i][1].replace('.blob', '.mp3')}`;
+
+        filter += `[${i + 1}:a]adelay=${start}|${start}[a${i + 1}];`;
+        preFiltro += `[a${i + 1}]`;
     }
 
-    filtro += `[${audios.map((_, i) => `a${i}`).join('][')}]amix=inputs=${audios.length}[a]`;
+    filter += `[0:a]${preFiltro}amix=inputs=${audios.length + 1}[a]`;
 
-
-
-    const args = [
-        '-i', ruta_video,
-        ...audios.map(audio => ['-i', audio[1]]).flat(),
-        '-filter_complex', filtro,
-        '-map', '0:v',
-        '-map', '[a]',
-        '-c:a', 'aac',
-        '-strict', 'experimental',
-        '-y',
-        '-shortest', ruta_video_output
-    ];
-
-    console.log(args);
-    const ffmpeg = spawn(ffmpegPath, args);
-
-    return new Promise((resolve, reject) => {
-        ffmpeg.stdout.on('data', (data) => {
-            console.log(`stdout: ${data}`);
-        });
-
-        ffmpeg.stderr.on('data', (data) => {
-            console.error(`stderr: ${data}`);
-        });
-        ffmpeg.on('close', (code) => {
-            if (code !== 0) {
-                console.error(`ffmpeg process exited with code ${code}`);
-                reject(`ffmpeg process exited with code ${code}`);
-            } else {
-                console.log(`Tracks inserted into video`);
-                resolve();
-            }
-        });
+    let command = `${ffmpegPath} -i ${ruta_video} ${inputs} -filter_complex "${filter}" -map 0:v -map [a] -c:v copy -c:a aac -strict experimental -y ${ruta_video_output}`;
+    console.log(command);
+    exec(command, (err, stdout, stderr) => {
+        if (err) {
+            console.error(err);
+            return;
+        } else {
+            console.log(`-- Creado ${ruta_video_output} --`);
+        }
     });
+}
+
+    // ffmpeg()
+    // .input(ruta_video)
+    // .input(inputs)
+    // .complexFilter(`"${filter}"`)
+    // .outputOptions([
+    //     '-map 0:v',
+    //     '-map [a]',
+    //     '-c:v copy',
+    //     '-c:a aac',
+    //     '-strict experimental',
+    //     '-y'
+    // ])
+    // .output(ruta_video_output)
+    // .on('start', function (commandLine) {
+    //     console.log('Spawned Ffmpeg with command: ' + commandLine);
+    // })
+    // .on('error', function (err) {
+    //     console.log('An error occurred: ' + err.message);
+    // })
+    // .on('end', function () {
+    //     console.log('Processing finished !');
+    // })
+    // .run();
+
+    // const args = [
+    //     '-i', ruta_video,
+    //     inputs,
+    //     '-filter_complex', filter,
+    //     '-map', '0:v',
+    //     '-map', '[a]',
+    //     '-c:v', 'copy',
+    //     '-c:a', 'aac',
+    //     '-strict', 'experimental',
+    //     '-y',
+    //     ruta_video_output
+    // ];
+
+    
+    // console.log(args);
+    // const ffmpeg = spawn(ffmpegPath, args);
+
+    // return new Promise((resolve, reject) => {
+    //     ffmpeg.stdout.on('data', (data) => {
+    //         console.log(`stdout: ${data}`);
+    //     });
+
+    //     ffmpeg.stderr.on('data', (data) => {
+    //         console.error(`stderr: ${data}`);
+    //     });
+
+    //     ffmpeg.on('close', (code) => {
+    //         if (code !== 0) {
+    //             console.error(`ffmpeg process exited with code ${code}`);
+    //             reject(`ffmpeg process exited with code ${code}`);
+    //         } else {
+    //             console.log(`Audio agregado al video`);
+    //             resolve();
+    //         }
+    //     });
+    // });
 
     // console.log("Ruta video: " + ruta_video);
     // console.log("Ruta video output: " + ruta_video_output);
