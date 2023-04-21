@@ -286,16 +286,22 @@ input[type='radio'] {
     height: 20% !important;
 }
 
-#tablaSilencios {
+#tablaSilencios,
+#tablaNuevoSilencio {
     border-collapse: collapse;
     width: 60%;
-    margin-top: 50px;
+    margin-top: 30px;
     text-align: center;
     margin-left: auto;
     margin-right: auto;
 }
 
-#tablaSilencios th {
+#tablaNuevoSilencio {
+    margin-top: 10px;
+}
+
+#tablaSilencios th,
+#tablaNuevoSilencio th {
     background-color: #eee;
     color: #666;
     font-weight: bold;
@@ -303,7 +309,8 @@ input[type='radio'] {
     text-align: center;
 }
 
-#tablaSilencios td {
+#tablaSilencios td,
+#tablaNuevoSilencio td {
     padding: 10px;
     border: 1px solid #ccc;
 }
@@ -314,6 +321,16 @@ input[type='radio'] {
     padding: 5px;
     border-radius: 5px;
     border: 1px solid #ccc;
+}
+
+.inputNuevoSilencio {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 5px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    display: inline;
+    margin-right: 10px;
 }
 
 .btnComprobar {
@@ -333,4 +350,52 @@ input[type='radio'] {
     display: flex;
     justify-content: center;
     margin-top: 10px;
+}
+
+.spanNuevoSilencio {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 10px;
+    margin-right: 10px;
+}
+
+.btnAddCurrentTime {
+    width: 25px;
+    height: 25px;
+    border-radius: 50%;
+    background-color: salmon;
+    color: white;
+    font-size: 25px;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    line-height: 25px;
+    position: relative;
+    margin-left: 10px;
+}
+
+.btnAddCurrentTime:hover {
+    background-color: white;
+    color: salmon;
+}
+
+.btnAddCurrentTime::after {
+    content: '+';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+#divNuevosSilencios {
+    display: block;
+    justify-content: center;
+}
+
+#btnAñadirSilencios {
+    width: 100px;
+    height: 60px;
 }

@@ -4,15 +4,12 @@ let recorder;
 let audioChunks = [];
 let audioBlobs = [];
 
-var silencios = [];
+let silencios = [];
 var datos_fichero = [];
 
-ipcRenderer.on('cambiar_archivo', (event, arg) => {
-    silencios = arg.silencios;
-    datos_fichero = arg.datos_fichero;
-    // Obtengo los botones para añadir los eventos
-    const btnsGrabar = document.querySelectorAll('.btnGrabar');
-    const btnsParar = document.querySelectorAll('.btnParar');
+function añadirBotonesControl(etiqueta){
+    const btnsGrabar = etiqueta.querySelectorAll('.btnGrabar');
+    const btnsParar = etiqueta.querySelectorAll('.btnParar');
     // Añado los eventos a los botones
     btnsGrabar.forEach(btn => {
         btn.addEventListener('click', function (event) { grabarVoz(event) }, false);
@@ -25,6 +22,13 @@ ipcRenderer.on('cambiar_archivo', (event, arg) => {
     let btnEnviar = document.querySelector('#btnEnviar');
 
     btnEnviar.addEventListener('click', function (event) { comprobarGrabaciones(event) }, false);
+}
+
+ipcRenderer.on('cambiar_archivo', (event, arg) => {
+    silencios = arg.silencios;
+    datos_fichero = arg.datos_fichero;
+    // Obtengo los botones para añadir los eventos
+    añadirBotonesControl(document);
 });
 
 let btnGrabarApretado = null;
@@ -101,7 +105,6 @@ function pararVoz(event) {
                 let result = await compruebaSilencios(output, blob);
                 let estado = result[0];
                 let buffer = result[1];
-                console.log(buffer);
                 actualizaEstado(estado, buffer, btn.id.split('_')[0]);
                 audioBlobs.push([blob, output, estado]);
             }
@@ -141,7 +144,8 @@ function getIndex(output) {
 // True si es mayor
 // False si es menor
 async function compruebaSilencios(output, blob) {
-    const indice = getIndex(output)
+    const indice = getIndex(output);
+    console.log(silencios);
     const silenceDuration = silencios[indice].duration;
 
     try {
@@ -214,7 +218,6 @@ async function almacenaWav(blob, output) {
 }
 
 
-
 function tiempoEnMilisegundos(tiempo) {
     let partes = tiempo.split(':');
     let horas = parseInt(partes[0]);
@@ -224,6 +227,15 @@ function tiempoEnMilisegundos(tiempo) {
     return (horas * 3600 + minutos * 60 + segundos) * 1000;
 }
 
+function tiempoEnSegundos(tiempo) {
+    var partes = tiempo.split(":");
+    var horas = parseInt(partes[0]);
+    var minutos = parseInt(partes[1]);
+    var segundos = parseInt(partes[2]);
+  
+    return horas * 3600 + minutos * 60 + segundos;
+  }
+
 function concatena(audios) {
     let ruta_video = datos_fichero.ruta;
     let ruta_video_output = ruta_video.replace('org_', 'mod_');
@@ -231,125 +243,38 @@ function concatena(audios) {
     let inputs = '';
     let filter = '';
     let preFiltro = '';
+
+    let inputsToResolve = [];
+    let silencesToResolve = [];
+
     for (let i = 0; i < audios.length; i++) {
+        // Obtengo el indice para saber el silencio
         let indice = getIndex(audios[i][1]);
         let start = tiempoEnMilisegundos(silencios[indice].start);
 
+        // Empiezo a crear el comando
         inputs += ` -i ${audios[i][1].replace('.blob', '.mp3')}`;
-
+        // Empiezo con el filtro
         filter += `[${i + 1}:a]adelay=${start}|${start}[a${i + 1}];`;
+
+        // Flags adicionales
         preFiltro += `[a${i + 1}]`;
     }
 
     filter += `[0:a]${preFiltro}amix=inputs=${audios.length + 1}[a]`;
 
     let command = `${ffmpegPath} -i ${ruta_video} ${inputs} -filter_complex "${filter}" -map 0:v -map [a] -c:v copy -c:a aac -strict experimental -y ${ruta_video_output}`;
-    console.log(command);
-    exec(command, (err, stdout, stderr) => {
-        if (err) {
-            console.error(err);
-            return;
-        } else {
-            console.log(`-- Creado ${ruta_video_output} --`);
-        }
-    });
-}
-
-    // ffmpeg()
-    // .input(ruta_video)
-    // .input(inputs)
-    // .complexFilter(`"${filter}"`)
-    // .outputOptions([
-    //     '-map 0:v',
-    //     '-map [a]',
-    //     '-c:v copy',
-    //     '-c:a aac',
-    //     '-strict experimental',
-    //     '-y'
-    // ])
-    // .output(ruta_video_output)
-    // .on('start', function (commandLine) {
-    //     console.log('Spawned Ffmpeg with command: ' + commandLine);
-    // })
-    // .on('error', function (err) {
-    //     console.log('An error occurred: ' + err.message);
-    // })
-    // .on('end', function () {
-    //     console.log('Processing finished !');
-    // })
-    // .run();
-
-    // const args = [
-    //     '-i', ruta_video,
-    //     inputs,
-    //     '-filter_complex', filter,
-    //     '-map', '0:v',
-    //     '-map', '[a]',
-    //     '-c:v', 'copy',
-    //     '-c:a', 'aac',
-    //     '-strict', 'experimental',
-    //     '-y',
-    //     ruta_video_output
-    // ];
-
     
-    // console.log(args);
-    // const ffmpeg = spawn(ffmpegPath, args);
-
-    // return new Promise((resolve, reject) => {
-    //     ffmpeg.stdout.on('data', (data) => {
-    //         console.log(`stdout: ${data}`);
-    //     });
-
-    //     ffmpeg.stderr.on('data', (data) => {
-    //         console.error(`stderr: ${data}`);
-    //     });
-
-    //     ffmpeg.on('close', (code) => {
-    //         if (code !== 0) {
-    //             console.error(`ffmpeg process exited with code ${code}`);
-    //             reject(`ffmpeg process exited with code ${code}`);
-    //         } else {
-    //             console.log(`Audio agregado al video`);
-    //             resolve();
-    //         }
-    //     });
-    // });
-
-    // console.log("Ruta video: " + ruta_video);
-    // console.log("Ruta video output: " + ruta_video_output);
-    // console.log("Audio: " + audio);
-
-    // let start = tiempoEnMilisegundos(silencios[indice].start);
-
-
-    // return new Promise((resolve, reject) => {
-    //     ffmpeg()
-    //         .input(ruta_video)
-    //         .input(audio)
-    //         .complexFilter(filtro)
-    //         .outputOptions([
-    //             '-map', '0:v',
-    //             '-map', '[a]',
-    //             '-c:v', 'copy',
-    //             '-c:a', 'aac',
-    //             '-strict', 'experimental',
-    //             '-shortest',
-    //             '-threads 4'
-    //         ])
-    //         .on('start', (commandLine) => {
-    //             console.log('Spawned Ffmpeg with command: ' + commandLine);
-    //         })
-    //         .on('error', (err) => {
-    //             console.log('An error occurred: ' + err.message);
-    //         })
-    //         .on('end', () => {
-    //             console.log('Processing finished !');
-    //             resolve();
-    //         })
-    //         .save(ruta_video_output)
-    //         .run();
-    // });
+    return new Promise((resolve, reject) => {
+        exec(command, (err, stdout, stderr) => {
+            if (err) {
+                console.error(err);
+                return;
+            } else {
+                resolve();
+            }
+        });
+    });
 }
 
 async function comprobarGrabaciones(event) {
@@ -404,6 +329,7 @@ async function comprobarGrabaciones(event) {
 
         await concatena(audioBlobs).then(() => {
             console.log('-------------------------------------------');
+            crearWebvtt();
         });
     }
     catch (err) {

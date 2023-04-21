@@ -69,69 +69,6 @@ ipcRenderer.on('fichero_seleccionado', (event, arg) => {
     btnConf.addEventListener('click', () => ipcRenderer.send('cargar_pantalla_configuracion', modo), true);
 });
 
-// ipcRenderer.on('fichero_seleccionado', (event, arg) => {
-//     console.log('hola');
-//     let threshold;
-//     let voz;
-//     if (arg != undefined) {
-//         threshold = arg.threshold_value;
-//         voz = arg.elegidoIdioma;
-//     }
-//     else {
-//         threshold = 0.5;
-//         voz = "Microsoft Zira Desktop - English (United States)";
-//         const btnConf = document.querySelector('#btnConf');
-
-//         if (btnConf != undefined) {
-//             if (esperandoVoces == undefined) {
-//                 speechSynthesis.addEventListener('voiceschanged', () => {
-//                     esperandoVoces = speechSynthesis.getVoices();
-//                     let label = document.querySelector('#fileName');
-//                     let fichero = label.innerHTML;
-//                     btnConf.addEventListener('click', () => ipcRenderer.send('cargar_pantalla_configuracion', fichero), true);
-//                 });
-//             }
-//         }
-//     }
-//     // 2.1 Evento para el botón de configuración
-
-//     let radios = document.querySelectorAll('input[name=modo]');
-//     if (radios != undefined) {
-//         modo = document.querySelector('input[name=modo]:checked').value;
-
-//         radios.forEach(radio => {
-//             radio.addEventListener('change', () => {
-//                 modo = radio.value;
-//             });
-//         });
-//     }
-
-//     let botonR = document.querySelector('#btnProcesar');
-//     botonR.addEventListener('click', () => {
-//         let label = document.querySelector('#fileName');
-//         let fichero = label.innerHTML;
-
-//         if (fichero == undefined || fichero == '') {
-//             Swal.fire({
-//                 title: 'Oops...',
-//                 text: 'No has seleccionado ningún fichero',
-//                 icon: 'error',
-//                 confirmButtonText: 'Volver'
-//             });
-//         }
-//         else {
-//             let obj = {
-//                 modo,
-//                 threshold,
-//                 voz
-//             };
-
-//             ipcRenderer.send('empezar_procesamiento', obj);
-//         }
-
-//     }, true);
-// });
-
 // 4.3 Si no se ha seleccionado ningún fichero, envío un mensaje de error
 ipcRenderer.on('no_fichero_seleccionado', (event, arg) => {
     Swal.fire({
@@ -150,7 +87,6 @@ ipcRenderer.on('actualiza_etiqueta', (event, arg) => {
 let plyr = require('plyr');
 const player = new plyr('#player');
 
-
 function convierteTiempo(seconds) {
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
@@ -159,6 +95,165 @@ function convierteTiempo(seconds) {
 }
 
 // 7.1 Tras cargar la pantalla de formulario añado todos los elemnentos HTML dinámicos
+function getCurrentSecond(event) {
+    let btn = event.currentTarget;
+    let input = btn.previousSibling;
+    let player = document.querySelector('#player');
+    let currentTime = player.currentTime;
+    input.value = convierteTiempo(currentTime);
+}
+
+function añadeStartEnd() {
+    let td = document.createElement('td');
+    let span = document.createElement('span');
+    span.className = 'spanNuevoSilencio';
+
+    let input = document.createElement('input');
+    input.type = 'text';
+    input.class = 'inputNuevoSilencio';
+
+    let btnGetCurrentSecond = document.createElement('button');
+    btnGetCurrentSecond.className = 'btnAddCurrentTime';
+    btnGetCurrentSecond.innerHTML = '+';
+
+    btnGetCurrentSecond.addEventListener('click', () => getCurrentSecond(event)), true;
+
+    span.appendChild(input);
+    span.appendChild(btnGetCurrentSecond);
+    td.appendChild(span);
+
+    return td;
+}
+
+// Añadir comprobaciones
+function añadirSilencios(event, modo) {
+    let tabla = document.querySelector('#tablaNuevoSilencio');
+    let inputs = tabla.querySelectorAll('input');
+
+    let start = inputs[0].value;
+    let end = inputs[1].value;
+
+    if (start == '' || end == '') {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Oops...',
+            text: 'No has introducido todos los campos',
+        });
+    }
+    else {
+        if (start == end) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Oops...',
+                text: 'El inicio y el fin no pueden ser iguales',
+            });
+        }
+        else {
+            let idDescripcion = `desc${silenciosRenderer.length}`;
+            let tr = creaTr(idDescripcion, start, end, modo);
+            // Añadir los eventos de los botones
+            let obj = {
+                start: start,
+                end: end,
+                duration: (tiempoEnSegundos(end) - tiempoEnSegundos(start)).toString()
+            };
+
+            silenciosRenderer.push(obj);
+            silencios = silenciosRenderer;
+            añadirBotonesControl(tr);
+            let tablaSilencios = document.querySelector('#tablaSilencios');
+            tablaSilencios.appendChild(tr);
+        }
+    }
+}
+
+function tablaAñadirSilencio(divForm, modo) {
+    // Añado form de añadir silencios
+    let divNuevosSilencios = document.createElement('div');
+    divNuevosSilencios.id = 'divNuevosSilencios';
+
+    let tablaNuevoSilencio = document.createElement('table');
+    tablaNuevoSilencio.className = 'tablaSilencios';
+    tablaNuevoSilencio.id = 'tablaNuevoSilencio';
+    tablaNuevoSilencio.innerHTML = '<tr><th>Inicio</th><th>Fin</th><th></tr>';
+
+    let tr = document.createElement('tr');
+
+    let tdStart = añadeStartEnd();
+    let tdEnd = añadeStartEnd();
+
+    tr.appendChild(tdStart);
+    tr.appendChild(tdEnd);
+
+    tablaNuevoSilencio.appendChild(tr);
+    divNuevosSilencios.appendChild(tablaNuevoSilencio);
+
+    let btnAñadirSilencios = document.createElement('button');
+    btnAñadirSilencios.className = 'botonR boton';
+    btnAñadirSilencios.innerHTML = 'Añadir silencio';
+    btnAñadirSilencios.id = 'btnAñadirSilencios';
+
+    divNuevosSilencios.appendChild(btnAñadirSilencios);
+    btnAñadirSilencios.addEventListener('click', () => añadirSilencios(event, modo), true);
+
+    divForm.appendChild(divNuevosSilencios);
+}
+
+function creaTr(idDescripcion, start, end, modo) {
+    let tr = document.createElement('tr');
+    tr.className = idDescripcion;
+
+    let tdStart = document.createElement('td');
+    tdStart.innerHTML = start;
+
+    let tdEnd = document.createElement('td');
+    tdEnd.innerHTML = end;
+
+    let tdInput = document.createElement('td');
+    tdInput.className = 'input';
+
+    tr.appendChild(tdStart);
+    tr.appendChild(tdEnd);
+
+    if (modo == 2) {
+        let span = document.createElement('span');
+        span.clasName = "botonesVoz";
+
+        let btnGrabar = document.createElement('button');
+        btnGrabar.id = `${idDescripcion}_grabar`;
+        btnGrabar.className = 'btnGrabar botonR';
+        btnGrabar.innerHTML = 'Grabar';
+
+        let btnParar = document.createElement('button');
+        btnParar.id = `${idDescripcion}_parar`;
+        btnParar.className = 'btnParar botonR';
+        btnParar.innerHTML = 'Parar';
+
+        let btnPlay = document.createElement('button');
+        btnPlay.className = 'btnPlay botonR';
+        btnPlay.innerHTML = "⏵︎";
+
+        span.appendChild(btnGrabar);
+        span.appendChild(btnParar);
+        span.appendChild(btnPlay);
+        tdInput.appendChild(span);
+    }
+
+    tr.appendChild(tdInput);
+    return tr;
+}
+
+let silenciosRenderer;
+function enviarAudios(datos_fichero) {
+    console.log(silenciosRenderer);
+    let args = {
+        silenciosRenderer,
+        datos_fichero
+    };
+
+    ipcRenderer.send('cambia_archivo_js_grabacion', args);
+}
+
 ipcRenderer.on('mostrar_formulario', (event, arg) => {
     // Tengo que mostrar el video
     let video = document.querySelector('video');
@@ -167,102 +262,54 @@ ipcRenderer.on('mostrar_formulario', (event, arg) => {
 
     video.src = arg.datos_fichero.ruta;
 
-    silencios = arg.silencios;
+    silenciosRenderer = arg.silencios;
     datos_fichero = arg.datos_fichero;
 
-    if (silencios.length == 0) {
+    tablaAñadirSilencio(divForm, modo);
+
+    if (silenciosRenderer.length == 0) {
         Swal.fire({
             icon: 'warning',
             title: 'Oops...',
             text: 'No se han encontrado silencios en el fichero',
         });
-        // Opción de añadir manualmente
     }
     else {
-        // Por implementar:
-        // 1. Crear tabla con los silencios - Hecho
-        // 2. Crear botón de enviar - Hacer
         let tabla = document.createElement('table');
         tabla.id = 'tablaSilencios';
         tabla.innerHTML = '<tr><th>Inicio</th><th>Fin</th><th>Descripción</th></tr>';
         var i = 0;
-        silencios.forEach(silencio => {
+        silenciosRenderer.forEach(silencio => {
             let idDescripcion = `desc${i}`;
             let start = silencio.start;
             let end = silencio.end;
-            let tr = document.createElement('tr');
-            tr.className = idDescripcion;
-
-            let tdStart = document.createElement('td');
-            tdStart.innerHTML = start;
-            let tdEnd = document.createElement('td');
-            tdEnd.innerHTML = end;
-            tr.appendChild(tdStart);
-            tr.appendChild(tdEnd);
-
-            let tdInput = document.createElement('td');
-            tdInput.className = 'input';
+            let tr = creaTr(idDescripcion, start, end, modo);
             // El usuario ha elegido la opción de describir manualmente
-            if (modo == 1) {
-                let input = document.createElement('input');
-                input.type = 'text';
-                input.className = 'inputSilencio';
-                tdInput.appendChild(input);
-            }
+            // if (modo == 1) {
+            //     let input = document.createElement('input');
+            //     input.type = 'text';
+            //     input.className = 'inputSilencio';
+            //     tdInput.appendChild(input);
+            // }
             // El usuario ha elegido la opción de describir con voz
-            else {
-                let span = document.createElement('span');
-                span.clasName = "botonesVoz";
 
-                let btnGrabar = document.createElement('button');
-                btnGrabar.id = `${idDescripcion}_grabar`;
-                btnGrabar.className = 'btnGrabar botonR';
-                btnGrabar.innerHTML = 'Grabar';
-
-                let btnParar = document.createElement('button');
-                btnParar.id = `${idDescripcion}_parar`;
-                btnParar.className = 'btnParar botonR';
-                btnParar.innerHTML = 'Parar';
-
-                let btnPlay = document.createElement('button');
-                btnPlay.className = 'btnPlay botonR';
-                btnPlay.innerHTML = "⏵︎";
-
-                span.appendChild(btnGrabar);
-                span.appendChild(btnParar);
-                span.appendChild(btnPlay);
-
-                tdInput.appendChild(span);
-                // btnGrabar.addEventListener('click', function(event){grabarVoz(event, silencios, datos_fichero)}, false);
-                // btnParar.addEventListener('click', function(event){pararVoz(event, silencios, datos_fichero)}, true);
-            }
-            tr.appendChild(tdInput);
             tabla.appendChild(tr);
             i += 1;
         });
-        divForm.appendChild(tabla);
 
+        divForm.appendChild(tabla);
         // Creo los dos botones
         let btnEnviar = document.createElement('button');
         btnEnviar.innerHTML = 'Enviar';
         btnEnviar.className = 'botonR';
         btnEnviar.id = 'btnEnviar';
 
+        btnEnviar.addEventListener('click', () => enviarAudios(datos_fichero), true);
+
         // Los meto al DOM
         let divBotones = document.createElement('div');
         divBotones.appendChild(btnEnviar);
         divForm.appendChild(divBotones);
-
-        if (modo == 2) {
-            args = {
-                silencios,
-                datos_fichero
-            }
-            ipcRenderer.send('cambia_archivo_js_grabacion', args);
-        }
-        else{
-
-        }
 
         // speechSynthesis.addEventListener('voiceschanged', () => {
         //     voice = speechSynthesis.getVoices().filter(voice => voice.lang.startsWith('es') && voice.name.includes('Spain') && voice.name.includes('victor'));
