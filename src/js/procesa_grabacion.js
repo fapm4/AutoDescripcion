@@ -10,13 +10,19 @@ var datos_fichero = [];
 function añadirBotonesControl(etiqueta){
     const btnsGrabar = etiqueta.querySelectorAll('.btnGrabar');
     const btnsParar = etiqueta.querySelectorAll('.btnParar');
+
+    let aux = false;
+
+    if(etiqueta == document){
+        aux = true;
+    }
     // Añado los eventos a los botones
     btnsGrabar.forEach(btn => {
         btn.addEventListener('click', function (event) { grabarVoz(event) }, false);
     });
 
     btnsParar.forEach(btn => {
-        btn.addEventListener('click', function (event) { pararVoz(event) }, false);
+        btn.addEventListener('click', function (event) { pararVoz(event, aux) }, false);
     });
 
     let btnEnviar = document.querySelector('#btnEnviar');
@@ -24,8 +30,8 @@ function añadirBotonesControl(etiqueta){
     btnEnviar.addEventListener('click', function (event) { comprobarGrabaciones(event) }, false);
 }
 
-ipcRenderer.on('cambiar_archivo', (event, arg) => {
-    silencios = arg.silencios;
+ipcRenderer.on('cambiar_archivo_grabacion', (event, arg) => {
+    silencios = arg.silenciosRenderer;
     datos_fichero = arg.datos_fichero;
     // Obtengo los botones para añadir los eventos
     añadirBotonesControl(document);
@@ -84,7 +90,7 @@ function actualizaEstado(estado, buffer, id) {
     }
 }
 
-function pararVoz(event) {
+function pararVoz(event, aux) {
     let btn = event.currentTarget;
     // Si no se ha dado a grabar, no hago nada
     if (btnGrabarApretado == null) {
@@ -102,7 +108,7 @@ function pararVoz(event) {
             audioChunks.push(e.data);
             if (recorder.state == 'inactive') {
                 let blob = new Blob(audioChunks, { type: 'audio/wav' });
-                let result = await compruebaSilencios(output, blob);
+                let result = await compruebaSilencios(output, blob, aux);
                 let estado = result[0];
                 let buffer = result[1];
                 actualizaEstado(estado, buffer, btn.id.split('_')[0]);
@@ -143,10 +149,15 @@ function getIndex(output) {
 
 // True si es mayor
 // False si es menor
-async function compruebaSilencios(output, blob) {
+async function compruebaSilencios(output, blob, aux) {
     const indice = getIndex(output);
-    console.log(silencios);
-    const silenceDuration = silencios[indice].duration;
+    let  silenceDuration;
+    if(aux) {
+        silenceDuration = silencios[indice].duration;
+    }
+    else{
+        silenceDuration = silenciosRenderer[indice].duration;
+    }
 
     try {
         const audioBuffer = await createAudioBuffer(blob);
@@ -236,7 +247,7 @@ function tiempoEnSegundos(tiempo) {
     return horas * 3600 + minutos * 60 + segundos;
   }
 
-function concatena(audios) {
+function concatena(audios, silencios) {
     let ruta_video = datos_fichero.ruta;
     let ruta_video_output = ruta_video.replace('org_', 'mod_');
 
@@ -250,12 +261,14 @@ function concatena(audios) {
     for (let i = 0; i < audios.length; i++) {
         // Obtengo el indice para saber el silencio
         let indice = getIndex(audios[i][1]);
-        let start = tiempoEnMilisegundos(silencios[indice].start);
+        let start = tiempoEnMilisegundos(silencios.find(elem => elem.index == indice).start);
 
         // Empiezo a crear el comando
         inputs += ` -i ${audios[i][1].replace('.blob', '.mp3')}`;
         // Empiezo con el filtro
-        filter += `[${i + 1}:a]adelay=${start}|${start}[a${i + 1}];`;
+        if(start > 0){
+            filter += `[${i + 1}:a]adelay=${start}|${start}[a${i + 1}];`;
+        }
 
         // Flags adicionales
         preFiltro += `[a${i + 1}]`;
@@ -326,8 +339,7 @@ async function comprobarGrabaciones(event) {
                 console.error(error);
             }
         }
-
-        await concatena(audioBlobs).then(() => {
+        await concatena(audioBlobs, silencios).then(() => {
             console.log('-------------------------------------------');
             crearWebvtt();
         });

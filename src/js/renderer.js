@@ -159,7 +159,6 @@ function añadirSilencios(event, modo) {
             };
 
             silenciosRenderer.push(obj);
-            silencios = silenciosRenderer;
             añadirBotonesControl(tr);
             let tablaSilencios = document.querySelector('#tablaSilencios');
             tablaSilencios.appendChild(tr);
@@ -245,7 +244,10 @@ function creaTr(idDescripcion, start, end, modo) {
 
 let silenciosRenderer;
 function enviarAudios(datos_fichero) {
-    console.log(silenciosRenderer);
+    silenciosRenderer = silenciosRenderer.map((silencio, index) => {
+        return {...silencio, index};
+    });
+
     let args = {
         silenciosRenderer,
         datos_fichero

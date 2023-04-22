@@ -239,7 +239,6 @@ ipcMain.on('audio_analizado', (event, arg) => {
         slashes: true,
     }));
 
-    console.log(arg);
     // 7.1 Creo el formulario
     ventanaPrincipal.webContents.on('did-finish-load', () => {
         ventanaPrincipal.webContents.send('mostrar_formulario', arg);
@@ -247,7 +246,8 @@ ipcMain.on('audio_analizado', (event, arg) => {
 });
 
 ipcMain.on('cambia_archivo_js_grabacion', (event, arg) => {
-    ventanaPrincipal.webContents.send('cambiar_archivo', arg);
+    console.log(arg);
+    ventanaPrincipal.webContents.send('cambiar_archivo_grabacion', arg);
 });
 
 ipcMain.on('listo_para_concatenar', (event, arg) => {
