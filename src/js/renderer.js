@@ -159,7 +159,7 @@ function añadirSilencios(event, modo) {
             };
 
             silenciosRenderer.push(obj);
-            añadirBotonesControl(tr);
+            console.log('puta');
             let tablaSilencios = document.querySelector('#tablaSilencios');
             tablaSilencios.appendChild(tr);
         }
@@ -223,10 +223,14 @@ function creaTr(idDescripcion, start, end, modo) {
         btnGrabar.className = 'btnGrabar botonR';
         btnGrabar.innerHTML = 'Grabar';
 
+        btnGrabar.addEventListener('click', function (event) { grabarVoz(event) }, false);
+
         let btnParar = document.createElement('button');
         btnParar.id = `${idDescripcion}_parar`;
         btnParar.className = 'btnParar botonR';
         btnParar.innerHTML = 'Parar';
+
+        btnParar.addEventListener('click', function (event) { pararVoz(event) }, false);
 
         let btnPlay = document.createElement('button');
         btnPlay.className = 'btnPlay botonR';
@@ -245,7 +249,7 @@ function creaTr(idDescripcion, start, end, modo) {
 let silenciosRenderer;
 function enviarAudios(datos_fichero) {
     silenciosRenderer = silenciosRenderer.map((silencio, index) => {
-        return {...silencio, index};
+        return { ...silencio, index };
     });
 
     let args = {
@@ -268,6 +272,14 @@ ipcRenderer.on('mostrar_formulario', (event, arg) => {
     datos_fichero = arg.datos_fichero;
 
     tablaAñadirSilencio(divForm, modo);
+
+    let btnEnviar = document.createElement('button');
+    btnEnviar.innerHTML = 'Enviar';
+    btnEnviar.className = 'botonR';
+    btnEnviar.id = 'btnEnviar';
+
+
+    btnEnviar.addEventListener('click', () => enviarAudios(datos_fichero), true);
 
     if (silenciosRenderer.length == 0) {
         Swal.fire({
@@ -294,24 +306,17 @@ ipcRenderer.on('mostrar_formulario', (event, arg) => {
             //     tdInput.appendChild(input);
             // }
             // El usuario ha elegido la opción de describir con voz
-
             tabla.appendChild(tr);
             i += 1;
         });
 
         divForm.appendChild(tabla);
-        // Creo los dos botones
-        let btnEnviar = document.createElement('button');
-        btnEnviar.innerHTML = 'Enviar';
-        btnEnviar.className = 'botonR';
-        btnEnviar.id = 'btnEnviar';
-
-        btnEnviar.addEventListener('click', () => enviarAudios(datos_fichero), true);
 
         // Los meto al DOM
         let divBotones = document.createElement('div');
         divBotones.appendChild(btnEnviar);
         divForm.appendChild(divBotones);
+
 
         // speechSynthesis.addEventListener('voiceschanged', () => {
         //     voice = speechSynthesis.getVoices().filter(voice => voice.lang.startsWith('es') && voice.name.includes('Spain') && voice.name.includes('victor'));

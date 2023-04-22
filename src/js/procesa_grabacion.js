@@ -26,21 +26,23 @@ function añadirBotonesControl(etiqueta){
     });
 
     let btnEnviar = document.querySelector('#btnEnviar');
+    console.log(btnEnviar);
 
     btnEnviar.addEventListener('click', function (event) { comprobarGrabaciones(event) }, false);
 }
 
 ipcRenderer.on('cambiar_archivo_grabacion', (event, arg) => {
+    console.log('cambiar_archivo_grabacion');
     silencios = arg.silenciosRenderer;
     datos_fichero = arg.datos_fichero;
     // Obtengo los botones para añadir los eventos
-    añadirBotonesControl(document);
+    comprobarGrabaciones();
 });
 
 let btnGrabarApretado = null;
 function grabarVoz(event) {
     let btn = event.currentTarget;
-
+    console.log('hola');
     btnGrabarApretado = btn;
     audioChunks = [];
     navigator.mediaDevices.getUserMedia({ audio: true })
@@ -90,7 +92,7 @@ function actualizaEstado(estado, buffer, id) {
     }
 }
 
-function pararVoz(event, aux) {
+function pararVoz(event) {
     let btn = event.currentTarget;
     // Si no se ha dado a grabar, no hago nada
     if (btnGrabarApretado == null) {
@@ -108,7 +110,7 @@ function pararVoz(event, aux) {
             audioChunks.push(e.data);
             if (recorder.state == 'inactive') {
                 let blob = new Blob(audioChunks, { type: 'audio/wav' });
-                let result = await compruebaSilencios(output, blob, aux);
+                let result = await compruebaSilencios(output, blob);
                 let estado = result[0];
                 let buffer = result[1];
                 actualizaEstado(estado, buffer, btn.id.split('_')[0]);
@@ -149,15 +151,10 @@ function getIndex(output) {
 
 // True si es mayor
 // False si es menor
-async function compruebaSilencios(output, blob, aux) {
+async function compruebaSilencios(output, blob) {
     const indice = getIndex(output);
     let  silenceDuration;
-    if(aux) {
-        silenceDuration = silencios[indice].duration;
-    }
-    else{
-        silenceDuration = silenciosRenderer[indice].duration;
-    }
+    silenceDuration = silenciosRenderer[indice].duration;
 
     try {
         const audioBuffer = await createAudioBuffer(blob);
@@ -269,6 +266,9 @@ function concatena(audios, silencios) {
         if(start > 0){
             filter += `[${i + 1}:a]adelay=${start}|${start}[a${i + 1}];`;
         }
+        else{
+            filter += `[${i + 1}:a]adelay=500|500[a${i + 1}];`;
+        }
 
         // Flags adicionales
         preFiltro += `[a${i + 1}]`;
@@ -277,6 +277,8 @@ function concatena(audios, silencios) {
     filter += `[0:a]${preFiltro}amix=inputs=${audios.length + 1}[a]`;
 
     let command = `${ffmpegPath} -i ${ruta_video} ${inputs} -filter_complex "${filter}" -map 0:v -map [a] -c:v copy -c:a aac -strict experimental -y ${ruta_video_output}`;
+
+    console.log(command);
     
     return new Promise((resolve, reject) => {
         exec(command, (err, stdout, stderr) => {
@@ -290,10 +292,8 @@ function concatena(audios, silencios) {
     });
 }
 
-async function comprobarGrabaciones(event) {
+async function comprobarGrabaciones() {
     try {
-        let btn = event.currentTarget;
-        let id = btn.id;
 
         if (audioBlobs.length == 0) {
             Swal.fire({
