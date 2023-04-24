@@ -7,13 +7,13 @@ let audioBlobs = [];
 let silencios = [];
 var datos_fichero = [];
 
-function añadirBotonesControl(etiqueta){
+function añadirBotonesControl(etiqueta) {
     const btnsGrabar = etiqueta.querySelectorAll('.btnGrabar');
     const btnsParar = etiqueta.querySelectorAll('.btnParar');
 
     let aux = false;
 
-    if(etiqueta == document){
+    if (etiqueta == document) {
         aux = true;
     }
     // Añado los eventos a los botones
@@ -26,13 +26,10 @@ function añadirBotonesControl(etiqueta){
     });
 
     let btnEnviar = document.querySelector('#btnEnviar');
-    console.log(btnEnviar);
-
     btnEnviar.addEventListener('click', function (event) { comprobarGrabaciones(event) }, false);
 }
 
 ipcRenderer.on('cambiar_archivo_grabacion', (event, arg) => {
-    console.log('cambiar_archivo_grabacion');
     silencios = arg.silenciosRenderer;
     datos_fichero = arg.datos_fichero;
     // Obtengo los botones para añadir los eventos
@@ -42,7 +39,6 @@ ipcRenderer.on('cambiar_archivo_grabacion', (event, arg) => {
 let btnGrabarApretado = null;
 function grabarVoz(event) {
     let btn = event.currentTarget;
-    console.log('hola');
     btnGrabarApretado = btn;
     audioChunks = [];
     navigator.mediaDevices.getUserMedia({ audio: true })
@@ -153,7 +149,7 @@ function getIndex(output) {
 // False si es menor
 async function compruebaSilencios(output, blob) {
     const indice = getIndex(output);
-    let  silenceDuration;
+    let silenceDuration;
     silenceDuration = silenciosRenderer[indice].duration;
 
     try {
@@ -240,9 +236,9 @@ function tiempoEnSegundos(tiempo) {
     var horas = parseInt(partes[0]);
     var minutos = parseInt(partes[1]);
     var segundos = parseInt(partes[2]);
-  
+
     return horas * 3600 + minutos * 60 + segundos;
-  }
+}
 
 function concatena(audios, silencios) {
     let ruta_video = datos_fichero.ruta;
@@ -252,21 +248,23 @@ function concatena(audios, silencios) {
     let filter = '';
     let preFiltro = '';
 
-    let inputsToResolve = [];
-    let silencesToResolve = [];
+    let data = [];
 
     for (let i = 0; i < audios.length; i++) {
         // Obtengo el indice para saber el silencio
         let indice = getIndex(audios[i][1]);
-        let start = tiempoEnMilisegundos(silencios.find(elem => elem.index == indice).start);
+        let start = silencios.find(elem => elem.index == indice).start;
+        let end = silencios.find(elem => elem.index == indice).end;
+        let startM = tiempoEnMilisegundos(start);
 
+        data.push([audios[i][1].replace('.blob', '.mp3'), start, end]);
         // Empiezo a crear el comando
         inputs += ` -i ${audios[i][1].replace('.blob', '.mp3')}`;
         // Empiezo con el filtro
-        if(start > 0){
-            filter += `[${i + 1}:a]adelay=${start}|${start}[a${i + 1}];`;
+        if (start > 0) {
+            filter += `[${i + 1}:a]adelay=${startM}|${startM}[a${i + 1}];`;
         }
-        else{
+        else {
             filter += `[${i + 1}:a]adelay=500|500[a${i + 1}];`;
         }
 
@@ -275,18 +273,18 @@ function concatena(audios, silencios) {
     }
 
     filter += `[0:a]${preFiltro}amix=inputs=${audios.length + 1}[a]`;
-
+    data.push(ruta_video_output);
     let command = `${ffmpegPath} -i ${ruta_video} ${inputs} -filter_complex "${filter}" -map 0:v -map [a] -c:v copy -c:a aac -strict experimental -y ${ruta_video_output}`;
 
     console.log(command);
-    
+
     return new Promise((resolve, reject) => {
         exec(command, (err, stdout, stderr) => {
             if (err) {
                 console.error(err);
                 return;
             } else {
-                resolve();
+                resolve(data);
             }
         });
     });
@@ -339,10 +337,11 @@ async function comprobarGrabaciones() {
                 console.error(error);
             }
         }
-        await concatena(audioBlobs, silencios).then(() => {
-            console.log('-------------------------------------------');
-            crearWebvtt();
-        });
+        await concatena(audioBlobs, silencios)
+            .then((data) => {
+                // Crear nueva página para el video con los audios y poner botones de descarga
+                ipcRenderer.send('video_concatenado', data);
+            });
     }
     catch (err) {
         console.log(err);

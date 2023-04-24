@@ -493,6 +493,79 @@ ipcRenderer.on('mostrar_formulario', (event, arg) => {
 //     }
 // }
 
+function generaWebVTT(datos) {
+    const recognition = new webkitSpeechRecognition();
+    recognition.lang = 'es-ES';
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+    recognition.continuous = true;
+    let folder = path.dirname(datos[0][0]); 
+    let ruta_vtt = `${folder}\\descripcion.vtt`;
+    let vtt = 'WEBVTT\n\n';
+
+
+    datos.forEach((dato, i) => {
+        let fichero = dato[0];
+        let start = dato[1] + '.000';
+        let end = dato[2] + '.000';
+
+        vtt += `${i + 1}\n`;
+        vtt += `${start} --> ${end}\n`;
+        const audio = new Audio(fichero);
+
+        audio.addEventListener('loadedmetadata', () => {
+            recognition.start();
+
+            recognition.addEventListener('result', (event) => {
+                const transcript = event.results[event.results.length - 1][0].transcript;
+                vtt += `${transcript}\n\n`;
+                recognition.stop();
+            });
+
+        });
+    });
+
+    recognition.addEventListener('end', () => {
+        fs.writeFile(ruta_vtt, vtt, (err) => {
+            if (err) reject(err);
+            else ipcRenderer.send('descarga_contenido', ruta_vtt);
+        });
+    });
+}
+
+ipcRenderer.on('pagina_descarga_cargada', (event, arg) => {
+    console.log(arg);
+
+    // arg[1] es el video modificado y arg[0] los audios con los silencios para el webvtt
+    let videoSrc = arg[arg.length - 1];
+    let form = document.querySelector('.form');
+    form.remove();
+
+    let bloque = document.querySelector('.bloquePrincipal');
+
+    let video = document.querySelector('video');
+    video.src = videoSrc;
+
+    let span = document.createElement('span');
+    span.clasName = "botonesVoz";
+
+    let btnDescargarVideo = document.createElement('button');
+    btnDescargarVideo.className = "boton botonR";
+    btnDescargarVideo.innerHTML = "Descargar video";
+    btnDescargarVideo.addEventListener('click', () => ipcRenderer.send('descarga_contenido', videoSrc), true);
+
+
+    let btnDescargarWebVTT = document.createElement('button');
+    btnDescargarWebVTT.className = "boton botonR";
+    btnDescargarWebVTT.innerHTML = "Descargar WEBVTT";
+    btnDescargarWebVTT.addEventListener('click', () => generaWebVTT(arg.slice(0, arg.length - 1)), true);
+
+    span.appendChild(btnDescargarVideo);
+    span.appendChild(btnDescargarWebVTT);
+
+    bloque.appendChild(span);
+});
+
 function queryAncestorSelector(node, selector) {
     // Obtengo el nodo padre
     var parent = node.parentNode;
@@ -510,6 +583,3 @@ function queryAncestorSelector(node, selector) {
 }
 
 module.exports.queryAncestorSelector = queryAncestorSelector;
-
-var comprobado = false;
-// poner boton para añadir tiempo actual

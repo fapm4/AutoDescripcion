@@ -3,6 +3,7 @@
 /////////////////////////// Imports ///////////////////////////
 // Electron
 const { app, BrowserWindow, Menu, ipcMain, dialog, desktopCapturer } = require('electron');
+const { download } = require('electron-dl');
 
 // URL
 const url = require('url');
@@ -31,6 +32,7 @@ const db = require('./js/db');
 
 //fs
 const fs = require('fs');
+const { V4MAPPED } = require('dns');
 
 /////////////////////////// Código ///////////////////////////
 let ventanaPrincipal;
@@ -210,7 +212,7 @@ async function addVideo(media) {
 
 // 4.2 Cuando se clicke sobre el botón de describir, empiezo el proceso de descripción -> ffmpeg.js
 ipcMain.on('empezar_procesamiento', (event, arg) => {
-    if(arg.length != 0){
+    if (arg.length != 0) {
         obj.threshold_value = arg.threshold_value;
         obj.idioma = arg.elegidoIdioma;
     }
@@ -254,6 +256,38 @@ ipcMain.on('listo_para_concatenar', (event, arg) => {
     ventanaPrincipal.webContents.send('concatenar', arg);
 });
 
+ipcMain.on('video_concatenado', (event, arg) => {
+    ventanaPrincipal.loadURL(url.format({
+        pathname: path.join(__dirname, 'views', 'formulario_descripcion.html'),
+        protocol: 'file',
+        slashes: true,
+    }));
+
+    ventanaPrincipal.webContents.on('did-finish-load', () => {
+        ventanaPrincipal.webContents.send('pagina_descarga_cargada', arg);
+    });
+});
+
+ipcMain.on('descarga_contenido', async (event, arg) => {
+    try {
+        console.log(arg);
+        const savePath = await dialog.showSaveDialog(ventanaPrincipal, {
+            title: 'Guardar como',
+            defaultPath: arg
+        });
+
+        if (savePath.filePath) {
+            await download(BrowserWindow.getFocusedWindow(), arg, {
+                directory: path.dirname(savePath.filePath),
+                filename: path.basename(savePath.filePath),
+                saveAs: false
+            });
+        }
+    }
+    catch (err) {
+        console.log(err);
+    }
+});
 // ipcMain.on('get_sources', async (event) => {
 //     try {
 //         const sources = desktopCapturer.getSources({ types: ['window', 'screen'] })
