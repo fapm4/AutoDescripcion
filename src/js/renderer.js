@@ -45,13 +45,23 @@ function redirige(event) {
 
 // 2. Una vez se cargue la página de subir ficheros, añado el evento de subir fichero
 let modo;
+
+function pedir_fichero() {
+    ipcRenderer.send('pedir_fichero');
+}
+
 ipcRenderer.on('subir_ficheros', (event, arg) => {
     // 2.2 Cuando se pulse el botón de subir fichero, se abre el diálogo para seleccionar el fichero
     const botonS = document.querySelector('.botonS');
     if (botonS != undefined) {
-        botonS.addEventListener('click', () => ipcRenderer.send('pedir_fichero'), true);
+        botonS.removeEventListener('click', pedir_fichero, true);
+        botonS.addEventListener('click', pedir_fichero, true);
     }
 });
+
+function cargar_pantalla_configuracion(modo) {
+    ipcRenderer.send('cargar_pantalla_configuracion', modo);
+}
 
 ipcRenderer.on('fichero_seleccionado', (event, arg) => {
     const btnConf = document.querySelector('#btnConf');
@@ -66,11 +76,12 @@ ipcRenderer.on('fichero_seleccionado', (event, arg) => {
         });
     }
 
-    btnConf.addEventListener('click', () => ipcRenderer.send('cargar_pantalla_configuracion', modo), true);
+    btnConf.addEventListener('click', cargar_pantalla_configuracion, true);
+    btnConf.addEventListener('click', function (event) { cargar_pantalla_configuracion(modo) }, true);
 });
 
 // 4.3 Si no se ha seleccionado ningún fichero, envío un mensaje de error
-ipcRenderer.on('no_fichero_seleccionado', (event, arg) => {
+ipcRenderer.once('no_fichero_seleccionado', (event, arg) => {
     Swal.fire({
         icon: 'error',
         title: 'Oops...',
@@ -159,7 +170,6 @@ function añadirSilencios(event, modo) {
             };
 
             silenciosRenderer.push(obj);
-            console.log('puta');
             let tablaSilencios = document.querySelector('#tablaSilencios');
             tablaSilencios.appendChild(tr);
         }
@@ -174,7 +184,7 @@ function tablaAñadirSilencio(divForm, modo) {
     let tablaNuevoSilencio = document.createElement('table');
     tablaNuevoSilencio.className = 'tablaSilencios';
     tablaNuevoSilencio.id = 'tablaNuevoSilencio';
-    tablaNuevoSilencio.innerHTML = '<tr><th>Inicio</th><th>Fin</th><th></tr>';
+    tablaNuevoSilencio.innerHTML = '<tr><th>Inicio</th><th>Fin</th></tr>';
 
     let tr = document.createElement('tr');
 
@@ -198,18 +208,41 @@ function tablaAñadirSilencio(divForm, modo) {
     divForm.appendChild(divNuevosSilencios);
 }
 
+function borrarSilencio(event, tr) {
+    let index = tr.className.split('desc')[1];
+    silenciosRenderer.splice(index, 1);
+    console.log(silenciosRenderer);
+    tr.remove();
+}
+
 function creaTr(idDescripcion, start, end, modo) {
     let tr = document.createElement('tr');
     tr.className = idDescripcion;
 
     let tdStart = document.createElement('td');
-    tdStart.innerHTML = start;
+    let startContainer = document.createElement('div');
+    startContainer.style.position = 'relative';
+    tdStart.appendChild(startContainer);
+
+    let startText = document.createElement('span');
+    startText.innerHTML = start;
+    startContainer.appendChild(startText);
+
+    let btnBorrar = document.createElement('button');
+    btnBorrar.className = 'btnBorrarSilencio';
+    btnBorrar.innerHTML = 'x';
+    startContainer.appendChild(btnBorrar);
+    btnBorrar.addEventListener('click', function (event) { borrarSilencio(event, tr) }, false);
 
     let tdEnd = document.createElement('td');
     tdEnd.innerHTML = end;
 
     let tdInput = document.createElement('td');
     tdInput.className = 'input';
+
+    let btnPlay = document.createElement('button');
+    btnPlay.className = 'btnPlay botonR';
+    btnPlay.innerHTML = "⏵︎";
 
     tr.appendChild(tdStart);
     tr.appendChild(tdEnd);
@@ -232,12 +265,21 @@ function creaTr(idDescripcion, start, end, modo) {
 
         btnParar.addEventListener('click', function (event) { pararVoz(event) }, false);
 
-        let btnPlay = document.createElement('button');
-        btnPlay.className = 'btnPlay botonR';
-        btnPlay.innerHTML = "⏵︎";
-
         span.appendChild(btnGrabar);
         span.appendChild(btnParar);
+        span.appendChild(btnPlay);
+        tdInput.appendChild(span);
+    }
+    else {
+        let span = document.createElement('span');
+        span.clasName = "botonesVoz";
+
+        let input = document.createElement('input');
+        input.type = 'text';
+        input.id = `${idDescripcion}_texto`;
+        input.className = 'inpuSilencio';
+
+        span.appendChild(input);
         span.appendChild(btnPlay);
         tdInput.appendChild(span);
     }
@@ -266,7 +308,9 @@ ipcRenderer.on('mostrar_formulario', (event, arg) => {
     let divForm = document.querySelector('.form');
     let modo = arg.datos_fichero.modo;
 
-    video.src = arg.datos_fichero.ruta;
+    if (video != undefined) {
+        video.src = arg.datos_fichero.ruta;
+    }
 
     silenciosRenderer = arg.silencios;
     datos_fichero = arg.datos_fichero;
@@ -277,7 +321,6 @@ ipcRenderer.on('mostrar_formulario', (event, arg) => {
     btnEnviar.innerHTML = 'Enviar';
     btnEnviar.className = 'botonR';
     btnEnviar.id = 'btnEnviar';
-
 
     btnEnviar.addEventListener('click', () => enviarAudios(datos_fichero), true);
 
@@ -298,14 +341,6 @@ ipcRenderer.on('mostrar_formulario', (event, arg) => {
             let start = silencio.start;
             let end = silencio.end;
             let tr = creaTr(idDescripcion, start, end, modo);
-            // El usuario ha elegido la opción de describir manualmente
-            // if (modo == 1) {
-            //     let input = document.createElement('input');
-            //     input.type = 'text';
-            //     input.className = 'inputSilencio';
-            //     tdInput.appendChild(input);
-            // }
-            // El usuario ha elegido la opción de describir con voz
             tabla.appendChild(tr);
             i += 1;
         });
@@ -499,7 +534,7 @@ function generaWebVTT(datos) {
     recognition.interimResults = false;
     recognition.maxAlternatives = 1;
     recognition.continuous = true;
-    let folder = path.dirname(datos[0][0]); 
+    let folder = path.dirname(datos[0][0]);
     let ruta_vtt = `${folder}\\descripcion.vtt`;
     let vtt = 'WEBVTT\n\n';
 
@@ -539,7 +574,9 @@ ipcRenderer.on('pagina_descarga_cargada', (event, arg) => {
     // arg[1] es el video modificado y arg[0] los audios con los silencios para el webvtt
     let videoSrc = arg[arg.length - 1];
     let form = document.querySelector('.form');
-    form.remove();
+    if (form != undefined) {
+        form.remove();
+    }
 
     let bloque = document.querySelector('.bloquePrincipal');
 

@@ -298,6 +298,7 @@ input[type='radio'] {
 
 #tablaNuevoSilencio {
     margin-top: 10px;
+    
 }
 
 #tablaSilencios th,
@@ -384,6 +385,38 @@ input[type='radio'] {
 
 .btnAddCurrentTime::after {
     content: '+';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.btnBorrarSilencio {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background-color: salmon;
+    color: white;
+    font-size: 25px;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    line-height: 25px;
+    margin-left: 10px;
+}
+
+.btnBorrarSilencio:hover {
+    background-color: white;
+    color: salmon;
+}
+
+.btnBorrarSilencio::after {
+    content: 'x';
     position: absolute;
     top: 50%;
     left: 50%;

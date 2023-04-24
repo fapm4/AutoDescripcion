@@ -128,28 +128,6 @@ ipcMain.on('cargar_pantalla_configuracion', (event, arg) => {
     });
 });
 
-// ipcMain.on('configuracion_guardada', (event, arg) => {
-//     ventanaPrincipal.loadURL(url.format({
-//         pathname: path.join(__dirname, 'views', 'sube_ficheros.html'),
-//         protocol: 'file',
-//         slashes: true,
-//     }));
-
-//     // Si es la página de subir ficheros, se añade un evento para que se pueda subir el fichero
-//     ventanaPrincipal.openDevTools();
-//     let threshold_value = arg.threshold_value;
-//     let elegidoIdioma = arg.elegidoIdioma;
-
-//     ventanaPrincipal.webContents.on('did-finish-load', () => {
-//         let obj = {
-//             elegidoIdioma,
-//             threshold_value
-//         };
-
-//         ventanaPrincipal.webContents.send('subir_ficheros', obj);
-//     });
-// });
-
 // 4.1 Abre el diálogo para seleccionar el fichero
 ipcMain.on('pedir_fichero', (event, arg) => {
     dialog.showOpenDialog({
@@ -216,6 +194,8 @@ ipcMain.on('empezar_procesamiento', (event, arg) => {
         obj.threshold_value = arg.threshold_value;
         obj.idioma = arg.elegidoIdioma;
     }
+
+    console.log(obj);
 
     ventanaPrincipal.webContents.send('busca_silencios', obj);
 });
@@ -288,25 +268,6 @@ ipcMain.on('descarga_contenido', async (event, arg) => {
         console.log(err);
     }
 });
-// ipcMain.on('get_sources', async (event) => {
-//     try {
-//         const sources = desktopCapturer.getSources({ types: ['window', 'screen'] })
-//         .then(async sources => {
-//             for (const source of sources) {
-//                 if(source.id === 'window:200922:0'){
-//                     ventanaPrincipal.webContents.send('sources', source);
-//                 }
-//             }
-//         });
-//     } catch (error) {
-//         console.log(error);
-//     }
-// });
-// Escucha el evento 'guarda_audio' desde el proceso de renderizado
-// ipcMain.on('guarda_audio', (event, arg) => {
-//     console.log('pepe');
-// });
-
 
 app.on('window-all-closed', () => {
     if (process.platform !== 'darwin') {
