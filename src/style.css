@@ -55,6 +55,10 @@ nav {
     text-align: left;
 }
 
+.formas p {
+    margin-top: 40px;
+}
+
 li {
     margin-top: 5px;
 }
