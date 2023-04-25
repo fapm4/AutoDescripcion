@@ -47,7 +47,6 @@ let elegidoIdioma;
 let voices;
 function checkIdioma() {
     // Variables para saber que opción de idioma y género se ha elegido
-    if(elegidoIdioma == undefined){ return; }
     speechSynthesis.addEventListener('voiceschanged', () => {
         voices = speechSynthesis.getVoices();
     

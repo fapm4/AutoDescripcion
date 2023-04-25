@@ -30,6 +30,7 @@ function añadirBotonesControl(etiqueta) {
 }
 
 ipcRenderer.on('cambiar_archivo_grabacion', (event, arg) => {
+    console.log('cambia a grabacion');
     silencios = arg.silenciosRenderer;
     datos_fichero = arg.datos_fichero;
     // Obtengo los botones para añadir los eventos
@@ -57,17 +58,19 @@ function actualizaEstado(estado, buffer, id) {
     let span = td.querySelector('span');
     let btnPlay = span.querySelector('.btnPlay');
 
-    const context = new AudioContext();
-    let source = context.createBufferSource();
+    if (buffer != null) {
+        const context = new AudioContext();
+        let source = context.createBufferSource();
 
-    btnPlay.addEventListener('click', () => {
-        if (buffer) {
-            source.buffer = buffer;
-            source.connect(context.destination);
-            source.start();
-        }
-        source = null;
-    });
+        btnPlay.addEventListener('click', () => {
+            if (buffer) {
+                source.buffer = buffer;
+                source.connect(context.destination);
+                source.start();
+            }
+            source = null;
+        });
+    }
 
     let existeComp = tr.querySelector('.comprobacion');
     if (existeComp != null) {
@@ -305,6 +308,7 @@ async function comprobarGrabaciones() {
             return;
         }
 
+        console.log(audioBlobs);
         audioBlobs = audioBlobs.filter(array => array.length === 3);
         var i = 0;
         for (i = 0; i < audioBlobs.length; i++) {

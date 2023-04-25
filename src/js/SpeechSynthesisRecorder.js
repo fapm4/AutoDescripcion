@@ -50,7 +50,7 @@ class SpeechSynthesisRecorder {
             // see https://bugzilla.mozilla.org/show_bug.cgi?id=934425, https://stackoverflow.com/q/33761770
             .then(stream => navigator.mediaDevices.enumerateDevices()
                 .then(devices => {
-                    const audiooutput = devices.find(device => device.kind == "audiooutput");
+                    let audiooutput = devices.filter(device => device.kind == 'audiooutput' && device.deviceId == 'default');
                     stream.getTracks().forEach(track => track.stop())
                     if (audiooutput) {
                         const constraints = {

@@ -277,8 +277,9 @@ function creaTr(idDescripcion, start, end, modo) {
         let input = document.createElement('input');
         input.type = 'text';
         input.id = `${idDescripcion}_texto`;
-        input.className = 'inpuSilencio';
+        input.className = 'inputSilencio';
 
+        btnPlay.addEventListener('click', function (event) { sintetiza(event) }, false);
         span.appendChild(input);
         span.appendChild(btnPlay);
         tdInput.appendChild(span);
@@ -289,17 +290,19 @@ function creaTr(idDescripcion, start, end, modo) {
 }
 
 let silenciosRenderer;
-function enviarAudios(datos_fichero) {
+function enviarAudios(datos_fichero, modo) {
     silenciosRenderer = silenciosRenderer.map((silencio, index) => {
         return { ...silencio, index };
     });
 
     let args = {
         silenciosRenderer,
-        datos_fichero
+        datos_fichero,
+        modo
     };
 
-    ipcRenderer.send('cambia_archivo_js_grabacion', args);
+    ipcRenderer.send('cambia_archivo_js', args);
+ 
 }
 
 ipcRenderer.on('mostrar_formulario', (event, arg) => {
@@ -322,7 +325,7 @@ ipcRenderer.on('mostrar_formulario', (event, arg) => {
     btnEnviar.className = 'botonR';
     btnEnviar.id = 'btnEnviar';
 
-    btnEnviar.addEventListener('click', () => enviarAudios(datos_fichero), true);
+    btnEnviar.addEventListener('click', () => enviarAudios(datos_fichero, modo), true);
 
     if (silenciosRenderer.length == 0) {
         Swal.fire({
@@ -569,8 +572,6 @@ function generaWebVTT(datos) {
 }
 
 ipcRenderer.on('pagina_descarga_cargada', (event, arg) => {
-    console.log(arg);
-
     // arg[1] es el video modificado y arg[0] los audios con los silencios para el webvtt
     let videoSrc = arg[arg.length - 1];
     let form = document.querySelector('.form');

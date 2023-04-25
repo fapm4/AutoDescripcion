@@ -195,8 +195,6 @@ ipcMain.on('empezar_procesamiento', (event, arg) => {
         obj.idioma = arg.elegidoIdioma;
     }
 
-    console.log(obj);
-
     ventanaPrincipal.webContents.send('busca_silencios', obj);
 });
 
@@ -227,9 +225,15 @@ ipcMain.on('audio_analizado', (event, arg) => {
     });
 });
 
-ipcMain.on('cambia_archivo_js_grabacion', (event, arg) => {
+ipcMain.on('cambia_archivo_js', (event, arg) => {
     console.log(arg);
-    ventanaPrincipal.webContents.send('cambiar_archivo_grabacion', arg);
+    if(arg.modo == 2){
+        ventanaPrincipal.webContents.send('cambiar_archivo_grabacion', arg);
+    }
+    else{
+        ventanaPrincipal.webContents.send('cambiar_archivo_sintesis', arg);
+    }
+
 });
 
 ipcMain.on('listo_para_concatenar', (event, arg) => {
