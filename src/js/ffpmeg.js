@@ -14,15 +14,48 @@ ipcRenderer.once('busca_silencios', (event, arg) => {
     console.log(arg);
 
     let nombreFichero = arg.ruta.split('\\').pop().split('.')[0];
-    let threshold_value = arg.threshold_value;
     // Mi PC
-    // const output = `C:\\Users\\panch\\Desktop\\TFG\\AutoDescripcion\\src\\contenido\\${nombreFichero.substring(4, nombreFichero.length)}\\${nombreFichero}.mp3`;
-    const output = `C:\\Users\\francip\\Desktop\\Repos\\AutoDescripcion\\src\\contenido\\${nombreFichero.substring(4, nombreFichero.length)}\\${nombreFichero}.mp3`;
+    const output = `C:\\Users\\panch\\Desktop\\TFG\\AutoDescripcion\\src\\contenido\\${nombreFichero.substring(4, nombreFichero.length)}\\${nombreFichero}.mp3`;
+    // const output = `C:\\Users\\francip\\Desktop\\Repos\\AutoDescripcion\\src\\contenido\\${nombreFichero.substring(4, nombreFichero.length)}\\${nombreFichero}.mp3`;
     let ruta = arg.ruta;
     let media_name = arg.media_name;
     let modo = arg.modo;
 
 
+    // 5. Obtengo el threshold
+    threshold_value = arg.threshold_value;
+    if (threshold_value == null) {
+        const cmd = 'ffmpeg';
+        const args = [
+            '-i', output,
+            '-filter_complex', 'ebur128=peak=true',
+            '-f', 'null',
+            '-'
+        ];
+        const ffmpegSpawn = spawn(cmd, args);
+
+        ffmpegSpawn.stderr.on('data', (data) => {
+            const str = data.toString();
+            const regex = /I:\s+(-?\d+\.\d+)\s+LUFS/;
+            const match = str.match(regex);
+            console.log('Match: ', match);
+            if (match) {
+                console.log('Match: ', match[1], match);
+                threshold_value = parseFloat(match[1]);
+                console.log('Loudness Integrado:', threshold_value, 'LUFS');
+            }
+            else{
+                console.log('No se ha podido obtener el threshold');
+            }
+        });
+
+        ffmpegSpawn.stderr.on('data', (data) => {
+            console.log(`stderr: ${data}`);
+        });
+        ffmpegSpawn.on('close', (code) => {
+            console.log(`FFmpeg process exited with code ${code}`);
+        });
+    }
     // 6. Mando un evento para mostrar la pantalla de carga - Por hacer
     let datos_fichero = {
         output,
@@ -91,4 +124,8 @@ function getIntervals(filePath, silenceThreshold, callback) {
         }
         callback(silences);
     });
+}
+
+function getMeanLoudness() {
+
 }

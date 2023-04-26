@@ -49,7 +49,7 @@ function checkIdioma() {
     // Variables para saber que opción de idioma y género se ha elegido
     speechSynthesis.addEventListener('voiceschanged', () => {
         voices = speechSynthesis.getVoices();
-    
+
         let idiomas = new Set(voices.map(voice => voice.lang));
 
         // Aux para ver lo elegido
@@ -71,8 +71,8 @@ function checkIdioma() {
             selectIdioma.appendChild(option);
         });
 
-        if(idioma != undefined){
-            if(idioma.querySelector('#selectIdioma') == undefined){
+        if (idioma != undefined) {
+            if (idioma.querySelector('#selectIdioma') == undefined) {
                 idioma.appendChild(selectIdioma);
             }
         }
@@ -101,16 +101,16 @@ function checkIdioma() {
             selectVoz.appendChild(option);
         });
 
-        if(li.querySelector('#selectVoz') == undefined){
+        if (li.querySelector('#selectVoz') == undefined) {
             li.appendChild(selectVoz);
         }
-        
+
         elegidoIdioma = selectVoz[selectVoz.selectedIndex].value;
 
         selectVoz.addEventListener('change', (event) => {
             elegidoIdioma = event.target.value;
         });
-    
+
         let divVoces = document.querySelector('.voces');
 
         let divPrueba = document.createElement('div');
@@ -136,7 +136,7 @@ function checkIdioma() {
         divPrueba.appendChild(inputPrueba);
         divPrueba.appendChild(btnPlay);
 
-        if(divVoces.querySelector('#divPrueba') == undefined){
+        if (divVoces.querySelector('#divPrueba') == undefined) {
             divVoces.appendChild(divPrueba);
         }
     });
@@ -160,9 +160,8 @@ function guardaConfig() {
         }
     }
     else {
-        threshold_value = '-30';
+        threshold_value = null;
     }
-
     // elegidoIdioma = speechSynthesis.getVoices().filter(voice => voice.name == elegidoIdioma)[0];
 
     let obj = {
@@ -180,19 +179,19 @@ ipcRenderer.on('pantalla_configuracion_cargada', (event, arg) => {
     checkThreshold();
 
     // 2.1.2 Controlar el idioma
-    if(arg == 1){
+    if (arg == 1) {
         checkIdioma();
     }
-    else{
+    else {
         let divVoces = document.querySelector('.voces');
-        if(divVoces != undefined){
+        if (divVoces != undefined) {
             divVoces.style.display = 'none';
             elegidoIdioma = 'Microsoft David Desktop - English (United States)';
         }
     }
 
     let btnGuardar = document.querySelector('.btnGuardar');
-    if(btnGuardar != undefined) {
+    if (btnGuardar != undefined) {
         btnGuardar.addEventListener('click', () => guardaConfig(), true);
     }
 });
