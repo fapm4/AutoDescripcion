@@ -19,14 +19,8 @@ class SpeechSynthesisRecorder {
         this.chunks = []
         if (utteranceOptions) {
             if (utteranceOptions.voice) {
-                this.speechSynthesis.onvoiceschanged = e => {
-                    const voice = this.speechSynthesis.getVoices().find(({
-                        name: _name
-                    }) => _name === utteranceOptions.voice)
-                    this.utterance.voice = voice
-                    console.log(voice, this.utterance)
-                }
-                this.speechSynthesis.getVoices()
+                this.utterance.voice = utteranceOptions.voice;
+                this.speechSynthesis.getVoices();
             }
             let {
                 lang, rate, pitch, volume

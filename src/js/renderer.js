@@ -305,11 +305,13 @@ function enviarAudios(datos_fichero, modo) {
 
 }
 
+let voiceSynth;
 ipcRenderer.on('mostrar_formulario', (event, arg) => {
     // Tengo que mostrar el video
     let video = document.querySelector('video');
     let divForm = document.querySelector('.form');
     let modo = arg.datos_fichero.modo;
+    voiceSynth = arg.voice;
 
     if (video != undefined) {
         video.src = arg.datos_fichero.ruta;
@@ -363,172 +365,6 @@ ipcRenderer.on('mostrar_formulario', (event, arg) => {
     divBotones.appendChild(btnEnviar);
     divForm.appendChild(divBotones);
 });
-
-// function compruebaAudios(silencios, datos_fichero) {
-//     var audioBlobs = [];
-//     let audioChunks = [];
-//     let promesas = [];
-//     console.log('Comprobando audios...');
-//     let inputs = document.querySelectorAll('.inputSilencio');
-//     let contadorInputs = 0;
-//     let contadorErrores = 0;
-
-//     navigator.mediaDevices.getUserMedia({ audio: true })
-//         .then(stream => {
-//             inputs.forEach((input) => {
-//                 audioChunks = [];
-//                 let recorder = new MediaRecorder(stream);
-
-//                 let tr = queryAncestorSelector(input, 'tr');
-//                 if (input.value == '' || input.value == null) {
-//                     añadirComprobacion(tr, false);
-//                     contadorErrores += 1;
-//                 } else {
-//                     let idDesc = tr.className;
-//                     let output = `${datos_fichero.ruta.split('org_')[0]}${idDesc}.blob`;
-//                     const utterance = new SpeechSynthesisUtterance();
-//                     utterance.text = input.value;
-//                     utterance.lang = voice;
-//                     utterance.rate = 1;
-//                     utterance.pitch = 1;
-
-//                     let startTime;
-//                     utterance.addEventListener('start', () => {
-//                         startTime = new Date();
-//                     });
-
-//                     utterance.addEventListener('end', () => {
-//                         const elapsed = (new Date() - startTime) / 1000;
-//                         const correct = elapsed > silencios[contadorInputs].duration ? false : true;
-//                         contadorErrores += añadirComprobacion(tr, correct);
-//                         contadorInputs += 1;
-//                         recorder.stop();
-//                         // resolve();
-//                     });
-
-//                     // promesas.push(promesa);
-//                     promesa = new Promise((resolve, reject) => {
-//                         recorder.addEventListener('dataavailable', e => {
-//                             audioChunks.push(e.data);
-//                             if (recorder.state == 'inactive') {
-//                                 let blob = new Blob(audioChunks, { type: 'audio/webm; codecs=opus' });
-//                                 audioBlobs.push([blob, output]);
-//                                 resolve(audioBlobs);
-//                                 chunks = [];
-//                             }
-//                         });
-//                     });
-
-//                     promesas.push(promesa);
-//                     speechSynthesis.speak(utterance);
-//                     recorder.start();
-//                 }
-//             });
-
-//             return Promise.all(promesas);
-//         })
-//         .then(audioBlobs => {
-//             if (contadorErrores > 0) {
-//                 Swal.fire({
-//                     title: '¡Atención!',
-//                     text: 'Hay errores en la descripción de los silencios. Por favor, revisa los campos en rojo',
-//                     icon: 'warning',
-//                     showCancelButton: true,
-//                     confirmButtonText: 'Enviar',
-//                     cancelButtonText: 'Cancelar'
-//                 }).then((result) => {
-//                     if (result.value) {
-//                         // El usuario hizo clic en "Enviar"
-//                         console.log('Listo para enviar.');
-//                         guardarAudios(audioBlobs);
-//                     }
-//                     else {
-//                         // El usuario hizo clic en "Cancelar"
-//                         console.log('El usuario canceló el envío.');
-//                     }
-//                 });
-//             }
-//             else {
-//                 console.log('Listo para enviar.');
-//                 guardarAudios(audioBlobs);
-//             }
-//         })
-//         .catch(err => console.log(err));
-// }
-
-// function blobToArrayBuffer(blob) {
-//     return new Promise((resolve, reject) => {
-//         const reader = new FileReader();
-//         reader.onload = () => resolve(reader.result);
-//         reader.onerror = reject;
-//         reader.readAsArrayBuffer(blob);
-//     });
-// }
-
-// function guardarAudios(audioBlobs) {
-//     // Filtra los objetos undefined y toma el primero
-//     let filtered = audioBlobs.filter(blob => blob != undefined)[0];
-//     console.log(filtered);
-
-//     for (let i = 0; i < filtered.length; i++) {
-//         let blob = filtered[i][0];
-//         let output = filtered[i][1];
-
-//         blobToArrayBuffer(blob).then(arrayBuffer => {
-//             fs.writeFile(output, Buffer.from(arrayBuffer), (err) => {
-//                 if (err) console.log(err);
-//                 else {
-//                     console.log('Archivo guardado correctamente')
-//                 }
-//             });
-//         });
-//     }
-// }
-
-// function añadirComprobacion(tr, correct) {
-//     let existe = tr.querySelector('.comprobacion');
-
-//     let span = document.createElement('span');
-//     span.title = correct ? 'La descripción se adecua al tiempo' : 'La descripción no se adecua al tiempo';
-//     span.className = correct ? 'correcto' : 'incorrecto';
-//     span.innerHTML = correct ? '🟢' : '🔴';
-
-//     if (existe) {
-//         return actualizaEstado(existe.querySelector('span'), correct);
-//     }
-//     else {
-//         let td = document.createElement('td');
-//         td.className = 'comprobacion';
-//         td.appendChild(span);
-//         tr.appendChild(td);
-
-//         if (span.className === 'correcto') {
-//             return 0;
-//         }
-//         else {
-//             return 1;
-//         }
-//     }
-// }
-
-// function actualizaEstado(spanExiste, correct) {
-//     if (spanExiste.innerHTML === '🔴') {
-//         if (correct) {
-//             spanExiste.innerHTML = '🟢';
-//             spanExiste.title = 'La descripción se adecua al tiempo';
-//             spanExiste.className = 'correcto';
-//             return 0;
-//         }
-//     }
-//     else if (spanExiste.innerHTML === '🟢') {
-//         if (!correct) {
-//             spanExiste.innerHTML = '🔴';
-//             spanExiste.title = 'La descripción no se adecua al tiempo';
-//             spanExiste.className = 'incorrecto';
-//             return 1;
-//         }
-//     }
-// }
 
 function generaWebVTT(datos) {
     const recognition = new webkitSpeechRecognition();

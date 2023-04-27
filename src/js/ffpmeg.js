@@ -15,8 +15,8 @@ ipcRenderer.once('busca_silencios', (event, arg) => {
 
     let nombreFichero = arg.ruta.split('\\').pop().split('.')[0];
     // Mi PC
-    // const output = `C:\\Users\\panch\\Desktop\\TFG\\AutoDescripcion\\src\\contenido\\${nombreFichero.substring(4, nombreFichero.length)}\\${nombreFichero}.mp3`;
-    const output = `C:\\Users\\francip\\Desktop\\Repos\\AutoDescripcion\\src\\contenido\\${nombreFichero.substring(4, nombreFichero.length)}\\${nombreFichero}.mp3`;
+    const output = `C:\\Users\\panch\\Desktop\\TFG\\AutoDescripcion\\src\\contenido\\${nombreFichero.substring(4, nombreFichero.length)}\\${nombreFichero}.mp3`;
+    // const output = `C:\\Users\\francip\\Desktop\\Repos\\AutoDescripcion\\src\\contenido\\${nombreFichero.substring(4, nombreFichero.length)}\\${nombreFichero}.mp3`;
     let ruta = arg.ruta;
     let media_name = arg.media_name;
     let modo = arg.modo;
@@ -29,7 +29,8 @@ ipcRenderer.once('busca_silencios', (event, arg) => {
         modo
     }
 
-    let obtenido = false;
+    let obj = {};
+    let voice = arg.idioma;
     ffmpeg(ruta)
         .output(output)
         .noVideo()
@@ -52,10 +53,12 @@ ipcRenderer.once('busca_silencios', (event, arg) => {
                         let regexValue = /-?\d+\.\d+/gm;
                         const matchValue = result.match(regexValue);
                         threshold_value = parseFloat(matchValue[0]);
+                        
                         getIntervals(output, threshold_value, (silencios) => {
-                            let obj = {
+                            obj = {
                                 datos_fichero,
-                                silencios
+                                silencios,
+                                voice
                             };
     
                             // 7. Silencios detectados, enviamos evento para  cargar la pantalla del formulario
@@ -66,10 +69,12 @@ ipcRenderer.once('busca_silencios', (event, arg) => {
                     }
                 });
             }
+    
             getIntervals(output, threshold_value, (silencios) => {
-                let obj = {
+                obj = {
                     datos_fichero,
-                    silencios
+                    silencios,
+                    voz
                 };
 
                 // 7. Silencios detectados, enviamos evento para  cargar la pantalla del formulario

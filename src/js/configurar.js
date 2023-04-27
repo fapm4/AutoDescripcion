@@ -35,11 +35,13 @@ let dic = {
 function reproducePrueba(input) {
     const utterance = new SpeechSynthesisUtterance();
     let voice = voices.filter(voice => voice.name == elegidoIdioma)[0];
+    console.log(voice);
     utterance.text = input.value;
     utterance.lang = voice;
     utterance.rate = 1;
     utterance.pitch = 1;
     utterance.volume = 1;
+    utterance.voice = voice;
     speechSynthesis.speak(utterance);
 }
 

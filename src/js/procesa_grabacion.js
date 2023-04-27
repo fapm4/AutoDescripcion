@@ -344,7 +344,7 @@ async function comprobarGrabaciones() {
         await concatena(audioBlobs, silencios)
             .then((data) => {
                 // Crear nueva página para el video con los audios y poner botones de descarga
-                ipcRenderer.send('video_concatenado', data);
+                // ipcRenderer.send('video_concatenado', data);
             });
     }
     catch (err) {

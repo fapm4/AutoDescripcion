@@ -1,30 +1,29 @@
-ipcRenderer.on('cambiar_archivo_sintesis', (event, arg) => {
+ipcRenderer.on('cambiar_archivo_sintesis', async (event, arg) => {
     silencios = arg.silenciosRenderer;
     datos_fichero = arg.datos_fichero;
 
-    preComprobacion();
-    comprobarGrabaciones();
+    await preComprobacion().then(() => console.log('procesados silencios'));
 });
 
 async function sintetiza(event) {
     let btn = event.currentTarget;
     let input = btn.previousElementSibling;
-    creaBlob(input, false);
+    await creaBlob(input, false);
 }
 
 async function creaBlob(input, almacena){
-    console.log(input.value);
+    let voice = voices.filter(voice => voice.name == voiceSynth)[0];
     let ttsRecorder = new SpeechSynthesisRecorder({
         text: input.value,
         utteranceOptions: {
-            lang: elegidoIdioma,
+            voice: voice,
             rate: 1,
             pitch: 1,
             volume: almacena ? 0 : 1
         }
     });
 
-    ttsRecorder.start()
+    await ttsRecorder.start()
         .then(tts => tts.blob())
         .then(async ({ tts, data }) => {
             let output_blob = datos_fichero.output.split('org')[0] + input.id.split('_')[0] + '.blob';
@@ -39,8 +38,13 @@ async function creaBlob(input, almacena){
 }
 
 async function preComprobacion(){
-    let inputs = document.querySelectorAll('.inputSilencio');
-    for(let i = 0; i < inputs.length; i++){
-        await creaBlob(inputs[i], true);
-    }
+    return new Promise(async (resolve, reject) => {
+        let inputs = document.querySelectorAll('.inputSilencio');
+        for(let i = 0; i < inputs.length; i++){
+            await creaBlob(inputs[i], true);
+            if(i == inputs.length - 1){
+                resolve();
+            }
+        }
+    });
 }
