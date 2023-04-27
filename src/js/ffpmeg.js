@@ -15,69 +15,62 @@ ipcRenderer.once('busca_silencios', (event, arg) => {
 
     let nombreFichero = arg.ruta.split('\\').pop().split('.')[0];
     // Mi PC
-    const output = `C:\\Users\\panch\\Desktop\\TFG\\AutoDescripcion\\src\\contenido\\${nombreFichero.substring(4, nombreFichero.length)}\\${nombreFichero}.mp3`;
-    // const output = `C:\\Users\\francip\\Desktop\\Repos\\AutoDescripcion\\src\\contenido\\${nombreFichero.substring(4, nombreFichero.length)}\\${nombreFichero}.mp3`;
+    // const output = `C:\\Users\\panch\\Desktop\\TFG\\AutoDescripcion\\src\\contenido\\${nombreFichero.substring(4, nombreFichero.length)}\\${nombreFichero}.mp3`;
+    const output = `C:\\Users\\francip\\Desktop\\Repos\\AutoDescripcion\\src\\contenido\\${nombreFichero.substring(4, nombreFichero.length)}\\${nombreFichero}.mp3`;
     let ruta = arg.ruta;
     let media_name = arg.media_name;
     let modo = arg.modo;
 
-
-    // 5. Obtengo el threshold
-    threshold_value = arg.threshold_value;
-    if (threshold_value == null) {
-        const cmd = 'ffmpeg';
-        const args = [
-            '-i', output,
-            '-filter_complex', 'ebur128=peak=true',
-            '-f', 'null',
-            '-'
-        ];
-        const ffmpegSpawn = spawn(cmd, args);
-
-        ffmpegSpawn.stderr.on('data', (data) => {
-            const str = data.toString();
-            const regex = /I:\s+(-?\d+\.\d+)\s+LUFS/;
-            const match = str.match(regex);
-            console.log('Match: ', match);
-            if (match) {
-                console.log('Match: ', match[1], match);
-                threshold_value = parseFloat(match[1]);
-                console.log('Loudness Integrado:', threshold_value, 'LUFS');
-            }
-            else{
-                console.log('No se ha podido obtener el threshold');
-            }
-        });
-
-        ffmpegSpawn.stderr.on('data', (data) => {
-            console.log(`stderr: ${data}`);
-        });
-        ffmpegSpawn.on('close', (code) => {
-            console.log(`FFmpeg process exited with code ${code}`);
-        });
-    }
     // 6. Mando un evento para mostrar la pantalla de carga - Por hacer
     let datos_fichero = {
         output,
         ruta,
         media_name,
         modo
-    };
+    }
 
+    let obtenido = false;
     ffmpeg(ruta)
         .output(output)
         .noVideo()
         .audioCodec('libmp3lame')
         .on('end', () => {
-            console.log('Audio extraído correctamente');
+            threshold_value = arg.threshold_value;
+            console.log('Threshold antes: ', threshold_value);
+            if (threshold_value == null) {
+                let command = `${ffmpegPath} -i ${output} -vn -filter_complex "ebur128=peak=true" -f null -`;
+                exec(command, (err, stdout, stderr) => {
+                    if (err) {
+                        console.err(err);
+                        return;
+                    }
+
+                    const regex = /I:         -?\d+\.\d+ LUFS/gm;
+                    const match = stderr.match(regex);
+                    if (match) {
+                        const result = match[match.length - 1];
+                        let regexValue = /-?\d+\.\d+/gm;
+                        const matchValue = result.match(regexValue);
+                        threshold_value = parseFloat(matchValue[0]);
+                        getIntervals(output, threshold_value, (silencios) => {
+                            let obj = {
+                                datos_fichero,
+                                silencios
+                            };
+    
+                            // 7. Silencios detectados, enviamos evento para  cargar la pantalla del formulario
+                            // para añadir el texto
+                            ipcRenderer.send('audio_analizado', obj);
+                        });
+                        
+                    }
+                });
+            }
             getIntervals(output, threshold_value, (silencios) => {
                 let obj = {
                     datos_fichero,
                     silencios
                 };
-
-                // console.log(`Se encontraron ${silencios.length} silencios.`);
-                // console.log('Silencios: ', silencios);
 
                 // 7. Silencios detectados, enviamos evento para  cargar la pantalla del formulario
                 // para añadir el texto

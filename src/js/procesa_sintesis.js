@@ -20,7 +20,7 @@ async function creaBlob(input, almacena){
             lang: elegidoIdioma,
             rate: 1,
             pitch: 1,
-            volume: almacena ? 1: 0,
+            volume: almacena ? 0 : 1
         }
     });
 

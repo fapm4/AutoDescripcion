@@ -45,10 +45,10 @@ function reproducePrueba(input) {
 
 let elegidoIdioma;
 let voices;
-function checkIdioma() {
+async function checkIdioma() {
     // Variables para saber que opción de idioma y género se ha elegido
-    speechSynthesis.addEventListener('voiceschanged', () => {
-        voices = speechSynthesis.getVoices();
+    speechSynthesis.addEventListener('voiceschanged', async () => {
+        voices = await speechSynthesis.getVoices();
 
         let idiomas = new Set(voices.map(voice => voice.lang));
 
@@ -142,7 +142,7 @@ function checkIdioma() {
     });
 }
 
-function guardaConfig() {
+async function guardaConfig() {
     // Comprobar que si es manual se haya introducido un valor
     let radio = document.querySelector('input[name=threshold]:checked');
     if (radio.value == 2) {
@@ -162,7 +162,6 @@ function guardaConfig() {
     else {
         threshold_value = null;
     }
-    // elegidoIdioma = speechSynthesis.getVoices().filter(voice => voice.name == elegidoIdioma)[0];
 
     let obj = {
         threshold_value,
@@ -173,14 +172,14 @@ function guardaConfig() {
 }
 let modo_grabacion;
 // 2.1 Cuando se pulse el botón de configuración, se abre la pantalla de configuración
-ipcRenderer.on('pantalla_configuracion_cargada', (event, arg) => {
+ipcRenderer.on('pantalla_configuracion_cargada', async (event, arg) => {
     modo_grabacion = arg;
     // 2.1.1 Controlar el threshold
     checkThreshold();
 
     // 2.1.2 Controlar el idioma
     if (arg == 1) {
-        checkIdioma();
+        await checkIdioma();
     }
     else {
         let divVoces = document.querySelector('.voces');
