@@ -302,7 +302,7 @@ function enviarAudios(datos_fichero, modo) {
     };
 
     ipcRenderer.send('cambia_archivo_js', args);
- 
+
 }
 
 ipcRenderer.on('mostrar_formulario', (event, arg) => {
@@ -318,6 +318,10 @@ ipcRenderer.on('mostrar_formulario', (event, arg) => {
     silenciosRenderer = arg.silencios;
     datos_fichero = arg.datos_fichero;
 
+    let tabla = document.createElement('table');
+    tabla.id = 'tablaSilencios';
+    tabla.innerHTML = '<tr><th>Inicio</th><th>Fin</th><th>Descripción</th></tr>';
+
     tablaAñadirSilencio(divForm, modo);
 
     let btnEnviar = document.createElement('button');
@@ -332,12 +336,10 @@ ipcRenderer.on('mostrar_formulario', (event, arg) => {
             icon: 'warning',
             title: 'Oops...',
             text: 'No se han encontrado silencios en el fichero',
+            confirmButtonText: 'Ok'
         });
     }
     else {
-        let tabla = document.createElement('table');
-        tabla.id = 'tablaSilencios';
-        tabla.innerHTML = '<tr><th>Inicio</th><th>Fin</th><th>Descripción</th></tr>';
         var i = 0;
         silenciosRenderer.forEach(silencio => {
             let idDescripcion = `desc${i}`;
@@ -347,15 +349,6 @@ ipcRenderer.on('mostrar_formulario', (event, arg) => {
             tabla.appendChild(tr);
             i += 1;
         });
-
-        divForm.appendChild(tabla);
-
-        // Los meto al DOM
-        let divBotones = document.createElement('div');
-        divBotones.appendChild(btnEnviar);
-        divForm.appendChild(divBotones);
-
-
         // speechSynthesis.addEventListener('voiceschanged', () => {
         //     voice = speechSynthesis.getVoices().filter(voice => voice.lang.startsWith('es') && voice.name.includes('Spain') && voice.name.includes('victor'));
         // });
@@ -363,6 +356,12 @@ ipcRenderer.on('mostrar_formulario', (event, arg) => {
         // // Añado el evento de comprobar
         // btnEnviar.addEventListener('click', () => compruebaAudios(silencios, datos_fichero), true);
     }
+    divForm.appendChild(tabla);
+
+    // Los meto al DOM
+    let divBotones = document.createElement('div');
+    divBotones.appendChild(btnEnviar);
+    divForm.appendChild(divBotones);
 });
 
 // function compruebaAudios(silencios, datos_fichero) {
