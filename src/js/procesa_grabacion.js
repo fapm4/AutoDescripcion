@@ -26,7 +26,7 @@ function añadirBotonesControl(etiqueta) {
     });
 
     let btnEnviar = document.querySelector('#btnEnviar');
-    btnEnviar.addEventListener('click', function (event) { comprobarGrabaciones(event) }, false);
+    btnEnviar.addEventListener('click', function (event) { comprobarGrabaciones(event, true) }, false);
 }
 
 ipcRenderer.on('cambiar_archivo_grabacion', (event, arg) => {
@@ -34,7 +34,7 @@ ipcRenderer.on('cambiar_archivo_grabacion', (event, arg) => {
     silencios = arg.silenciosRenderer;
     datos_fichero = arg.datos_fichero;
     // Obtengo los botones para añadir los eventos
-    comprobarGrabaciones();
+    comprobarGrabaciones(true);
 });
 
 let btnGrabarApretado = null;
@@ -293,7 +293,7 @@ function concatena(audios, silencios) {
     });
 }
 
-async function comprobarGrabaciones() {
+async function comprobarGrabaciones(procedente) {
     try {
 
         if (audioBlobs.length == 0) {
@@ -308,8 +308,10 @@ async function comprobarGrabaciones() {
             return;
         }
 
+        if(procedente){
+            audioBlobs = audioBlobs.filter(array => array.length === 3);
+        }
         console.log(audioBlobs);
-        audioBlobs = audioBlobs.filter(array => array.length === 3);
         var i = 0;
         for (i = 0; i < audioBlobs.length; i++) {
             let data = audioBlobs[i];

@@ -2,7 +2,7 @@ ipcRenderer.on('cambiar_archivo_sintesis', async (event, arg) => {
     silencios = arg.silenciosRenderer;
     datos_fichero = arg.datos_fichero;
 
-    await preComprobacion().then(() => console.log('procesados silencios'));
+    await preComprobacion().then(() => comprobarGrabaciones(false));
 });
 
 async function sintetiza(event) {
@@ -19,7 +19,7 @@ async function creaBlob(input, almacena){
             voice: voice,
             rate: 1,
             pitch: 1,
-            volume: almacena ? 0 : 1
+            volume: 1 // almacena ? 0 : 1
         }
     });
 
@@ -32,7 +32,7 @@ async function creaBlob(input, almacena){
             let buffer = result[1];
             actualizaEstado(estado, null, input.id.split('_')[0]);
             if(almacena){
-                audioBlobs.push(data, output_blob, estado);
+                audioBlobs.push([data, output_blob, estado]);
             }
         });
 }
