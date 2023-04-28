@@ -79,18 +79,30 @@ async function checkIdioma() {
             }
         }
 
+
         // Asigno el por defecto
         elegidoIdioma = selectIdioma[selectIdioma.selectedIndex].value;
+        let voces_filtrada = voices.filter(voice => voice.lang == elegidoIdioma);
         // Cuando cambie el valor, actualizo el div
         selectIdioma.addEventListener('change', (event) => {
             elegidoIdioma = event.target.value;
+            voces_filtrada = voices.filter(voice => voice.lang == elegidoIdioma);
+
+            selectVoz.innerHTML = '';
+
+            // Creo las nuevas opciones para la voz
+            voces_filtrada.forEach(voice => {
+                let option = document.createElement('option');
+                option.value = voice.name;
+                option.innerHTML = voice.name;
+                selectVoz.appendChild(option);
+            });
+
         });
 
         // Tengo que añadir una nueva select para elegir la voz filtrada por género e idioma
         let ul = queryAncestorSelector(idioma, 'ul');
         let li = ul.querySelector('#liVoces');
-
-        let voces_filtrada = voices.filter(voice => voice.lang == elegidoIdioma);
 
         let selectVoz = document.createElement('select');
         selectVoz.id = 'selectVoz';

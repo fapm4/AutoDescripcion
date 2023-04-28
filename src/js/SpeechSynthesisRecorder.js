@@ -44,28 +44,20 @@ class SpeechSynthesisRecorder {
             // see https://bugzilla.mozilla.org/show_bug.cgi?id=934425, https://stackoverflow.com/q/33761770
             .then(stream => navigator.mediaDevices.enumerateDevices()
                 .then(devices => {
-                    console.log(devices.filter(device => device.kind == 'audiooutput'));
-                    let audiooutput = devices.filter(device => device.kind == 'audiooutput' && device.deviceId == 'default');
                     stream.getTracks().forEach(track => track.stop())
-                    if (audiooutput) {
-                        console.log(audiooutput);
-                        const constraints = {
-                            deviceId: {
-                                exact: audiooutput.deviceId
-                            }
-                        };
-                        return navigator.mediaDevices.getUserMedia({
-                            audio: constraints
-                        });
-                    }
+                    const audioOutputDevice = devices.find(device => device.kind === 'audiooutput');
+                    const constraints = audioOutputDevice ? { deviceId: { exact: audioOutputDevice.deviceId } } : { audio: true };
+
                     return navigator.mediaDevices.getUserMedia({
-                        audio: true
+                        audio: constraints
                     });
                 }))
             .then(stream => new Promise(resolve => {
                 const track = stream.getAudioTracks()[0]
+                console.log(`Using audio device: ${track.label}`)
                 this.mediaStream_.addTrack(track)
                 // return the current `MediaStream`
+                console.log(this.mediaStream_, this.dataType)
                 if (this.dataType && this.dataType === 'mediaStream') {
                     resolve({
                         tts: this,
@@ -93,7 +85,8 @@ class SpeechSynthesisRecorder {
                     console.log(`Ending recording SpeechSynthesisUtterance ${this.utterance.text}`)
                 }
                 this.speechSynthesis.speak(this.utterance)
-            }))
+            })
+            )
     }
     blob() {
         if (!this.chunks.length) throw new Error('no data to return')

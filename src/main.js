@@ -2,7 +2,7 @@
 
 /////////////////////////// Imports ///////////////////////////
 // Electron
-const { app, BrowserWindow, Menu, ipcMain, dialog, desktopCapturer } = require('electron');
+const { app, BrowserWindow, Menu, ipcMain, dialog, systemPreferences } = require('electron');
 const { download } = require('electron-dl');
 
 // URL
@@ -32,7 +32,6 @@ const db = require('./js/db');
 
 //fs
 const fs = require('fs');
-const { V4MAPPED } = require('dns');
 
 /////////////////////////// Código ///////////////////////////
 let ventanaPrincipal;
@@ -41,6 +40,7 @@ require('@electron/remote/main').initialize();
 
 app.commandLine.appendSwitch('enable-features', 'WebSpeechAPI');
 app.commandLine.appendSwitch('enable-features', 'MediaRecorderAPI');
+
 
 const templateMenu = [
     {
@@ -79,7 +79,6 @@ app.on('ready', () => {
     });
 
     require('@electron/remote/main').enable(ventanaPrincipal.webContents);
-
     // Se carga el archivo index.html
     ventanaPrincipal.loadURL(url.format({
         // Cambiar esto después
@@ -227,10 +226,10 @@ ipcMain.on('audio_analizado', (event, arg) => {
 
 ipcMain.on('cambia_archivo_js', (event, arg) => {
     console.log(arg);
-    if(arg.modo == 2){
+    if (arg.modo == 2) {
         ventanaPrincipal.webContents.send('cambiar_archivo_grabacion', arg);
     }
-    else{
+    else {
         ventanaPrincipal.webContents.send('cambiar_archivo_sintesis', arg);
     }
 

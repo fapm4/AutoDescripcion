@@ -8,7 +8,8 @@ ipcRenderer.on('cambiar_archivo_sintesis', async (event, arg) => {
 async function sintetiza(event) {
     let btn = event.currentTarget;
     let input = btn.previousElementSibling;
-    await creaBlob(input, false);
+    
+    
 }
 
 async function creaBlob(input, almacena){
@@ -21,6 +22,7 @@ async function creaBlob(input, almacena){
             pitch: 1,
             volume: 1 // almacena ? 0 : 1
         }
+        ,dataType: 'blob'
     });
 
     await ttsRecorder.start()
