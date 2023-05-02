@@ -313,6 +313,7 @@ ipcRenderer.on('mostrar_formulario', (event, arg) => {
     let modo = arg.datos_fichero.modo;
     voiceSynth = arg.voice;
 
+    console.log(voiceSynth);
     if (video != undefined) {
         video.src = arg.datos_fichero.ruta;
     }
@@ -351,12 +352,6 @@ ipcRenderer.on('mostrar_formulario', (event, arg) => {
             tabla.appendChild(tr);
             i += 1;
         });
-        // speechSynthesis.addEventListener('voiceschanged', () => {
-        //     voice = speechSynthesis.getVoices().filter(voice => voice.lang.startsWith('es') && voice.name.includes('Spain') && voice.name.includes('victor'));
-        // });
-
-        // // Añado el evento de comprobar
-        // btnEnviar.addEventListener('click', () => compruebaAudios(silencios, datos_fichero), true);
     }
     divForm.appendChild(tabla);
 

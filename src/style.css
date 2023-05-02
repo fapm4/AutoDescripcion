@@ -302,7 +302,6 @@ input[type='radio'] {
 
 #tablaNuevoSilencio {
     margin-top: 10px;
-    
 }
 
 #tablaSilencios th,
@@ -435,4 +434,9 @@ input[type='radio'] {
 #btnAñadirSilencios {
     width: 100px;
     height: 60px;
+}
+
+#buttonPrueba {
+    width: 40px;
+    height: 40px;
 }

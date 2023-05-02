@@ -45,114 +45,67 @@ function reproducePrueba(input) {
     speechSynthesis.speak(utterance);
 }
 
+const say = require('say');
+
 let elegidoIdioma;
-let voices;
+// let voices;
+
+function getVoices() {
+    return new Promise((resolve) => {
+        say.getInstalledVoices((err, voices) => {
+            return resolve(voices);
+        });
+    });
+}
+
+async function reproducePrueba(texto, voz) {
+    let start = new Date().getTime();
+    say.speak(texto, voz);
+}
+
 async function checkIdioma() {
-    // Variables para saber que opción de idioma y género se ha elegido
-    speechSynthesis.addEventListener('voiceschanged', async () => {
-        voices = await speechSynthesis.getVoices();
+    getVoices().then(voicesSay => {
+        let liVoces = document.querySelector('#liVoces');
+        let span = liVoces.querySelector('span');
+        span.innerHTML = "";
 
-        let idiomas = new Set(voices.map(voice => voice.lang));
+        let select = document.createElement('select');
+        select.style = 'margin-left: 10px; margin-right: 10px;';
+        select.id = 'selectVoz';
 
-        // Aux para ver lo elegido
-        let divListado = document.createElement('div');
-        divListado.id = 'divListado';
-
-        // Idioma
-        // Saco el div de idioma
-        let idioma = document.querySelector('#idioma');
-
-        let selectIdioma = document.createElement('select');
-        selectIdioma.id = 'selectIdioma';
-
-        // Creo las opciones para el idioma
-        idiomas.forEach(idioma => {
+        voicesSay.forEach(voice => {
             let option = document.createElement('option');
-            option.value = idioma;
-            option.innerHTML = dic[idioma];
-            selectIdioma.appendChild(option);
+            option.value = voice;
+            option.innerHTML = voice;
+            select.appendChild(option);
         });
 
-        if (idioma != undefined) {
-            if (idioma.querySelector('#selectIdioma') == undefined) {
-                idioma.appendChild(selectIdioma);
-            }
-        }
+        span.appendChild(select);
 
+        elegidoIdioma = select.value;
 
-        // Asigno el por defecto
-        elegidoIdioma = selectIdioma[selectIdioma.selectedIndex].value;
-        let voces_filtrada = voices.filter(voice => voice.lang == elegidoIdioma);
-        // Cuando cambie el valor, actualizo el div
-        selectIdioma.addEventListener('change', (event) => {
-            elegidoIdioma = event.target.value;
-            voces_filtrada = voices.filter(voice => voice.lang == elegidoIdioma);
-
-            selectVoz.innerHTML = '';
-
-            // Creo las nuevas opciones para la voz
-            voces_filtrada.forEach(voice => {
-                let option = document.createElement('option');
-                option.value = voice.name;
-                option.innerHTML = voice.name;
-                selectVoz.appendChild(option);
-            });
-
-        });
-
-        // Tengo que añadir una nueva select para elegir la voz filtrada por género e idioma
-        let ul = queryAncestorSelector(idioma, 'ul');
-        let li = ul.querySelector('#liVoces');
-
-        let selectVoz = document.createElement('select');
-        selectVoz.id = 'selectVoz';
-
-        // Creo las opciones para la voz
-        voces_filtrada.forEach(voice => {
-            let option = document.createElement('option');
-            option.value = voice.name;
-            option.innerHTML = voice.name;
-            selectVoz.appendChild(option);
-        });
-
-        if (li.querySelector('#selectVoz') == undefined) {
-            li.appendChild(selectVoz);
-        }
-
-        elegidoIdioma = selectVoz[selectVoz.selectedIndex].value;
-
-        selectVoz.addEventListener('change', (event) => {
+        select.addEventListener('change', (event) => {
             elegidoIdioma = event.target.value;
         });
 
-        let divVoces = document.querySelector('.voces');
+        let input = document.createElement('input');
+        input.type = 'text';
+        input.id = 'inputPrueba';
 
-        let divPrueba = document.createElement('div');
-        divPrueba.id = 'divPrueba';
+        input.placeholder = 'Texto a reproducir';
+        input.style = 'margin-left: 10px; margin-right: 10px;';
+        span.appendChild(input);
 
-        let inputPrueba = document.createElement('input');
-        inputPrueba.type = 'text';
-        inputPrueba.id = 'inputPrueba';
-        inputPrueba.className = "inputPrueba";
-        inputPrueba.placeholder = 'Prueba la voz';
+        let button = document.createElement('button');
+        button.id = 'buttonPrueba';
+        button.innerHTML = "⏵︎";
+        button.className = 'botonS';
+        button.style = 'margin-left: 10px; margin-right: 10px;';
+        span.appendChild(button);
 
-        let btnPlay = document.createElement('button');
-        let spanPlay = document.createElement('span');
-        spanPlay.className = "material-icons";
-        spanPlay.innerHTML = "⏵︎";
-        btnPlay.appendChild(spanPlay);
-        btnPlay.className = "btnPrueba botonR";
-        btnPlay.id = "btnPlayPrueba";
-
-        btnPlay.addEventListener('click', () => reproducePrueba(inputPrueba), true);
-
-        divVoces.appendChild(divListado);
-        divPrueba.appendChild(inputPrueba);
-        divPrueba.appendChild(btnPlay);
-
-        if (divVoces.querySelector('#divPrueba') == undefined) {
-            divVoces.appendChild(divPrueba);
-        }
+        button.addEventListener('click', () => {
+            reproducePrueba(input.value, elegidoIdioma);
+        });
     });
 }
 
@@ -184,6 +137,7 @@ async function guardaConfig() {
 
     ipcRenderer.send('empezar_procesamiento', obj);
 }
+
 let modo_grabacion;
 // 2.1 Cuando se pulse el botón de configuración, se abre la pantalla de configuración
 ipcRenderer.on('pantalla_configuracion_cargada', async (event, arg) => {
@@ -195,14 +149,6 @@ ipcRenderer.on('pantalla_configuracion_cargada', async (event, arg) => {
     if (arg == 1) {
         await checkIdioma();
     }
-    else {
-        let divVoces = document.querySelector('.voces');
-        if (divVoces != undefined) {
-            divVoces.style.display = 'none';
-            elegidoIdioma = 'Microsoft David Desktop - English (United States)';
-        }
-    }
-
     let btnGuardar = document.querySelector('.btnGuardar');
     if (btnGuardar != undefined) {
         btnGuardar.addEventListener('click', () => guardaConfig(), true);

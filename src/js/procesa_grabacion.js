@@ -26,7 +26,7 @@ function añadirBotonesControl(etiqueta) {
     });
 
     let btnEnviar = document.querySelector('#btnEnviar');
-    btnEnviar.addEventListener('click', function (event) { comprobarGrabaciones(event, true) }, false);
+    btnEnviar.addEventListener('click', function (event) { comprobarGrabaciones(event) }, false);
 }
 
 ipcRenderer.on('cambiar_archivo_grabacion', (event, arg) => {
@@ -34,7 +34,7 @@ ipcRenderer.on('cambiar_archivo_grabacion', (event, arg) => {
     silencios = arg.silenciosRenderer;
     datos_fichero = arg.datos_fichero;
     // Obtengo los botones para añadir los eventos
-    comprobarGrabaciones(true);
+    comprobarGrabaciones();
 });
 
 let btnGrabarApretado = null;
@@ -243,7 +243,7 @@ function tiempoEnSegundos(tiempo) {
     return horas * 3600 + minutos * 60 + segundos;
 }
 
-function concatena(audios, silencios) {
+function concatena(audios, silencios, sintesis) {
     let ruta_video = datos_fichero.ruta;
     let ruta_video_output = ruta_video.replace('org_', 'mod_');
 
@@ -253,6 +253,7 @@ function concatena(audios, silencios) {
 
     let data = [];
 
+    // TERMINAR ESTO
     for (let i = 0; i < audios.length; i++) {
         // Obtengo el indice para saber el silencio
         let indice = getIndex(audios[i][1]);
@@ -293,7 +294,7 @@ function concatena(audios, silencios) {
     });
 }
 
-async function comprobarGrabaciones(procedente) {
+async function comprobarGrabaciones() {
     try {
 
         if (audioBlobs.length == 0) {
@@ -308,9 +309,8 @@ async function comprobarGrabaciones(procedente) {
             return;
         }
 
-        if(procedente){
-            audioBlobs = audioBlobs.filter(array => array.length === 3);
-        }
+        audioBlobs = audioBlobs.filter(array => array.length === 3);
+
         console.log(audioBlobs);
         var i = 0;
         for (i = 0; i < audioBlobs.length; i++) {
