@@ -224,7 +224,6 @@ async function almacenaWav(blob, output) {
     }
 }
 
-
 function tiempoEnMilisegundos(tiempo) {
     let partes = tiempo.split(':');
     let horas = parseInt(partes[0]);
