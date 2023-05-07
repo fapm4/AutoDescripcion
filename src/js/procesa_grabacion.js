@@ -242,7 +242,7 @@ function tiempoEnSegundos(tiempo) {
     return horas * 3600 + minutos * 60 + segundos;
 }
 
-function concatena(audios, silencios, sintesis) {
+async function concatena(audios, silencios, sintesis, textos) {
     let ruta_video = datos_fichero.ruta;
     let ruta_video_output = ruta_video.replace('org_', 'mod_');
 
@@ -254,17 +254,25 @@ function concatena(audios, silencios, sintesis) {
 
     // TERMINAR ESTO
     for (let i = 0; i < audios.length; i++) {
-        // Obtengo el indice para saber el silencio
-        let indice = getIndex(audios[i][1]);
+        if (sintesis) {
+            audio = audios[i];
+
+        }
+        else {
+            audio = audios[i][1];
+        }
+
+        indice = getIndex(audio);
+
         let start = silencios.find(elem => elem.index == indice).start;
         let end = silencios.find(elem => elem.index == indice).end;
         let startM = tiempoEnMilisegundos(start);
 
-        data.push([audios[i][1].replace('.blob', '.mp3'), start, end]);
+        data.push([audio.replace('.blob', '.mp3'), start, end, textos[i].value]);
         // Empiezo a crear el comando
-        inputs += ` -i ${audios[i][1].replace('.blob', '.mp3')}`;
+        inputs += ` -i ${audio.replace('.blob', '.mp3')}`;
         // Empiezo con el filtro
-        if (start > 0) {
+        if (startM > 0) {
             filter += `[${i + 1}:a]adelay=${startM}|${startM}[a${i + 1}];`;
         }
         else {
@@ -282,20 +290,19 @@ function concatena(audios, silencios, sintesis) {
     console.log(command);
 
     return new Promise((resolve, reject) => {
-        exec(command, (err, stdout, stderr) => {
-            if (err) {
-                console.error(err);
-                return;
-            } else {
-                resolve(data);
-            }
-        });
+        try {
+            const stdout = execSync(command);
+            console.log(data);
+            resolve(data);
+        } catch (error) {
+            console.error(error);
+            reject(error);
+        }
     });
 }
 
 async function comprobarGrabaciones() {
     try {
-
         if (audioBlobs.length == 0) {
             Swal.fire({
                 title: '¡Atención!',
@@ -308,9 +315,6 @@ async function comprobarGrabaciones() {
             return;
         }
 
-        audioBlobs = audioBlobs.filter(array => array.length === 3);
-
-        console.log(audioBlobs);
         var i = 0;
         for (i = 0; i < audioBlobs.length; i++) {
             let data = audioBlobs[i];
@@ -342,11 +346,14 @@ async function comprobarGrabaciones() {
                 console.error(error);
             }
         }
-        await concatena(audioBlobs, silencios)
+        await concatena(audioBlobs, silencios, false)
             .then((data) => {
+                console.log('ola?');
+                console.log(data);
                 // Crear nueva página para el video con los audios y poner botones de descarga
-                // ipcRenderer.send('video_concatenado', data);
-            });
+                ipcRenderer.send('video_concatenado', data);
+            })
+            .catch(err => console.log(err));
     }
     catch (err) {
         console.log(err);

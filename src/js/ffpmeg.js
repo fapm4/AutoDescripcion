@@ -4,7 +4,7 @@ const ffmpeg = require('fluent-ffmpeg');
 const ffprobe = require('node-ffprobe');
 ffmpeg.setFfmpegPath(ffmpegPath);
 const path = require('path')
-const { exec } = require('child_process');
+const { exec, execSync } = require('child_process');
 
 
 // 4.2 Si no se ha seleccionado ningún fichero, envío un mensaje de error

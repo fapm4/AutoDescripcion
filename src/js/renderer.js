@@ -1,6 +1,7 @@
 var ipcRenderer = require('electron').ipcRenderer;
 const remote = require('@electron/remote');
 const fs = require('fs');
+const { util } = require('util');
 const main = remote.require('./main');
 const imageSoruce = "https://www.google.com/url?sa=i&url=https%3A%2F%2Fwww.spreadshirt.es%2Fshop%2Fdesign%2Fboton%2Bplay%2Bcamiseta%2Bpremium%2Bhombre-D5975f73a59248d6110152d16%3Fsellable%3D30xwlz15z4Upe0m9kzy3-812-7&psig=AOvVaw0yfJZRipPcZ0fKQVnSDetn&ust=1677955190722000&source=images&cd=vfe&ved=0CBAQjRxqFwoTCJiQtay0wP0CFQAAAAAdAAAAABAE";
 /////////////////////////// Este código afecta a -> sube_ficheros.html e index.html ///////////////////////////
