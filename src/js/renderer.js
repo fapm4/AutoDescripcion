@@ -280,6 +280,8 @@ function creaTr(idDescripcion, start, end, modo) {
         input.id = `${idDescripcion}_texto`;
         input.className = 'inputSilencio';
 
+        input.addEventListener('keydown', function (event) { actualizaTiempo(event) }, false);
+
         btnPlay.addEventListener('click', function (event) { sintetiza(event) }, false);
         span.appendChild(input);
         span.appendChild(btnPlay);
@@ -431,8 +433,6 @@ ipcRenderer.on('pagina_descarga_cargada', (event, arg) => {
     if (form != undefined) {
         form.remove();
     }
-
-    console.log(arg);
 
     let bloque = document.querySelector('.bloquePrincipal');
 
