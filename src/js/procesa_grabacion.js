@@ -289,16 +289,12 @@ async function concatena(audios, silencios, sintesis, textos) {
 
     console.log(command);
 
-    return new Promise((resolve, reject) => {
-        try {
-            const stdout = execSync(command);
-            console.log(data);
-            resolve(data);
-        } catch (error) {
-            console.error(error);
-            reject(error);
-        }
-    });
+    try {
+        const stdout = execSync(command);
+        ipcRenderer.send('video_concatenado', data);
+    } catch (error) {
+        console.error(error);
+    }
 }
 
 async function comprobarGrabaciones() {
@@ -346,14 +342,7 @@ async function comprobarGrabaciones() {
                 console.error(error);
             }
         }
-        await concatena(audioBlobs, silencios, false)
-            .then((data) => {
-                console.log('ola?');
-                console.log(data);
-                // Crear nueva página para el video con los audios y poner botones de descarga
-                ipcRenderer.send('video_concatenado', data);
-            })
-            .catch(err => console.log(err));
+        await concatena(audioBlobs, silencios, false);
     }
     catch (err) {
         console.log(err);

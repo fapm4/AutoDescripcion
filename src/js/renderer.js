@@ -363,43 +363,65 @@ ipcRenderer.on('mostrar_formulario', (event, arg) => {
 });
 
 function generaWebVTT(datos) {
-    const recognition = new webkitSpeechRecognition();
-    recognition.lang = 'es-ES';
-    recognition.interimResults = false;
-    recognition.maxAlternatives = 1;
-    recognition.continuous = true;
+    let vtt = 'WEBVTT\n\n';
     let folder = path.dirname(datos[0][0]);
     let ruta_vtt = `${folder}\\descripcion.vtt`;
-    let vtt = 'WEBVTT\n\n';
 
+    // Síntesis
+    if (datos[0].length == 4) {
+        datos.forEach((dato, i) => {
+            let fichero = dato[0];
+            let start = dato[1] + '.000';
+            let end = dato[2] + '.000';
+            let texto = dato[3];
 
-    datos.forEach((dato, i) => {
-        let fichero = dato[0];
-        let start = dato[1] + '.000';
-        let end = dato[2] + '.000';
-
-        vtt += `${i + 1}\n`;
-        vtt += `${start} --> ${end}\n`;
-        const audio = new Audio(fichero);
-
-        audio.addEventListener('loadedmetadata', () => {
-            recognition.start();
-
-            recognition.addEventListener('result', (event) => {
-                const transcript = event.results[event.results.length - 1][0].transcript;
-                vtt += `${transcript}\n\n`;
-                recognition.stop();
-            });
-
+            vtt += `${i + 1}\n`;
+            vtt += `${start} --> ${end}\n`;
+            vtt += `${texto}\n\n`;
         });
-    });
 
-    recognition.addEventListener('end', () => {
         fs.writeFile(ruta_vtt, vtt, (err) => {
             if (err) reject(err);
             else ipcRenderer.send('descarga_contenido', ruta_vtt);
         });
-    });
+    }
+    // Grabación
+    else {
+        const recognition = new webkitSpeechRecognition();
+        recognition.lang = 'es-ES';
+        recognition.interimResults = false;
+        recognition.maxAlternatives = 1;
+        recognition.continuous = true;
+
+
+        datos.forEach((dato, i) => {
+            let fichero = dato[0];
+            let start = dato[1] + '.000';
+            let end = dato[2] + '.000';
+
+            vtt += `${i + 1}\n`;
+            vtt += `${start} --> ${end}\n`;
+            const audio = new Audio(fichero);
+
+            audio.addEventListener('loadedmetadata', () => {
+                recognition.start();
+
+                recognition.addEventListener('result', (event) => {
+                    const transcript = event.results[event.results.length - 1][0].transcript;
+                    vtt += `${transcript}\n\n`;
+                    recognition.stop();
+                });
+
+            });
+        });
+
+        recognition.addEventListener('end', () => {
+            fs.writeFile(ruta_vtt, vtt, (err) => {
+                if (err) reject(err);
+                else ipcRenderer.send('descarga_contenido', ruta_vtt);
+            });
+        }); 
+    }
 }
 
 ipcRenderer.on('pagina_descarga_cargada', (event, arg) => {
@@ -409,6 +431,8 @@ ipcRenderer.on('pagina_descarga_cargada', (event, arg) => {
     if (form != undefined) {
         form.remove();
     }
+
+    console.log(arg);
 
     let bloque = document.querySelector('.bloquePrincipal');
 
