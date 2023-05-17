@@ -15,7 +15,7 @@ ipcRenderer.once('busca_silencios', (event, arg) => {
 
     let nombreFichero = arg.ruta.split('\\').pop().split('.')[0];
     // Mi PC
-    const output = `C:\\Users\\panch\\Desktop\\TFG\\AutoDescripcion\\src\\contenido\\${nombreFichero.substring(4, nombreFichero.length)}\\${nombreFichero}.mp3`;
+    const output = `src\\contenido\\${nombreFichero.substring(4, nombreFichero.length)}\\${nombreFichero}.mp3`;
     // const output = `C:\\Users\\francip\\Desktop\\Repos\\AutoDescripcion\\src\\contenido\\${nombreFichero.substring(4, nombreFichero.length)}\\${nombreFichero}.mp3`;
     let ruta = arg.ruta;
     let media_name = arg.media_name;

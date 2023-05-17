@@ -150,7 +150,9 @@ ipcRenderer.on('pantalla_configuracion_cargada', async (event, arg) => {
         await checkIdioma();
     }
     let btnGuardar = document.querySelector('.btnGuardar');
-    if (btnGuardar != undefined) {
+    if (
+        btnGuardar != undefined) {
+        btnGuardar.removeEventListener('click', () => guardaConfig(), true);
         btnGuardar.addEventListener('click', () => guardaConfig(), true);
     }
 });

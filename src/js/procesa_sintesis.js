@@ -21,26 +21,29 @@ async function preComprobacion() {
     let promesas = [];
 
     for (const input of inputs) {
-        let output = datos_fichero.output.split('org')[0] + input.id.split('_')[0] + '.mp3';
-        audiosGenerados.push(output);
+        if (input.value != "") {
+            let output = datos_fichero.output.split('org')[0] + input.id.split('_')[0] + '.mp3';
+            audiosGenerados.push(output);
 
-        let promesa = new Promise((resolve, reject) => {
-            say.export(input.value, elegidoIdioma, 1, output, (err) => {
-                if (err) {
-                    reject(err);
-                } else {
-                    resolve();
-                }
+            let promesa = new Promise((resolve, reject) => {
+                say.export(input.value, elegidoIdioma, 1, output, (err) => {
+                    if (err) {
+                        reject(err);
+                    } else {
+                        resolve();
+                    }
+                });
+
             });
-        });
 
-        promesas.push(promesa);
+            promesas.push(promesa);
+        }
     }
 
     return Promise.all(promesas);
 }
 
-function actualizaTiempo(event){
+function actualizaTiempo(event) {
     let tecla = event.key;
 
     if (tecla == 'Enter') {
@@ -49,11 +52,11 @@ function actualizaTiempo(event){
         const velocidad = plataforma === 'darwin' ? 175 : 100;
         let texto = event.currentTarget.value;
 
-        say.speak(texto, elegidoIdioma, velocidad, { volume: 0.0}, (err) => {
+        say.speak(texto, elegidoIdioma, velocidad, { volume: 0.0 }, (err) => {
             if (err) {
                 console.log(err);
             }
-            else{
+            else {
                 duracion = Math.ceil(texto.length / velocidad) * 1000;
             }
         });
