@@ -284,11 +284,11 @@ input[type='radio'] {
     }
 }
 
-#player {
-    margin-top: 20px !important;
-    width: 30% !important;
-    height: 20% !important;
+.custom-player {
+    width: 30%;
+    height: auto;
 }
+
 
 #tablaSilencios,
 #tablaNuevoSilencio {

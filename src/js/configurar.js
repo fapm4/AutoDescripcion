@@ -1,3 +1,5 @@
+const { ipcRenderer } = require('electron');
+const { queryAncestorSelector } = require('../js/renderer.js');
 let threshold_value;
 
 function checkThreshold() {
@@ -32,19 +34,6 @@ let dic = {
     'en-US': 'Inglés',
 };
 
-function reproducePrueba(input) {
-    const utterance = new SpeechSynthesisUtterance();
-    let voice = voices.filter(voice => voice.name == elegidoIdioma)[0];
-    console.log(voice);
-    utterance.text = input.value;
-    utterance.lang = voice;
-    utterance.rate = 1;
-    utterance.pitch = 1;
-    utterance.volume = 1;
-    utterance.voice = voice;
-    speechSynthesis.speak(utterance);
-}
-
 const say = require('say');
 
 let elegidoIdioma;
@@ -56,11 +45,6 @@ function getVoices() {
             return resolve(voices);
         });
     });
-}
-
-async function reproducePrueba(texto, voz) {
-    let start = new Date().getTime();
-    say.speak(texto, voz);
 }
 
 async function checkIdioma() {
@@ -104,7 +88,7 @@ async function checkIdioma() {
         span.appendChild(button);
 
         button.addEventListener('click', () => {
-            reproducePrueba(input.value, elegidoIdioma);
+            say.speak(input.value, elegidoIdioma);
         });
     });
 }
@@ -132,27 +116,29 @@ async function guardaConfig() {
 
     let obj = {
         threshold_value,
-        elegidoIdioma
+        voz: elegidoIdioma
     };
 
     ipcRenderer.send('empezar_procesamiento', obj);
 }
 
-let modo_grabacion;
 // 2.1 Cuando se pulse el botón de configuración, se abre la pantalla de configuración
-ipcRenderer.on('pantalla_configuracion_cargada', async (event, arg) => {
-    modo_grabacion = arg;
+ipcRenderer.once('pantalla_configuracion_cargada', async (event, arg) => {
     // 2.1.1 Controlar el threshold
     checkThreshold();
 
-    // 2.1.2 Controlar el idioma
+    // 2.1.2 Controlar el idioma - Si es 1, entonces hay que sintetizar
     if (arg == 1) {
         await checkIdioma();
+    }
+    else{
+        let divVoces = document.querySelector('.voces');
+        divVoces.style.display = 'none';
     }
     let btnGuardar = document.querySelector('.btnGuardar');
     if (
         btnGuardar != undefined) {
-        btnGuardar.removeEventListener('click', () => guardaConfig(), true);
-        btnGuardar.addEventListener('click', () => guardaConfig(), true);
+        btnGuardar.removeEventListener('click', guardaConfig, true);
+        btnGuardar.addEventListener('click', guardaConfig, true);
     }
 });

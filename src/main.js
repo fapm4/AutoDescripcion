@@ -26,10 +26,6 @@ const ffmpeg = require('fluent-ffmpeg');
 const ffprobe = require('node-ffprobe');
 ffmpeg.setFfmpegPath(ffmpegPath);
 
-
-// DB
-const db = require('./js/db');
-
 //fs
 const fs = require('fs');
 
@@ -158,31 +154,23 @@ function getMediaName(media) {
 // Guardado del fichero
 async function addVideo(media) {
     let media_name = getMediaName(media);
+    const video = fs.readFileSync(media);
 
-    await db.connect((err) => {
-        const video = fs.readFileSync(media);
+    let ruta = path.join(__dirname, 'contenido', media_name.split('.')[0]);
+    fs.mkdir(ruta, { recursive: true }, (err) => {
+        if (err) throw err;
+    });
+    ruta = path.join(ruta, "org_" + media_name);
 
-        let ruta = path.join(__dirname, 'contenido', media_name.split('.')[0]);
-        fs.mkdir(ruta, { recursive: true }, (err) => {
-            if (err) throw err;
-        });
-        ruta = path.join(ruta, "org_" + media_name);
-
-        fs.writeFile(ruta, video, (err) => {
-            if (err) throw err;
-        });
+    fs.writeFile(ruta, video, (err) => {
+        if (err) throw err;
 
         // Actualizo el label del HTML
         ventanaPrincipal.webContents.send('actualiza_etiqueta', media_name);
 
-        // Guardo la referencia en la base de datos
-        db.query('INSERT INTO video (name, ruta) VALUES (?, ?)', [media_name, ruta], (err, result) => {
-            if (err) throw err;
-        });
-
         obj = {
-            media_name,
-            ruta
+            nombre_fichero: media_name,
+            ruta_org: ruta,
         };
     });
 }
@@ -191,7 +179,7 @@ async function addVideo(media) {
 ipcMain.on('empezar_procesamiento', (event, arg) => {
     if (arg.length != 0) {
         obj.threshold_value = arg.threshold_value;
-        obj.idioma = arg.elegidoIdioma;
+        obj.voz = arg.voz;
     }
 
     ventanaPrincipal.webContents.send('busca_silencios', obj);
@@ -212,6 +200,7 @@ ipcMain.on('pantalla_carga', (event, arg) => {
 
 // 7. Recibo el evento de que el audio ya ha sido analizado
 ipcMain.on('audio_analizado', (event, arg) => {
+    console.log(arg);
     ventanaPrincipal.loadURL(url.format({
         pathname: path.join(__dirname, 'views', 'formulario_descripcion.html'),
         protocol: 'file',
@@ -225,7 +214,6 @@ ipcMain.on('audio_analizado', (event, arg) => {
 });
 
 ipcMain.on('cambia_archivo_js', (event, arg) => {
-    console.log(arg);
     if (arg.modo == 2) {
         ventanaPrincipal.webContents.send('cambiar_archivo_grabacion', arg);
     }
@@ -275,13 +263,6 @@ ipcMain.on('descarga_contenido', async (event, arg) => {
 app.on('window-all-closed', () => {
     if (process.platform !== 'darwin') {
         app.quit();
-        db.query('DELETE FROM video', (err, result) => {
-            if (err) throw err;
-        });
-
-        db.end((err => {
-            if (err) throw err;
-        }));
     }
 });
 

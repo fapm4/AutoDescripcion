@@ -1,4 +1,4 @@
-var ipcRenderer = require('electron').ipcRenderer;
+const { ipcRenderer } = require('electron');
 const remote = require('@electron/remote');
 const fs = require('fs');
 /////////////////////////// Este código afecta a -> sube_ficheros.html e index.html ///////////////////////////
@@ -27,15 +27,6 @@ function redirige(event) {
     switch (currentTarget.id) {
         case 'btnInicio':
             ruta = 'index.html';
-            fs.readdir(path.join(__dirname, 'contenido'), (err, files) => {
-                if (err) throw err;
-                files.forEach(file => {
-                    fs.unlink(path.join(__dirname, 'contenido', file), err => {
-                        if (err) throw err;
-                    });
-                });
-            });
-            
             break;
         case 'btnInfo':
             ruta = 'index.html';
@@ -117,7 +108,7 @@ function convierteTiempo(seconds) {
 function getCurrentSecond(event) {
     let btn = event.currentTarget;
     let input = btn.previousSibling;
-    let player = document.querySelector('#player');
+    let player = document.querySelector('video');
     let currentTime = player.currentTime;
     input.value = convierteTiempo(currentTime);
 }
@@ -287,9 +278,9 @@ function creaTr(idDescripcion, start, end, modo) {
         input.id = `${idDescripcion}_texto`;
         input.className = 'inputSilencio';
 
-        input.addEventListener('keydown', function (event) { actualizaTiempo(event) }, false);
+        // input.addEventListener('keydown', function (event) { actualizaTiempo(event) }, false);
 
-        btnPlay.addEventListener('click', function (event) { sintetiza(event) }, false);
+        btnPlay.addEventListener('click', function (event) { sintetiza(event, voz) }, false);
         span.appendChild(input);
         span.appendChild(btnPlay);
         tdInput.appendChild(span);
@@ -300,37 +291,33 @@ function creaTr(idDescripcion, start, end, modo) {
 }
 
 let silenciosRenderer;
-function enviarAudios(datos_fichero, modo) {
+function enviarAudios(datos_audio, modo) {
     silenciosRenderer = silenciosRenderer.map((silencio, index) => {
         return { ...silencio, index };
     });
 
     let args = {
         silenciosRenderer,
-        datos_fichero,
-        modo
+        datos_audio,
     };
 
     ipcRenderer.send('cambia_archivo_js', args);
-
 }
 
-let voiceSynth;
-ipcRenderer.on('mostrar_formulario', (event, arg) => {
-    // Tengo que mostrar el video
+let voz;
+ipcRenderer.once('mostrar_formulario', (event, arg) => {
     let video = document.querySelector('video');
     let divForm = document.querySelector('.form');
-    let modo = arg.datos_fichero.modo;
-    voiceSynth = arg.voice;
+    let modo = arg.modo;
+    voz = arg.voz;
 
-    console.log(voiceSynth);
     if (video != undefined) {
-        video.src = arg.datos_fichero.ruta;
+        video.src = arg.ruta_org;
     }
 
     silenciosRenderer = arg.silencios;
-    datos_fichero = arg.datos_fichero;
-
+    console.log(silenciosRenderer)
+    
     let tabla = document.createElement('table');
     tabla.id = 'tablaSilencios';
     tabla.innerHTML = '<tr><th>Inicio</th><th>Fin</th><th>Descripción</th></tr>';
@@ -342,7 +329,7 @@ ipcRenderer.on('mostrar_formulario', (event, arg) => {
     btnEnviar.className = 'botonR';
     btnEnviar.id = 'btnEnviar';
 
-    btnEnviar.addEventListener('click', () => enviarAudios(datos_fichero, modo), true);
+    btnEnviar.addEventListener('click', () => enviarAudios(arg, modo), true);
 
     if (silenciosRenderer.length == 0) {
         Swal.fire({
@@ -429,7 +416,7 @@ function generaWebVTT(datos) {
                 if (err) reject(err);
                 else ipcRenderer.send('descarga_contenido', ruta_vtt);
             });
-        }); 
+        });
     }
 }
 
@@ -467,19 +454,18 @@ ipcRenderer.on('pagina_descarga_cargada', (event, arg) => {
 });
 
 function queryAncestorSelector(node, selector) {
-    // Obtengo el nodo padre
     var parent = node.parentNode;
 
-    // Saco todos los nodos con mi selector
-    var all = document.querySelectorAll(selector);
-    var found = false;
-    while (parent !== document && !found) {
-        for (var i = 0; i < all.length && !found; i++) {
-            found = (all[i] === parent) ? true : false;
+    while (parent !== document) {
+        if (parent.matches(selector)) {
+            return parent;
         }
-        parent = (!found) ? parent.parentNode : parent;
+        parent = parent.parentNode;
     }
-    return (found) ? parent : null;
+
+    return null;
 }
 
+
 module.exports.queryAncestorSelector = queryAncestorSelector;
+module.exports.convierteTiempo = convierteTiempo;

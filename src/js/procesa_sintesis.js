@@ -1,8 +1,11 @@
+const say = require('say');
 let audiosGenerados = [];
 
 ipcRenderer.on('cambiar_archivo_sintesis', async (event, arg) => {
     silencios = arg.silenciosRenderer;
-    datos_fichero = arg.datos_fichero;
+    datos_audio = arg.datos_audio;
+
+    console.log(datos_audio);
 
     await preComprobacion().then(() => {
         let inputs = document.querySelectorAll(".inputSilencio");
@@ -10,10 +13,10 @@ ipcRenderer.on('cambiar_archivo_sintesis', async (event, arg) => {
     });
 });
 
-async function sintetiza(event) {
+async function sintetiza(event, voz) {
     let btn = event.currentTarget;
     let input = btn.previousElementSibling;
-    reproducePrueba(input.value, elegidoIdioma);
+    say.speak(input.value, voz);
 }
 
 async function preComprobacion() {
@@ -22,11 +25,11 @@ async function preComprobacion() {
 
     for (const input of inputs) {
         if (input.value != "") {
-            let output = datos_fichero.output.split('org')[0] + input.id.split('_')[0] + '.mp3';
+            let output = datos_audio.audio_extraido.split('org')[0] + input.id.split('_')[0] + '.mp3';
             audiosGenerados.push(output);
 
             let promesa = new Promise((resolve, reject) => {
-                say.export(input.value, elegidoIdioma, 1, output, (err) => {
+                say.export(input.value, datos_audio.voz, 1, output, (err) => {
                     if (err) {
                         reject(err);
                     } else {

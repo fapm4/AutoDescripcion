@@ -7,32 +7,10 @@ let audioBlobs = [];
 let silencios = [];
 var datos_fichero = [];
 
-function añadirBotonesControl(etiqueta) {
-    const btnsGrabar = etiqueta.querySelectorAll('.btnGrabar');
-    const btnsParar = etiqueta.querySelectorAll('.btnParar');
-
-    let aux = false;
-
-    if (etiqueta == document) {
-        aux = true;
-    }
-    // Añado los eventos a los botones
-    btnsGrabar.forEach(btn => {
-        btn.addEventListener('click', function (event) { grabarVoz(event) }, false);
-    });
-
-    btnsParar.forEach(btn => {
-        btn.addEventListener('click', function (event) { pararVoz(event, aux) }, false);
-    });
-
-    let btnEnviar = document.querySelector('#btnEnviar');
-    btnEnviar.addEventListener('click', function (event) { comprobarGrabaciones(event) }, false);
-}
-
 ipcRenderer.on('cambiar_archivo_grabacion', (event, arg) => {
     console.log('cambia a grabacion');
     silencios = arg.silenciosRenderer;
-    datos_fichero = arg.datos_fichero;
+    datos_fichero = arg.datos_audio;
     // Obtengo los botones para añadir los eventos
     comprobarGrabaciones();
 });
@@ -102,7 +80,8 @@ function pararVoz(event) {
     if (btnGrabarApretado.id.split('_')[0] == btn.id.split('_')[0]) {
         recorder.stop();
         console.log('Parando...');
-        let output = datos_fichero.output.split('org')[0] + btn.id.split("_")[0] + '.blob';
+        let output = datos_fichero.audio_extraido.split('org')[0] + btn.id.split("_")[0] + '.blob';
+
         recorder.ondataavailable = async e => {
             btnGrabarApretado.classList.toggle('botonR');
             btnGrabarApretado.classList.toggle('botonR_i');
