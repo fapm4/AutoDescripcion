@@ -1,18 +1,35 @@
-const { spawn } = require('child_process');
+const { ipcRenderer } = require('electron');
+const ffmpegPath = require('ffmpeg-static-electron').path;
+const ffmpeg = require('fluent-ffmpeg');
+ffmpeg.setFfmpegPath(ffmpegPath);
+const { exec, execSync } = require('child_process');
 
 let recorder;
 let audioChunks = [];
 let audioBlobs = [];
 
 let silencios = [];
-var datos_fichero = [];
+var datos_audio = [];
 
-ipcRenderer.on('cambiar_archivo_grabacion', (event, arg) => {
-    console.log('cambia a grabacion');
-    silencios = arg.silenciosRenderer;
-    datos_fichero = arg.datos_audio;
-    // Obtengo los botones para añadir los eventos
-    comprobarGrabaciones();
+ipcRenderer.once('cambiar_archivo_grabacion', (event, arg) => {
+    console.log('Cambiando a grabación');
+    datos_audio = arg;
+    console.log(datos_audio);
+    let btnsPlay = document.querySelectorAll('.btnPlay');
+    let btnsGrabar = document.querySelectorAll('.btnGrabar');
+    let btnsParar = document.querySelectorAll('.btnParar');
+
+    btnsPlay.forEach(btn => {
+        btn.addEventListener('click', function (event) { sintetiza(event, voz) }, false);
+    });
+
+    btnsGrabar.forEach(btn => {
+        btn.addEventListener('click', grabarVoz, false);
+    });
+
+    btnsParar.forEach(btn => {
+        btn.addEventListener('click', pararVoz, false);
+    });
 });
 
 let btnGrabarApretado = null;
@@ -80,7 +97,7 @@ function pararVoz(event) {
     if (btnGrabarApretado.id.split('_')[0] == btn.id.split('_')[0]) {
         recorder.stop();
         console.log('Parando...');
-        let output = datos_fichero.audio_extraido.split('org')[0] + btn.id.split("_")[0] + '.blob';
+        let output = datos_audio.audio_extraido.split('org')[0] + btn.id.split("_")[0] + '.blob';
 
         recorder.ondataavailable = async e => {
             btnGrabarApretado.classList.toggle('botonR');
@@ -222,16 +239,16 @@ function tiempoEnSegundos(tiempo) {
 }
 
 async function concatena(audios, silencios, sintesis, textos) {
-    let ruta_video = datos_fichero.ruta;
+    let ruta_video = datos_audio.ruta_org;
     let ruta_video_output = ruta_video.replace('org_', 'mod_');
 
+    console.log(silencios);
     let inputs = '';
     let filter = '';
     let preFiltro = '';
 
     let data = [];
 
-    // TERMINAR ESTO
     for (let i = 0; i < audios.length; i++) {
         if (sintesis) {
             audio = audios[i];
@@ -247,7 +264,13 @@ async function concatena(audios, silencios, sintesis, textos) {
         let end = silencios.find(elem => elem.index == indice).end;
         let startM = tiempoEnMilisegundos(start);
 
-        data.push([audio.replace('.blob', '.mp3'), start, end, textos[i].value]);
+        if(textos != undefined) {
+            data.push([audio.replace('.blob', '.mp3'), start, end, textos[i].value]);
+        }
+        else {
+            data.push([audio.replace('.blob', '.mp3'), start, end]);
+        }
+
         // Empiezo a crear el comando
         inputs += ` -i ${audio.replace('.blob', '.mp3')}`;
         // Empiezo con el filtro
@@ -276,7 +299,7 @@ async function concatena(audios, silencios, sintesis, textos) {
     }
 }
 
-async function comprobarGrabaciones() {
+ipcRenderer.on('concatenar_grabacion', async (event, arg) => {
     try {
         if (audioBlobs.length == 0) {
             Swal.fire({
@@ -321,7 +344,7 @@ async function comprobarGrabaciones() {
                 console.error(error);
             }
         }
-        await concatena(audioBlobs, silencios, false);
+        await concatena(audioBlobs, arg.silenciosRenderer, false);
     }
     catch (err) {
         console.log(err);
@@ -334,4 +357,6 @@ async function comprobarGrabaciones() {
             cancelButtonText: 'Cancelar'
         });
     }
-}
+});
+
+module.exports.tiempoEnSegundos = tiempoEnSegundos;

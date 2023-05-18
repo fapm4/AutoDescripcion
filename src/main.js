@@ -200,7 +200,6 @@ ipcMain.on('pantalla_carga', (event, arg) => {
 
 // 7. Recibo el evento de que el audio ya ha sido analizado
 ipcMain.on('audio_analizado', (event, arg) => {
-    console.log(arg);
     ventanaPrincipal.loadURL(url.format({
         pathname: path.join(__dirname, 'views', 'formulario_descripcion.html'),
         protocol: 'file',
@@ -224,7 +223,9 @@ ipcMain.on('cambia_archivo_js', (event, arg) => {
 });
 
 ipcMain.on('listo_para_concatenar', (event, arg) => {
-    ventanaPrincipal.webContents.send('concatenar', arg);
+    if(arg.datos_audio.modo == 2){
+        ventanaPrincipal.webContents.send('concatenar_grabacion', arg);
+    }
 });
 
 ipcMain.on('video_concatenado', (event, arg) => {
@@ -241,7 +242,7 @@ ipcMain.on('video_concatenado', (event, arg) => {
 
 ipcMain.on('descarga_contenido', async (event, arg) => {
     try {
-        console.log(arg);
+
         const savePath = await dialog.showSaveDialog(ventanaPrincipal, {
             title: 'Guardar como',
             defaultPath: arg

@@ -1,6 +1,8 @@
 const { ipcRenderer } = require('electron');
 const remote = require('@electron/remote');
+const { tiempoEnSegundos } = require('../js/procesa_grabacion.js');
 const fs = require('fs');
+const { path } = require('path');
 /////////////////////////// Este código afecta a -> sube_ficheros.html e index.html ///////////////////////////
 
 let esperandoVoces;
@@ -94,9 +96,6 @@ ipcRenderer.on('actualiza_etiqueta', (event, arg) => {
     label.innerHTML = arg;
 });
 /////////////////////////// Este código afecta a -> formulario_descripcion.html ///////////////////////////
-let plyr = require('plyr');
-const player = new plyr('#player');
-
 function convierteTiempo(seconds) {
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
@@ -255,14 +254,14 @@ function creaTr(idDescripcion, start, end, modo) {
         btnGrabar.className = 'btnGrabar botonR';
         btnGrabar.innerHTML = 'Grabar';
 
-        btnGrabar.addEventListener('click', function (event) { grabarVoz(event) }, false);
+        // btnGrabar.addEventListener('click', function (event) { grabarVoz(event) }, false);
 
         let btnParar = document.createElement('button');
         btnParar.id = `${idDescripcion}_parar`;
         btnParar.className = 'btnParar botonR';
         btnParar.innerHTML = 'Parar';
 
-        btnParar.addEventListener('click', function (event) { pararVoz(event) }, false);
+        // btnParar.addEventListener('click', function (event) { pararVoz(event) }, false);
 
         span.appendChild(btnGrabar);
         span.appendChild(btnParar);
@@ -280,7 +279,7 @@ function creaTr(idDescripcion, start, end, modo) {
 
         // input.addEventListener('keydown', function (event) { actualizaTiempo(event) }, false);
 
-        btnPlay.addEventListener('click', function (event) { sintetiza(event, voz) }, false);
+        // btnPlay.addEventListener('click', function (event) { sintetiza(event, voz) }, false);
         span.appendChild(input);
         span.appendChild(btnPlay);
         tdInput.appendChild(span);
@@ -301,13 +300,15 @@ function enviarAudios(datos_audio, modo) {
         datos_audio,
     };
 
-    ipcRenderer.send('cambia_archivo_js', args);
+    console.log('Enviando audios');
+    ipcRenderer.send('listo_para_concatenar', args);
 }
 
 let voz;
 ipcRenderer.once('mostrar_formulario', (event, arg) => {
     let video = document.querySelector('video');
     let divForm = document.querySelector('.form');
+
     let modo = arg.modo;
     voz = arg.voz;
 
@@ -316,8 +317,7 @@ ipcRenderer.once('mostrar_formulario', (event, arg) => {
     }
 
     silenciosRenderer = arg.silencios;
-    console.log(silenciosRenderer)
-    
+
     let tabla = document.createElement('table');
     tabla.id = 'tablaSilencios';
     tabla.innerHTML = '<tr><th>Inicio</th><th>Fin</th><th>Descripción</th></tr>';
@@ -329,7 +329,7 @@ ipcRenderer.once('mostrar_formulario', (event, arg) => {
     btnEnviar.className = 'botonR';
     btnEnviar.id = 'btnEnviar';
 
-    btnEnviar.addEventListener('click', () => enviarAudios(arg, modo), true);
+    btnEnviar.addEventListener('click', () => enviarAudios(arg), true);
 
     if (silenciosRenderer.length == 0) {
         Swal.fire({
@@ -356,12 +356,20 @@ ipcRenderer.once('mostrar_formulario', (event, arg) => {
     let divBotones = document.createElement('div');
     divBotones.appendChild(btnEnviar);
     divForm.appendChild(divBotones);
+
+    // Una vez se ha cargado el formulario, añado los eventos a los botones desde el otro fichero
+    ipcRenderer.send('cambia_archivo_js', arg);
+
 });
 
 function generaWebVTT(datos) {
+    console.log(datos);
     let vtt = 'WEBVTT\n\n';
-    let folder = path.dirname(datos[0][0]);
+    let ruta_absoluta = window.location.href.split('/').slice(0, -3).join('/') + '/';
+
+    let folder = ruta_absoluta + datos[0][0].split('\\').slice(0, -1).join('\\');
     let ruta_vtt = `${folder}\\descripcion.vtt`;
+    ruta_vtt = ruta_vtt.replace(/\\/g, '/');
 
     // Síntesis
     if (datos[0].length == 4) {
@@ -389,34 +397,67 @@ function generaWebVTT(datos) {
         recognition.maxAlternatives = 1;
         recognition.continuous = true;
 
-
-        datos.forEach((dato, i) => {
-            let fichero = dato[0];
-            let start = dato[1] + '.000';
-            let end = dato[2] + '.000';
-
-            vtt += `${i + 1}\n`;
-            vtt += `${start} --> ${end}\n`;
-            const audio = new Audio(fichero);
-
-            audio.addEventListener('loadedmetadata', () => {
-                recognition.start();
-
-                recognition.addEventListener('result', (event) => {
-                    const transcript = event.results[event.results.length - 1][0].transcript;
-                    vtt += `${transcript}\n\n`;
-                    recognition.stop();
-                });
-
-            });
+        // Iniciar el reconocimiento de voz antes de iterar sobre los datos
+        recognition.addEventListener('start', () => {
+            console.log('Reconocimiento de voz iniciado');
         });
 
         recognition.addEventListener('end', () => {
-            fs.writeFile(ruta_vtt, vtt, (err) => {
-                if (err) reject(err);
-                else ipcRenderer.send('descarga_contenido', ruta_vtt);
-            });
+            console.log('Reconocimiento de voz finalizado');
         });
+
+        recognition.addEventListener('result', (event) => {
+            console.log('asdasda');
+            const transcript = event.results[0][0].transcript;
+            console.log(transcript);
+        });
+
+        const audio = new Audio(ruta_absoluta + datos[0][0]);
+        audio.addEventListener('loadedmetadata', () => {
+            recognition.start();
+        });
+
+        audio.load();
+
+
+        // datos.forEach((dato, i) => {
+        //     let fichero = ruta_absoluta + dato[0];
+        //     fichero = fichero.replace(/\\/g, '/');
+        //     let start = dato[1] + '.000';
+        //     let end = dato[2] + '.000';
+
+        //     console.log(start, end);
+
+        //     vtt += `${i + 1}\n`;
+        //     vtt += `${start} --> ${end}\n`;
+
+        //     console.log(fichero);
+        //     const audio = new Audio(fichero);
+
+        //     audio.addEventListener('loadedmetadata', () => {
+        //         // No es necesario llamar a recognition.start() aquí
+        //         // Reconocimiento de voz en curso
+
+        //         recognition.addEventListener('result', (event) => {
+        //             const transcript = event.results[event.results.length - 1][0].transcript;
+        //             vtt += `${transcript}\n\n`;
+        //             recognition.stop();
+        //         });
+
+        //     });
+        // });
+
+        console.log(vtt);
+        // recognition.addEventListener('end', () => {
+        //     fs.writeFileSync(ruta_vtt, vtt, (err) => {
+        //         if (err) console.log(err);
+        //         // else ipcRenderer.send('descarga_contenido', ruta_vtt);
+        //     });
+        // });
+
+        // // Iniciar el reconocimiento de voz
+        // recognition.start();
+
     }
 }
 
