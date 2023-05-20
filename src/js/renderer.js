@@ -203,7 +203,9 @@ function tablaAñadirSilencio(divForm, modo) {
     divNuevosSilencios.appendChild(btnAñadirSilencios);
     btnAñadirSilencios.addEventListener('click', () => añadirSilencios(event, modo), true);
 
-    divForm.appendChild(divNuevosSilencios);
+    if (divForm != undefined) {
+        divForm.appendChild(divNuevosSilencios);
+    }
 }
 
 function borrarSilencio(event, tr) {
@@ -350,12 +352,14 @@ ipcRenderer.once('mostrar_formulario', (event, arg) => {
             i += 1;
         });
     }
-    divForm.appendChild(tabla);
 
-    // Los meto al DOM
-    let divBotones = document.createElement('div');
-    divBotones.appendChild(btnEnviar);
-    divForm.appendChild(divBotones);
+    if (divForm != undefined) {
+        divForm.appendChild(tabla);
+        // Los meto al DOM
+        let divBotones = document.createElement('div');
+        divBotones.appendChild(btnEnviar);
+        divForm.appendChild(divBotones);
+    }
 
     // Una vez se ha cargado el formulario, añado los eventos a los botones desde el otro fichero
     ipcRenderer.send('cambia_archivo_js', arg);
@@ -385,7 +389,7 @@ function generaWebVTT(datos) {
         });
 
         fs.writeFile(ruta_vtt, vtt, (err) => {
-            if (err) reject(err);
+            if (err) console.log(err);
             else ipcRenderer.send('descarga_contenido', ruta_vtt);
         });
     }
@@ -419,63 +423,23 @@ function generaWebVTT(datos) {
 
         audio.load();
 
-
-        // datos.forEach((dato, i) => {
-        //     let fichero = ruta_absoluta + dato[0];
-        //     fichero = fichero.replace(/\\/g, '/');
-        //     let start = dato[1] + '.000';
-        //     let end = dato[2] + '.000';
-
-        //     console.log(start, end);
-
-        //     vtt += `${i + 1}\n`;
-        //     vtt += `${start} --> ${end}\n`;
-
-        //     console.log(fichero);
-        //     const audio = new Audio(fichero);
-
-        //     audio.addEventListener('loadedmetadata', () => {
-        //         // No es necesario llamar a recognition.start() aquí
-        //         // Reconocimiento de voz en curso
-
-        //         recognition.addEventListener('result', (event) => {
-        //             const transcript = event.results[event.results.length - 1][0].transcript;
-        //             vtt += `${transcript}\n\n`;
-        //             recognition.stop();
-        //         });
-
-        //     });
-        // });
-
-        console.log(vtt);
-        // recognition.addEventListener('end', () => {
-        //     fs.writeFileSync(ruta_vtt, vtt, (err) => {
-        //         if (err) console.log(err);
-        //         // else ipcRenderer.send('descarga_contenido', ruta_vtt);
-        //     });
-        // });
-
-        // // Iniciar el reconocimiento de voz
-        // recognition.start();
-
     }
 }
 
-ipcRenderer.on('pagina_descarga_cargada', (event, arg) => {
+ipcRenderer.once('pagina_descarga_cargada', (event, arg) => {
     // arg[1] es el video modificado y arg[0] los audios con los silencios para el webvtt
     let videoSrc = arg[arg.length - 1];
-    let form = document.querySelector('.form');
-    if (form != undefined) {
-        form.remove();
-    }
 
     let bloque = document.querySelector('.bloquePrincipal');
 
     let video = document.querySelector('video');
-    video.src = videoSrc;
+    if(video != undefined){
+        video.src = videoSrc;
+    }
 
     let span = document.createElement('span');
-    span.clasName = "botonesVoz";
+    span.className = "botonesVoz";
+    span.id = "botonesDescarga";
 
     let btnDescargarVideo = document.createElement('button');
     btnDescargarVideo.className = "boton botonR";
@@ -488,9 +452,14 @@ ipcRenderer.on('pagina_descarga_cargada', (event, arg) => {
     btnDescargarWebVTT.innerHTML = "Descargar WEBVTT";
     btnDescargarWebVTT.addEventListener('click', () => generaWebVTT(arg.slice(0, arg.length - 1)), true);
 
+    let btnVolver = document.createElement('button');
+    btnVolver.className = "boton botonR";
+    btnVolver.innerHTML = "Volver";
+    btnVolver.addEventListener('click', () => { ipcRenderer.send('reinicia') }, true);
+
     span.appendChild(btnDescargarVideo);
     span.appendChild(btnDescargarWebVTT);
-
+    span.appendChild(btnVolver);
     bloque.appendChild(span);
 });
 

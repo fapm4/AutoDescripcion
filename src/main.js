@@ -4,6 +4,7 @@
 // Electron
 const { app, BrowserWindow, Menu, ipcMain, dialog, systemPreferences } = require('electron');
 const { download } = require('electron-dl');
+const { spawn } = require('child_process');
 
 // URL
 const url = require('url');
@@ -223,14 +224,17 @@ ipcMain.on('cambia_archivo_js', (event, arg) => {
 });
 
 ipcMain.on('listo_para_concatenar', (event, arg) => {
-    if(arg.datos_audio.modo == 2){
+    if (arg.datos_audio.modo == 2) {
         ventanaPrincipal.webContents.send('concatenar_grabacion', arg);
+    }
+    else {
+        ventanaPrincipal.webContents.send('concatenar_sintesis', arg);
     }
 });
 
 ipcMain.on('video_concatenado', (event, arg) => {
     ventanaPrincipal.loadURL(url.format({
-        pathname: path.join(__dirname, 'views', 'formulario_descripcion.html'),
+        pathname: path.join(__dirname, 'views', 'pagina_descarga.html'),
         protocol: 'file',
         slashes: true,
     }));
@@ -259,6 +263,18 @@ ipcMain.on('descarga_contenido', async (event, arg) => {
     catch (err) {
         console.log(err);
     }
+});
+
+ipcMain.on('reinicia', (event, arg) => {
+    app.quit();
+    ventanaPrincipal.close();
+
+    const appPath = app.getPath('exe');
+    const child = spawn(appPath, {
+        detached: true,
+        stdio: 'ignore',
+    });
+    child.unref();
 });
 
 app.on('window-all-closed', () => {

@@ -12,9 +12,7 @@ let silencios = [];
 var datos_audio = [];
 
 ipcRenderer.once('cambiar_archivo_grabacion', (event, arg) => {
-    console.log('Cambiando a grabación');
     datos_audio = arg;
-    console.log(datos_audio);
     let btnsPlay = document.querySelectorAll('.btnPlay');
     let btnsGrabar = document.querySelectorAll('.btnGrabar');
     let btnsParar = document.querySelectorAll('.btnParar');
@@ -239,6 +237,7 @@ function tiempoEnSegundos(tiempo) {
 }
 
 async function concatena(audios, silencios, sintesis, textos) {
+    console.log('pepe');
     let ruta_video = datos_audio.ruta_org;
     let ruta_video_output = ruta_video.replace('org_', 'mod_');
 
@@ -360,3 +359,5 @@ ipcRenderer.on('concatenar_grabacion', async (event, arg) => {
 });
 
 module.exports.tiempoEnSegundos = tiempoEnSegundos;
+module.exports.tiempoEnMilisegundos = tiempoEnMilisegundos;
+module.exports.getIndex = getIndex;
