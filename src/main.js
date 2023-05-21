@@ -265,16 +265,18 @@ ipcMain.on('descarga_contenido', async (event, arg) => {
     }
 });
 
-ipcMain.on('reinicia', (event, arg) => {
-    app.quit();
-    ventanaPrincipal.close();
+ipcMain.on('volver_a_formulario', (event, arg) => {
+    ventanaPrincipal.loadURL(url.format({
+        pathname: path.join(__dirname, 'views', 'formulario_descripcion.html'),
+        protocol: 'file',
+        slashes: true,
+    }));
 
-    const appPath = app.getPath('exe');
-    const child = spawn(appPath, {
-        detached: true,
-        stdio: 'ignore',
+    console.log(arg);
+    // 7.1 Creo el formulario
+    ventanaPrincipal.webContents.on('did-finish-load', () => {
+        ventanaPrincipal.webContents.send('carga_datos', arg);
     });
-    child.unref();
 });
 
 app.on('window-all-closed', () => {

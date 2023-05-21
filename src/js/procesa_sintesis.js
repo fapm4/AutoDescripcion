@@ -11,7 +11,7 @@ let audiosGenerados = [];
 let silencios = [];
 let datos_audio;
 
-ipcRenderer.on('concatenar_sintesis', async (event, arg) => {
+ipcRenderer.once('concatenar_sintesis', async (event, arg) => {
     silencios = arg.silenciosRenderer;
     datos_audio = arg.datos_audio;
 
@@ -91,7 +91,10 @@ async function concatena(audios, silencios, textos) {
     }
 
     filter += `[0:a]${preFiltro}amix=inputs=${audios.length + 1}[a]`;
-    data.push(ruta_video_output);
+
+    data.datos_audio = datos_audio;
+    data.ruta_mod = ruta_video_output;
+
     let command = `${ffmpegPath} -i ${ruta_video} ${inputs} -filter_complex "${filter}" -map 0:v -map [a] -c:v copy -c:a aac -strict experimental -y ${ruta_video_output}`;
 
     console.log(command);
@@ -104,22 +107,22 @@ async function concatena(audios, silencios, textos) {
     }
 }
 
-function actualizaTiempo(event) {
-    let tecla = event.key;
+// function actualizaTiempo(event) {
+//     let tecla = event.key;
 
-    if (tecla == 'Enter') {
-        let plataforma = process.platform;
-        let duracion = 0;
-        const velocidad = plataforma === 'darwin' ? 175 : 100;
-        let texto = event.currentTarget.value;
+//     if (tecla == 'Enter') {
+//         let plataforma = process.platform;
+//         let duracion = 0;
+//         const velocidad = plataforma === 'darwin' ? 175 : 100;
+//         let texto = event.currentTarget.value;
 
-        say.speak(texto, elegidoIdioma, velocidad, { volume: 0.0 }, (err) => {
-            if (err) {
-                console.log(err);
-            }
-            else {
-                duracion = Math.ceil(texto.length / velocidad) * 1000;
-            }
-        });
-    }
-}
+//         say.speak(texto, elegidoIdioma, velocidad, { volume: 0.0 }, (err) => {
+//             if (err) {
+//                 console.log(err);
+//             }
+//             else {
+//                 duracion = Math.ceil(texto.length / velocidad) * 1000;
+//             }
+//         });
+//     }
+// }

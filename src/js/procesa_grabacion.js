@@ -236,7 +236,7 @@ function tiempoEnSegundos(tiempo) {
     return horas * 3600 + minutos * 60 + segundos;
 }
 
-async function concatena(audios, silencios, sintesis, textos) {
+async function concatena(audios, silencios) {
     console.log('pepe');
     let ruta_video = datos_audio.ruta_org;
     let ruta_video_output = ruta_video.replace('org_', 'mod_');
@@ -249,13 +249,7 @@ async function concatena(audios, silencios, sintesis, textos) {
     let data = [];
 
     for (let i = 0; i < audios.length; i++) {
-        if (sintesis) {
-            audio = audios[i];
-
-        }
-        else {
-            audio = audios[i][1];
-        }
+        audio = audios[i][1];
 
         indice = getIndex(audio);
 
@@ -263,12 +257,7 @@ async function concatena(audios, silencios, sintesis, textos) {
         let end = silencios.find(elem => elem.index == indice).end;
         let startM = tiempoEnMilisegundos(start);
 
-        if(textos != undefined) {
-            data.push([audio.replace('.blob', '.mp3'), start, end, textos[i].value]);
-        }
-        else {
-            data.push([audio.replace('.blob', '.mp3'), start, end]);
-        }
+        data.push([audio.replace('.blob', '.mp3'), start, end]);
 
         // Empiezo a crear el comando
         inputs += ` -i ${audio.replace('.blob', '.mp3')}`;
@@ -286,6 +275,7 @@ async function concatena(audios, silencios, sintesis, textos) {
 
     filter += `[0:a]${preFiltro}amix=inputs=${audios.length + 1}[a]`;
     data.push(ruta_video_output);
+    data.push(datos_audio);
     let command = `${ffmpegPath} -i ${ruta_video} ${inputs} -filter_complex "${filter}" -map 0:v -map [a] -c:v copy -c:a aac -strict experimental -y ${ruta_video_output}`;
 
     console.log(command);
@@ -298,7 +288,7 @@ async function concatena(audios, silencios, sintesis, textos) {
     }
 }
 
-ipcRenderer.on('concatenar_grabacion', async (event, arg) => {
+ipcRenderer.once('concatenar_grabacion', async (event, arg) => {
     try {
         if (audioBlobs.length == 0) {
             Swal.fire({
@@ -343,7 +333,7 @@ ipcRenderer.on('concatenar_grabacion', async (event, arg) => {
                 console.error(error);
             }
         }
-        await concatena(audioBlobs, arg.silenciosRenderer, false);
+        await concatena(audioBlobs, arg.silenciosRenderer, );
     }
     catch (err) {
         console.log(err);
