@@ -228,6 +228,7 @@ ipcMain.on('listo_para_concatenar', (event, arg) => {
         ventanaPrincipal.webContents.send('concatenar_grabacion', arg);
     }
     else {
+        console.log(arg);
         ventanaPrincipal.webContents.send('concatenar_sintesis', arg);
     }
 });
@@ -239,6 +240,7 @@ ipcMain.on('video_concatenado', (event, arg) => {
         slashes: true,
     }));
 
+    console.log('Video concatenado: ', arg);
     ventanaPrincipal.webContents.on('did-finish-load', () => {
         ventanaPrincipal.webContents.send('pagina_descarga_cargada', arg);
     });
@@ -272,12 +274,30 @@ ipcMain.on('volver_a_formulario', (event, arg) => {
         slashes: true,
     }));
 
+    console.log('------------------------------------');
     console.log(arg);
     // 7.1 Creo el formulario
     ventanaPrincipal.webContents.on('did-finish-load', () => {
         ventanaPrincipal.webContents.send('carga_datos', arg);
     });
 });
+
+ipcMain.on('borrar_descripcion', (event, arg) => {
+    let ruta = path.join(__dirname, 'contenido');
+
+    try {
+        fs.readdirSync(ruta).forEach(file => {
+            ruta = path.join(ruta, file);
+            ruta = path.join(ruta, arg);
+            fs.unlinkSync(ruta, (err) => {
+                console.log(err);
+            });
+        });
+    }
+    catch (err) {
+        console.log(err);
+    }
+})
 
 app.on('window-all-closed', () => {
     if (process.platform !== 'darwin') {

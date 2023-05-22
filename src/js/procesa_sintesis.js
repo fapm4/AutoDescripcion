@@ -11,10 +11,12 @@ let audiosGenerados = [];
 let silencios = [];
 let datos_audio;
 
-ipcRenderer.once('concatenar_sintesis', async (event, arg) => {
+ipcRenderer.on('concatenar_sintesis', async (event, arg) => {
     silencios = arg.silenciosRenderer;
     datos_audio = arg.datos_audio;
 
+    console.log(datos_audio);
+    console.log(silencios);
     await preComprobacion()
         .then(() => {
             let inputs = document.querySelectorAll(".inputSilencio");
@@ -32,9 +34,9 @@ async function preComprobacion() {
     let inputs = document.querySelectorAll('.inputSilencio');
     let promesas = [];
 
+    console.log(inputs);
     for (const input of inputs) {
         if (input.value != "") {
-            console.log(datos_audio.audio_extraido);
             let output = datos_audio.audio_extraido.split('org')[0] + input.id.split('_')[0] + '.mp3';
             audiosGenerados.push(output);
 
@@ -65,6 +67,8 @@ async function concatena(audios, silencios, textos) {
     let preFiltro = '';
 
     let data = [];
+    
+    console.log(audios);
 
     for (let i = 0; i < audios.length; i++) {
         audio = audios[i];
@@ -101,6 +105,7 @@ async function concatena(audios, silencios, textos) {
 
     try {
         const stdout = execSync(command);
+        console.log(data);
         ipcRenderer.send('video_concatenado', data);
     } catch (error) {
         console.error(error);
