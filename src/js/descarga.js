@@ -1,7 +1,10 @@
+const  { ipcRenderer } = require('electron');
+
 function volver_a_formulario(args) {
     console.log(args);
     ipcRenderer.send('volver_a_formulario', args);
 }
+
 let contador = 0;
 ipcRenderer.on('pagina_descarga_cargada', (event, arg) => {
     // arg[1] es el video modificado y arg[0] los audios con los silencios para el webvtt

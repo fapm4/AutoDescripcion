@@ -3,6 +3,9 @@ const ffmpegPath = require('ffmpeg-static-electron').path;
 const ffmpeg = require('fluent-ffmpeg');
 ffmpeg.setFfmpegPath(ffmpegPath);
 const { exec, execSync } = require('child_process');
+const { tiempoEnMilisegundos } = require('../js/base_functions.js');
+const { tiempoEnSegundos } = require('../js/base_functions.js');
+const { getIndex } = require('../js/base_functions.js');
 
 let recorder;
 let audioChunks = [];
@@ -134,14 +137,6 @@ function createAudioBuffer(blob) {
     });
 }
 
-function getIndex(output) {
-    let filename = output.split('\\').pop();
-    const regex = /desc(\d+)\./;
-    const match = filename.match(regex);
-    const indice = match[1];
-    return indice;
-}
-
 // True si es mayor
 // False si es menor
 async function compruebaSilencios(output, blob) {
@@ -216,24 +211,6 @@ async function almacenaWav(blob, output) {
     catch (err) {
         console.log(err);
     }
-}
-
-function tiempoEnMilisegundos(tiempo) {
-    let partes = tiempo.split(':');
-    let horas = parseInt(partes[0]);
-    let minutos = parseInt(partes[1]);
-    let segundos = parseInt(partes[2]);
-
-    return (horas * 3600 + minutos * 60 + segundos) * 1000;
-}
-
-function tiempoEnSegundos(tiempo) {
-    var partes = tiempo.split(":");
-    var horas = parseInt(partes[0]);
-    var minutos = parseInt(partes[1]);
-    var segundos = parseInt(partes[2]);
-
-    return horas * 3600 + minutos * 60 + segundos;
 }
 
 async function concatena(audios, silencios) {
@@ -347,7 +324,3 @@ ipcRenderer.once('concatenar_grabacion', async (event, arg) => {
         });
     }
 });
-
-module.exports.tiempoEnSegundos = tiempoEnSegundos;
-module.exports.tiempoEnMilisegundos = tiempoEnMilisegundos;
-module.exports.getIndex = getIndex;

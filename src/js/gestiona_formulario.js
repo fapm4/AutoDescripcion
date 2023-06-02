@@ -1,13 +1,6 @@
 const { ipcRenderer } = require('electron');
-
-module.exports.convierteTiempo = convierteTiempo;
-
-function convierteTiempo(seconds) {
-    const hours = Math.floor(seconds / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
-    const remainingSeconds = seconds % 60;
-    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${remainingSeconds.toFixed(0).padStart(2, '0')}`;
-}
+const { convierteTiempo } = require('../js/base_functions.js');
+const { tiempoEnSegundos } = require('../js/base_functions.js');
 
 // 7.1 Tras cargar la pantalla de formulario añado todos los elemnentos HTML dinámicos
 function getCurrentSecond(event) {
@@ -76,6 +69,10 @@ function añadirSilencios(event, modo) {
             silenciosRenderer.push(obj);
             let tablaSilencios = document.querySelector('#tablaSilencios');
             tablaSilencios.appendChild(tr);
+
+            inputs.forEach(input => {
+                input.value = '';
+            });
         }
     }
 }
@@ -223,6 +220,7 @@ function enviarAudios(datos_audio, modo) {
 // ESTO
 let voz;
 function mostrarFormulario(arg) {
+    console.log('hola 2');
     let modo;
     let video = document.querySelector('video');
     let divForm = document.querySelector('.form');
@@ -294,6 +292,7 @@ ipcRenderer.on('mostrar_formulario', (event, arg) => {
 });
 
 ipcRenderer.once('carga_datos', (event, arg) => {
+    console.log('hola 1');
     let modo;
     let video = document.querySelector('video');
     let divForm = document.querySelector('.form');

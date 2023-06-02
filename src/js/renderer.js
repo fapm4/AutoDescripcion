@@ -1,100 +1,20 @@
 const { ipcRenderer } = require('electron');
 const remote = require('@electron/remote');
 const { tiempoEnSegundos } = require('../js/procesa_grabacion.js');
-const { convierteTiempo } = require('../js/gestiona_formulario.js');
+const { redirige } = require('../js/base_functions.js');
 const fs = require('fs');
 const { path } = require('path');
-/////////////////////////// Este código afecta a -> sube_ficheros.html e index.html ///////////////////////////
-
-let esperandoVoces;
+/////////////////////////// Este código afecta a -> index.html ///////////////////////////
 // 1. Añado evento a los botones de la página index.html
-ipcRenderer.once('carga_finalizada', (event, arg) => {
-    speechSynthesis.addEventListener('voiceschanged', () => {
-        esperandoVoces = speechSynthesis.getVoices();
-    });
-
+ipcRenderer.on('carga_finalizada', (event, args) => {
+    console.log(window.location.href);
     // Saco los botones de Inicio, Informaciónn y Describir
     const botones = document.querySelectorAll('.boton');
-
+    
     botones.forEach(boton => {
-        boton.removeEventListener('click', redirige, true);
-        boton.addEventListener('click', redirige, true);
+        boton.removeEventListener('click', redirige, false);
+        boton.addEventListener('click', redirige, false);
     });
-});
-
-// 1.1 Función que redirige a la página correspondiente
-function redirige(event) {
-    const currentTarget = event.currentTarget;
-    let ruta;
-
-    switch (currentTarget.id) {
-        case 'btnInicio':
-            ruta = 'index.html';
-            break;
-        case 'btnInfo':
-            ruta = 'index.html';
-            break;
-        case 'btnDescr':
-            ruta = 'sube_ficheros.html';
-            break;
-        default:
-            prompt('Error');
-    };
-
-    // Envío el nombre del fichero para redireccionar
-    ipcRenderer.send('redirige_pagina', ruta);
-}
-
-// 2. Una vez se cargue la página de subir ficheros, añado el evento de subir fichero
-let modo;
-
-function pedir_fichero() {
-    ipcRenderer.send('pedir_fichero');
-}
-
-ipcRenderer.on('subir_ficheros', (event, arg) => {
-    // 2.2 Cuando se pulse el botón de subir fichero, se abre el diálogo para seleccionar el fichero
-    const botonS = document.querySelector('.botonS');
-    if (botonS != undefined) {
-        botonS.removeEventListener('click', pedir_fichero, true);
-        botonS.addEventListener('click', pedir_fichero, true);
-    }
-});
-
-function cargar_pantalla_configuracion(modo) {
-    ipcRenderer.send('cargar_pantalla_configuracion', modo);
-}
-
-ipcRenderer.on('fichero_seleccionado', (event, arg) => {
-    const btnConf = document.querySelector('#btnConf');
-    let radios = document.querySelectorAll('input[name=modo]');
-    if (radios != undefined) {
-        modo = document.querySelector('input[name=modo]:checked').value;
-
-        radios.forEach(radio => {
-            radio.addEventListener('change', () => {
-                modo = radio.value;
-            });
-        });
-    }
-
-    btnConf.addEventListener('click', cargar_pantalla_configuracion, true);
-    btnConf.addEventListener('click', function (event) { cargar_pantalla_configuracion(modo) }, true);
-});
-
-// 4.3 Si no se ha seleccionado ningún fichero, envío un mensaje de error
-ipcRenderer.once('no_fichero_seleccionado', (event, arg) => {
-    Swal.fire({
-        icon: 'error',
-        title: 'Oops...',
-        text: 'No has seleccionado ningún fichero',
-    });
-});
-
-// Si no, actualiza el nombre del label con el nombre del fichero
-ipcRenderer.on('actualiza_etiqueta', (event, arg) => {
-    let label = document.querySelector('#fileName');
-    label.innerHTML = arg;
 });
 
 function generaWebVTT(datos) {
@@ -129,19 +49,3 @@ function generaWebVTT(datos) {
 
     }
 }
-
-function queryAncestorSelector(node, selector) {
-    var parent = node.parentNode;
-
-    while (parent !== document) {
-        if (parent.matches(selector)) {
-            return parent;
-        }
-        parent = parent.parentNode;
-    }
-
-    return null;
-}
-
-module.exports.queryAncestorSelector = queryAncestorSelector;
-module.exports.convierteTiempo = convierteTiempo;

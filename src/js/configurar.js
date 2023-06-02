@@ -1,5 +1,5 @@
 const { ipcRenderer } = require('electron');
-const { queryAncestorSelector } = require('../js/renderer.js');
+const { queryAncestorSelector } = require('../js/base_functions.js');
 let threshold_value;
 
 function checkThreshold() {

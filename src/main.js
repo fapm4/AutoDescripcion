@@ -21,19 +21,11 @@ if (process.env.NODE_ENV === 'development') {
     });
 }
 
-// FFMPeg
-const ffmpegPath = require('ffmpeg-static-electron').path;
-const ffmpeg = require('fluent-ffmpeg');
-const ffprobe = require('node-ffprobe');
-ffmpeg.setFfmpegPath(ffmpegPath);
-
 //fs
 const fs = require('fs');
 
 /////////////////////////// Código ///////////////////////////
 let ventanaPrincipal;
-
-require('@electron/remote/main').initialize();
 
 app.commandLine.appendSwitch('enable-features', 'WebSpeechAPI');
 app.commandLine.appendSwitch('enable-features', 'MediaRecorderAPI');
@@ -75,7 +67,6 @@ app.on('ready', () => {
         height: 1080,
     });
 
-    require('@electron/remote/main').enable(ventanaPrincipal.webContents);
     // Se carga el archivo index.html
     ventanaPrincipal.loadURL(url.format({
         // Cambiar esto después
@@ -84,17 +75,20 @@ app.on('ready', () => {
         slashes: true
     }));
 
+    // Se crea el menú de la aplicación
+    Menu.setApplicationMenu(Menu.buildFromTemplate(templateMenu));
+
     // Cuando se haya cargado por completo el fichero HTML, mando un evento para añadir los eventos a los botones
     // del index.html
     ventanaPrincipal.webContents.on('did-finish-load', () => {
-        ventanaPrincipal.webContents.send('carga_finalizada', 'Añadiendo eventos a los botones');
+        ventanaPrincipal.webContents.send('carga_finalizada');
     });
-    // Se crea el menú de la aplicación
-    Menu.setApplicationMenu(Menu.buildFromTemplate(templateMenu));
 });
 
 // 2. Partiendo de la página de index.html, se redirige a la página de subir ficheros, inicio o información
 ipcMain.on('redirige_pagina', (event, arg) => {
+    console.log('Main 2 -> Redirijo a la página ' + arg);
+
     ventanaPrincipal.loadURL(url.format({
         pathname: path.join(__dirname, 'views', arg),
         protocol: 'file',
@@ -103,11 +97,12 @@ ipcMain.on('redirige_pagina', (event, arg) => {
 
     // Si es la página de subir ficheros, se añade un evento para que se pueda subir el fichero
     ventanaPrincipal.openDevTools();
-    if (arg == 'sube_ficheros.html') {
-        ventanaPrincipal.webContents.on('did-finish-load', () => {
+
+    ventanaPrincipal.webContents.on('did-finish-load', () => {
+        if (arg == 'sube_ficheros.html') {
             ventanaPrincipal.webContents.send('subir_ficheros');
-        });
-    }
+        }
+    });
 });
 
 var obj;
@@ -137,7 +132,7 @@ ipcMain.on('pedir_fichero', (event, arg) => {
         }
         else {
             // Una vez se seleccione el fichero, lo almaceno en la base de datos y en el FS
-            ventanaPrincipal.webContents.send('fichero_seleccionado', 'Fichero seleccionado correctamente');
+            // ventanaPrincipal.webContents.send('fichero_seleccionado', 'Fichero seleccionado correctamente');
             addVideo(result.filePaths[0]);
         }
     }).catch(err => {
@@ -156,6 +151,7 @@ function getMediaName(media) {
 async function addVideo(media) {
     let media_name = getMediaName(media);
     const video = fs.readFileSync(media);
+    let modo;
 
     let ruta = path.join(__dirname, 'contenido', media_name.split('.')[0]);
     fs.mkdir(ruta, { recursive: true }, (err) => {
@@ -166,13 +162,12 @@ async function addVideo(media) {
     fs.writeFile(ruta, video, (err) => {
         if (err) throw err;
 
-        // Actualizo el label del HTML
-        ventanaPrincipal.webContents.send('actualiza_etiqueta', media_name);
-
         obj = {
             nombre_fichero: media_name,
             ruta_org: ruta,
         };
+        // Actualizo el label del HTML
+        ventanaPrincipal.webContents.send('actualiza_etiqueta', obj);
     });
 }
 

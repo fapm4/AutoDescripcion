@@ -4,8 +4,11 @@ const ffmpeg = require('fluent-ffmpeg');
 ffmpeg.setFfmpegPath(ffmpegPath);
 const { exec, execSync } = require('child_process');
 
-const { getIndex } = require('../js/procesa_grabacion.js');
-const { tiempoEnMilisegundos } = require('../js/procesa_grabacion.js');
+const { ipcRenderer } = require('electron');
+const { getIndex } = require('../js/base_functions.js');
+const { tiempoEnMilisegundos } = require('../js/base_functions.js');
+const { convierteTiempo } = require('../js/base_functions.js');
+
 let audiosGenerados = [];
 
 let silencios = [];

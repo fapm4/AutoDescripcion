@@ -3,7 +3,7 @@ const ffmpegPath = require('ffmpeg-static-electron').path;
 const ffmpeg = require('fluent-ffmpeg');
 ffmpeg.setFfmpegPath(ffmpegPath);
 const { exec } = require('child_process');
-const { convierteTiempo } = require('../js/renderer.js');
+const { convierteTiempo } = require('../js/base_functions.js');
 
 
 // 4.2 Si no se ha seleccionado ningún fichero, envío un mensaje de error
