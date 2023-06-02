@@ -87,8 +87,6 @@ app.on('ready', () => {
 
 // 2. Partiendo de la página de index.html, se redirige a la página de subir ficheros, inicio o información
 ipcMain.on('redirige_pagina', (event, arg) => {
-    console.log('Main 2 -> Redirijo a la página ' + arg);
-
     ventanaPrincipal.loadURL(url.format({
         pathname: path.join(__dirname, 'views', arg),
         protocol: 'file',
@@ -202,9 +200,10 @@ ipcMain.on('audio_analizado', (event, arg) => {
         slashes: true,
     }));
 
+    arg.volver = false;
     // 7.1 Creo el formulario
     ventanaPrincipal.webContents.on('did-finish-load', () => {
-        ventanaPrincipal.webContents.send('mostrar_formulario', arg);
+        ventanaPrincipal.webContents.send('cargar_tabla', arg);
     });
 });
 
@@ -269,11 +268,10 @@ ipcMain.on('volver_a_formulario', (event, arg) => {
         slashes: true,
     }));
 
-    console.log('------------------------------------');
-    console.log(arg);
+    arg.volver = true;
     // 7.1 Creo el formulario
     ventanaPrincipal.webContents.on('did-finish-load', () => {
-        ventanaPrincipal.webContents.send('carga_datos', arg);
+        ventanaPrincipal.webContents.send('cargar_tabla', arg);
     });
 });
 

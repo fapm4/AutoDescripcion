@@ -74,8 +74,8 @@ async function concatena(audios, silencios, textos) {
     console.log(audios);
 
     for (let i = 0; i < audios.length; i++) {
-        audio = audios[i];
-        indice = getIndex(audio);
+        let audio = audios[i];
+        let indice = getIndex(audio);
 
         let start = silencios.find(elem => elem.index == indice).start;
         let end = silencios.find(elem => elem.index == indice).end;

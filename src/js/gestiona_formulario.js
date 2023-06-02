@@ -220,92 +220,32 @@ function enviarAudios(datos_audio, modo) {
 // ESTO
 let voz;
 function mostrarFormulario(arg) {
-    console.log('hola 2');
-    let modo;
-    let video = document.querySelector('video');
-    let divForm = document.querySelector('.form');
-
-    let argsToSend;
-
-    modo = arg.modo;
-    voz = arg.voz;
-    video.src = arg.ruta_org;
-    silenciosRenderer = arg.silencios;
-    argsToSend = arg;
-
-    silenciosRenderer.forEach((silencio, index) => {
-        silencio.index = index;
-    });
-
-    let tabla = document.createElement('table');
-    tabla.id = 'tablaSilencios';
-    tabla.innerHTML = '<tr><th>Inicio</th><th>Fin</th><th>Descripción</th></tr>';
-
-    if (document.querySelector('#tablaSilencios') == undefined) {
-        tablaAñadirSilencio(divForm, modo);
-    }
-
-    let btnEnviar = document.createElement('button');
-    btnEnviar.innerHTML = 'Enviar';
-    btnEnviar.className = 'botonR';
-    btnEnviar.id = 'btnEnviar';
-
-    btnEnviar.addEventListener('click', () => enviarAudios(argsToSend), true);
-
-    if (silenciosRenderer.length == 0) {
-        Swal.fire({
-            icon: 'warning',
-            title: 'Oops...',
-            text: 'No se han encontrado silencios en el fichero',
-            confirmButtonText: 'Ok'
-        });
-    }
-
-    else {
-        var i = 0;
-        silenciosRenderer.forEach(silencio => {
-            let idDescripcion = `desc${i}`;
-            let start = silencio.start;
-            let end = silencio.end;
-            let tr = creaTr(idDescripcion, start, end, modo);
-            tabla.appendChild(tr);
-            i += 1;
-        });
-    }
-
-    if (divForm != undefined) {
-        let divBotones = document.createElement('div');
-        if (!arg.volver) {
-            divForm.appendChild(tabla);
-            divBotones.appendChild(btnEnviar);
-        }
-        // Los meto al DOM
-        divForm.appendChild(divBotones);
-    }
-
-    // Una vez se ha cargado el formulario, añado los eventos a los botones desde el otro fichero
-    // ipcRenderer.send('cambia_archivo_js', arg);
-}
-
-ipcRenderer.on('mostrar_formulario', (event, arg) => {
-    mostrarFormulario(arg);
-});
-
-ipcRenderer.once('carga_datos', (event, arg) => {
-    console.log('hola 1');
     let modo;
     let video = document.querySelector('video');
     let divForm = document.querySelector('.form');
 
     let argsToSend;
     let datos_a_cargar;
-    modo = arg.datos_audio.modo;
-    voz = arg.datos_audio.voz;
-    video.src = arg.datos_audio.ruta_org;
-    silenciosRenderer = arg.datos_audio.silencios;
-    argsToSend = arg.datos_audio;
 
-    datos_a_cargar = arg.filter(elem => Array.isArray(elem));
+    console.log(arg.volver);
+
+    // Llamo desde la página de descargar
+    if (arg.volver) {
+        modo = arg.datos_audio.modo;
+        voz = arg.datos_audio.voz;
+        video.src = arg.datos_audio.ruta_org;
+        silenciosRenderer = arg.datos_audio.silencios;
+        argsToSend = arg.datos_audio;
+
+        datos_a_cargar = arg.filter(elem => Array.isArray(elem));
+    }
+    else {
+        modo = arg.modo;
+        voz = arg.voz;
+        video.src = arg.ruta_org;
+        silenciosRenderer = arg.silencios;
+        argsToSend = arg;
+    }
 
     silenciosRenderer.forEach((silencio, index) => {
         silencio.index = index;
@@ -336,36 +276,58 @@ ipcRenderer.once('carga_datos', (event, arg) => {
     }
 
     else {
-        datos_a_cargar.forEach(silencio => {
-            let idDescripcion = silencio[0].split('\\').pop().split('.')[0];
-            let start = silencio[1];
-            let end = silencio[2];
-            let texto = silencio[3];
+        if (arg.volver) {
+            datos_a_cargar.forEach(silencio => {
+                let idDescripcion = silencio[0].split('\\').pop().split('.')[0];
+                let start = silencio[1];
+                let end = silencio[2];
+                let texto = silencio[3];
 
-            let tr = document.querySelector(`.${idDescripcion}`);
-            if (tr) {
-                tr.querySelector('input').value = texto;
-            }
-            else {
-                let tr = creaTr(idDescripcion, start, end, modo);
-                tr.querySelector('input').value = texto;
-                let tabla = document.querySelector('#tablaSilencios');
-                tabla.appendChild(tr);
-            }
-        });
-    }
-
-    if (divForm != undefined) {
-        let divBotones = document.createElement('div');
-        if (!arg.volver) {
-            divForm.appendChild(tabla);
-            divBotones.appendChild(btnEnviar);
+                let tr = document.querySelector(`.${idDescripcion}`);
+                if (tr) {
+                    tr.querySelector('input').value = texto;
+                }
+                else {
+                    let tr = creaTr(idDescripcion, start, end, modo);
+                    tr.querySelector('input').value = texto;
+                    console.log('bro1');
+                    tabla.appendChild(tr);
+                }
+            });
         }
-        // Los meto al DOM
-
-        divForm.appendChild(divBotones);
+        else {
+            var i = 0;
+            silenciosRenderer.forEach(silencio => {
+                let idDescripcion = `desc${i}`;
+                let start = silencio.start;
+                let end = silencio.end;
+                let tr = creaTr(idDescripcion, start, end, modo);
+                tabla.appendChild(tr);
+                i += 1;
+            });
+        }
     }
 
-    // Una vez se ha cargado el formulario, añado los eventos a los botones desde el otro fichero
-    // ipcRenderer.send('cambia_archivo_js', arg);
+    let divBotones = document.createElement('div');
+    // Los meto al DOM
+    if(divForm.querySelector('#tablaSilencios') == undefined) { 
+        divForm.appendChild(tabla); 
+        divBotones.appendChild(btnEnviar);
+    divForm.appendChild(divBotones);
+    }
+}
+
+let cargaInicial = true;
+
+ipcRenderer.on('cargar_tabla', (event, arg) => {
+    console.log(arg);
+    if (cargaInicial) {
+        cargaInicial = false;
+        return; // Evitar la ejecución del código en la carga inicial
+    }
+
+    if (arg.volver) {
+        ipcRenderer.removeListener('cargar_tabla', (event, arg) => { });
+    }
+    mostrarFormulario(arg);
 });

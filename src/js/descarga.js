@@ -1,7 +1,7 @@
 const  { ipcRenderer } = require('electron');
 
 function volver_a_formulario(args) {
-    console.log(args);
+    args.volver = true;
     ipcRenderer.send('volver_a_formulario', args);
 }
 
