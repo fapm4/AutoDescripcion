@@ -1,8 +1,10 @@
 const { ipcRenderer } = require('electron');
 const { convierteTiempo } = require('../js/base_functions.js');
 const { tiempoEnSegundos } = require('../js/base_functions.js');
+const { actualizaBotones } = require('../js/procesa_grabacion.js');
 
-// 7.1 Tras cargar la pantalla de formulario añado todos los elemnentos HTML dinámicos
+let vuelto = false;
+
 function getCurrentSecond(event) {
     let btn = event.currentTarget;
     let input = btn.previousSibling;
@@ -33,8 +35,14 @@ function añadeStartEnd() {
     return td;
 }
 
+function getTablaActual(silencios) {
+    let tabla = document.querySelector('#tablaSilencios');
+    console.log(tabla);
+    let trs = tabla.querySelectorAll('tr');
+}
+
 // Añadir comprobaciones
-function añadirSilencios(event, modo) {
+function añadirSilencios(event, modo, volver) {
     let tabla = document.querySelector('#tablaNuevoSilencio');
     let inputs = tabla.querySelectorAll('input');
 
@@ -63,12 +71,15 @@ function añadirSilencios(event, modo) {
             let obj = {
                 start: start,
                 end: end,
-                duration: (tiempoEnSegundos(end) - tiempoEnSegundos(start)).toString()
+                duration: (tiempoEnSegundos(end) - tiempoEnSegundos(start)).toString(),
+                index: silenciosRenderer.length,
             };
 
             silenciosRenderer.push(obj);
             let tablaSilencios = document.querySelector('#tablaSilencios');
             tablaSilencios.appendChild(tr);
+
+            actualizaBotones();
 
             inputs.forEach(input => {
                 input.value = '';
@@ -106,20 +117,23 @@ function tablaAñadirSilencio(divForm, modo) {
     divNuevosSilencios.appendChild(btnAñadirSilencios);
     btnAñadirSilencios.addEventListener('click', () => añadirSilencios(event, modo), true);
 
-    if (divForm != undefined) {
-        divForm.appendChild(divNuevosSilencios);
-    }
+    divForm.appendChild(divNuevosSilencios);
 }
+let silenciosRenderer;
 
 function borrarSilencio(event, tr) {
-    ipcRenderer.send('borrar_descripcion', tr.className + ".mp3");
-
     let index = tr.className.split('desc')[1];
-    console.log(index);
-    silenciosRender = silenciosRenderer.splice(index, 1);
-    silenciosRenderer.indexOf(index + 1).index = index;
-    console.log(silenciosRenderer);
+
+    silenciosRenderer.splice(index, 1);
     tr.remove();
+    let fichero = tr.className + ".mp3";
+
+    let objs = {
+        silenciosRenderer,
+        fichero
+    }
+
+    ipcRenderer.send('borrar_descripcion', objs);
 }
 
 function creaTr(idDescripcion, start, end, modo) {
@@ -163,14 +177,14 @@ function creaTr(idDescripcion, start, end, modo) {
         btnGrabar.className = 'btnGrabar botonR';
         btnGrabar.innerHTML = 'Grabar';
 
-        // btnGrabar.addEventListener('click', function (event) { grabarVoz(event) }, false);
+        btnGrabar.addEventListener('click', function (event) { grabarVoz(event) }, false);
 
         let btnParar = document.createElement('button');
         btnParar.id = `${idDescripcion}_parar`;
         btnParar.className = 'btnParar botonR';
         btnParar.innerHTML = 'Parar';
 
-        // btnParar.addEventListener('click', function (event) { pararVoz(event) }, false);
+        btnParar.addEventListener('click', function (event) { pararVoz(event) }, false);
 
         span.appendChild(btnGrabar);
         span.appendChild(btnParar);
@@ -198,7 +212,6 @@ function creaTr(idDescripcion, start, end, modo) {
     return tr;
 }
 
-let silenciosRenderer;
 function enviarAudios(datos_audio, modo) {
     for (let i = 0; i < silenciosRenderer.length; i++) {
         if (silenciosRenderer[i].index == undefined) {
@@ -207,13 +220,13 @@ function enviarAudios(datos_audio, modo) {
     }
     datos_audio.silencios = silenciosRenderer;
 
+    let volver = datos_audio.volver;
     let args = {
+        volver,
         silenciosRenderer,
         datos_audio,
     };
 
-    console.log(args);
-    console.log('Enviando audios');
     ipcRenderer.send('listo_para_concatenar', args);
 }
 
@@ -225,19 +238,18 @@ function mostrarFormulario(arg) {
     let divForm = document.querySelector('.form');
 
     let argsToSend;
-    let datos_a_cargar;
-
-    console.log(arg.volver);
 
     // Llamo desde la página de descargar
-    if (arg.volver) {
+    if (cargaInicial == false && arg.volver == true) {
+        document.querySelector('#btnEnviar').remove();
+        document.querySelector('#tablaSilencios').remove();
+
         modo = arg.datos_audio.modo;
         voz = arg.datos_audio.voz;
         video.src = arg.datos_audio.ruta_org;
         silenciosRenderer = arg.datos_audio.silencios;
         argsToSend = arg.datos_audio;
-
-        datos_a_cargar = arg.filter(elem => Array.isArray(elem));
+        argsToSend.volver = true;
     }
     else {
         modo = arg.modo;
@@ -245,17 +257,18 @@ function mostrarFormulario(arg) {
         video.src = arg.ruta_org;
         silenciosRenderer = arg.silencios;
         argsToSend = arg;
-    }
+        argsToSend.volver = false;
 
-    silenciosRenderer.forEach((silencio, index) => {
-        silencio.index = index;
-    });
+        silenciosRenderer.forEach((silencio, index) => {
+            silencio.index = index;
+        });
+    }
 
     let tabla = document.createElement('table');
     tabla.id = 'tablaSilencios';
     tabla.innerHTML = '<tr><th>Inicio</th><th>Fin</th><th>Descripción</th></tr>';
 
-    if (document.querySelector('#tablaSilencios') == undefined) {
+    if (document.querySelector('#tablaSilencios') == undefined && !arg.volver) {
         tablaAñadirSilencio(divForm, modo);
     }
 
@@ -264,6 +277,7 @@ function mostrarFormulario(arg) {
     btnEnviar.className = 'botonR';
     btnEnviar.id = 'btnEnviar';
 
+    btnEnviar.removeEventListener('click', () => enviarAudios(argsToSend), true);
     btnEnviar.addEventListener('click', () => enviarAudios(argsToSend), true);
 
     if (silenciosRenderer.length == 0) {
@@ -276,26 +290,39 @@ function mostrarFormulario(arg) {
     }
 
     else {
-        if (arg.volver) {
-            datos_a_cargar.forEach(silencio => {
-                let idDescripcion = silencio[0].split('\\').pop().split('.')[0];
-                let start = silencio[1];
-                let end = silencio[2];
-                let texto = silencio[3];
+        if (arg.volver == true) {
+            if (modo == 1) {
+                silenciosRenderer.forEach(silencio => {
+                    let idDescripcion = `desc${silencio.index}`;
+                    let start = silencio.start;
+                    let end = silencio.end;
+                    let texto = silencio.texto;
 
-                let tr = document.querySelector(`.${idDescripcion}`);
-                if (tr) {
-                    tr.querySelector('input').value = texto;
-                }
-                else {
+                    let tr = document.querySelector(`.${idDescripcion}`);
+                    if (tr) {
+                        tr.querySelector('input').value = texto;
+                    }
+                    else {
+                        let tr = creaTr(idDescripcion, start, end, modo);
+                        tr.querySelector('input').value = texto;
+                        tabla.appendChild(tr);
+                    }
+                });
+            }
+            else {
+                var i = 0;
+                silenciosRenderer.forEach(silencio => {
+                    let idDescripcion = `desc${i}`;
+                    let start = silencio.start;
+                    let end = silencio.end;
                     let tr = creaTr(idDescripcion, start, end, modo);
-                    tr.querySelector('input').value = texto;
-                    console.log('bro1');
                     tabla.appendChild(tr);
-                }
-            });
+                    i += 1;
+                });
+            }
         }
         else {
+            // console.log(Date.now().toString());
             var i = 0;
             silenciosRenderer.forEach(silencio => {
                 let idDescripcion = `desc${i}`;
@@ -309,25 +336,39 @@ function mostrarFormulario(arg) {
     }
 
     let divBotones = document.createElement('div');
-    // Los meto al DOM
-    if(divForm.querySelector('#tablaSilencios') == undefined) { 
-        divForm.appendChild(tabla); 
-        divBotones.appendChild(btnEnviar);
+
+    divForm.appendChild(tabla);
     divForm.appendChild(divBotones);
+    divBotones.appendChild(btnEnviar);
+    // Los meto al DOM
+    if (divForm.querySelector('#tablaSilencios') == undefined) {
+        divBotones.appendChild(btnEnviar);
+        divForm.appendChild(divBotones);
     }
 }
 
+// TERMINAR ESTO -> AL VOLVER NO COGE EL TEXTO NUEVO
+
 let cargaInicial = true;
 
-ipcRenderer.on('cargar_tabla', (event, arg) => {
-    console.log(arg);
+ipcRenderer.once('cargar_tabla', (event, arg) => {
+    vuelto = false;
     if (cargaInicial) {
         cargaInicial = false;
-        return; // Evitar la ejecución del código en la carga inicial
     }
 
-    if (arg.volver) {
-        ipcRenderer.removeListener('cargar_tabla', (event, arg) => { });
+    // if (arg.volver) {
+    //     ipcRenderer.removeListener('cargar_tabla', (event, arg) => { });
+    // }
+    mostrarFormulario(arg);
+    if (arg.modo == 2) {
+        ipcRenderer.send('cambia_archivo_js', arg);
     }
+});
+
+ipcRenderer.on('cargar_tabla_volver', (event, arg) => {
+    vuelto = true;
+    silenciosRenderer = arg.datos_audio.silencios;
+    console.log('vuelvo');
     mostrarFormulario(arg);
 });

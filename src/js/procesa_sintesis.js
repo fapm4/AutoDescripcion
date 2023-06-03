@@ -14,6 +14,10 @@ let audiosGenerados = [];
 let silencios = [];
 let datos_audio;
 
+ipcRenderer.on('actualiza_silencios', (event, arg) => {
+    silenciosRenderer = arg;
+});
+
 ipcRenderer.on('concatenar_sintesis', async (event, arg) => {
     silencios = arg.silenciosRenderer;
     datos_audio = arg.datos_audio;
@@ -26,12 +30,6 @@ ipcRenderer.on('concatenar_sintesis', async (event, arg) => {
             concatena(audiosGenerados, silencios, inputs);
         });
 });
-
-async function sintetiza(event, voz) {
-    let btn = event.currentTarget;
-    let input = btn.previousElementSibling;
-    say.speak(input.value, voz);
-}
 
 async function preComprobacion() {
     let inputs = document.querySelectorAll('.inputSilencio');
@@ -70,18 +68,19 @@ async function concatena(audios, silencios, textos) {
     let preFiltro = '';
 
     let data = [];
-    
-    console.log(audios);
+    data.actuales = [];
 
     for (let i = 0; i < audios.length; i++) {
         let audio = audios[i];
         let indice = getIndex(audio);
+        console.log(indice);
+        console.log(silencios.find(elem => elem.index == indice));
 
         let start = silencios.find(elem => elem.index == indice).start;
         let end = silencios.find(elem => elem.index == indice).end;
         let startM = tiempoEnMilisegundos(start);
 
-        data.push([audio.replace('.blob', '.mp3'), start, end, textos[i].value]);
+        data.actuales.push([audio.replace('.blob', '.mp3'), start, end, textos[i].value]);
 
         // Empiezo a crear el comando
         inputs += ` -i ${audio.replace('.blob', '.mp3')}`;

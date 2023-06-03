@@ -30,7 +30,6 @@ let ventanaPrincipal;
 app.commandLine.appendSwitch('enable-features', 'WebSpeechAPI');
 app.commandLine.appendSwitch('enable-features', 'MediaRecorderAPI');
 
-
 const templateMenu = [
     {
         label: 'DevTools',
@@ -66,6 +65,8 @@ app.on('ready', () => {
         width: 1920,
         height: 1080,
     });
+
+    ventanaPrincipal.webContents.setMaxListeners(30); // Establecer límite de escuchadores en 20
 
     // Se carga el archivo index.html
     ventanaPrincipal.loadURL(url.format({
@@ -217,6 +218,10 @@ ipcMain.on('cambia_archivo_js', (event, arg) => {
 
 });
 
+ipcMain.on('actualiza_silencios', (event, arg) => {
+    ventanaPrincipal.webContents.send('actualizar_silencios', arg);
+});
+
 ipcMain.on('listo_para_concatenar', (event, arg) => {
     if (arg.datos_audio.modo == 2) {
         ventanaPrincipal.webContents.send('concatenar_grabacion', arg);
@@ -236,7 +241,8 @@ ipcMain.on('video_concatenado', (event, arg) => {
 
     console.log('Video concatenado: ', arg);
     ventanaPrincipal.webContents.on('did-finish-load', () => {
-        ventanaPrincipal.webContents.send('pagina_descarga_cargada', arg);
+        ventanaPrincipal.webContents.send('pagina_descarga_cargada');
+        ventanaPrincipal.webContents.send('carga_datos', arg);
     });
 });
 
@@ -268,11 +274,13 @@ ipcMain.on('volver_a_formulario', (event, arg) => {
         slashes: true,
     }));
 
-    arg.volver = true;
-    // 7.1 Creo el formulario
+    let paso = arg;
+    console.log(paso);
+    
     ventanaPrincipal.webContents.on('did-finish-load', () => {
-        ventanaPrincipal.webContents.send('cargar_tabla', arg);
+        ventanaPrincipal.webContents.send('cargar_tabla_volver', paso);
     });
+
 });
 
 ipcMain.on('borrar_descripcion', (event, arg) => {
@@ -281,7 +289,7 @@ ipcMain.on('borrar_descripcion', (event, arg) => {
     try {
         fs.readdirSync(ruta).forEach(file => {
             ruta = path.join(ruta, file);
-            ruta = path.join(ruta, arg);
+            ruta = path.join(ruta, arg.fichero);
             fs.unlinkSync(ruta, (err) => {
                 console.log(err);
             });
@@ -290,6 +298,8 @@ ipcMain.on('borrar_descripcion', (event, arg) => {
     catch (err) {
         console.log(err);
     }
+
+    ventanaPrincipal.webContents.send('actualiza_silencios', arg.silenciosRederer);
 })
 
 app.on('window-all-closed', () => {

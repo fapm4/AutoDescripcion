@@ -1,32 +1,38 @@
-const  { ipcRenderer } = require('electron');
+const { ipcRenderer } = require('electron');
+const { getIndex } = require('../js/base_functions.js');
 
-function volver_a_formulario(args) {
-    args.volver = true;
-    ipcRenderer.send('volver_a_formulario', args);
+let datos;
+const clickVolver = () => {
+    let audios_actuales = datos.actuales;
+    let silenciosActualizados = []
+
+    audios_actuales.forEach(audio => {
+        let nombre = audio[0];
+        let indice = getIndex(nombre);
+
+        let [ruta, start, end, texto] = audio;
+
+        let tmp = {
+            ruta: ruta,
+            start: start,
+            end: end,
+            texto: texto,
+            index: indice,
+            duration: (parseFloat(end) - parseFloat(start)).toFixed(1),
+        };
+
+        silenciosActualizados.push(tmp);
+    });
+
+    delete datos.actuales;
+    // delete arg.datos_audio.silencios;
+    datos.datos_audio.silencios = silenciosActualizados;
+    datos.volver = true;
+
+    ipcRenderer.send('volver_a_formulario', datos);
 }
 
-let contador = 0;
-ipcRenderer.on('pagina_descarga_cargada', (event, arg) => {
-    // arg[1] es el video modificado y arg[0] los audios con los silencios para el webvtt
-    let args = arg;
-
-    let video = document.querySelector('.custom-player');
-    video.remove();
-
-    let nuevoVideo = document.createElement('video');
-    nuevoVideo.className = "custom-player";
-    let videoSrc = arg.ruta_mod;
-
-    if (nuevoVideo != undefined) {
-        nuevoVideo.src = videoSrc;
-    }
-
-    nuevoVideo.controls = true;
-
-    console.log(args);
-
-    document.querySelector('.reproductor').appendChild(nuevoVideo);
-
+ipcRenderer.once('pagina_descarga_cargada', (event, arg) => {
     let bloque = document.querySelector('.bloquePrincipal');
 
     let span = document.createElement('span');
@@ -47,15 +53,27 @@ ipcRenderer.on('pagina_descarga_cargada', (event, arg) => {
     let btnVolver = document.createElement('button');
     btnVolver.className = "boton botonR";
     btnVolver.innerHTML = "Volver";
+    btnVolver.addEventListener('click', clickVolver, true);
 
-    btnVolver.addEventListener('click', () => { args.volver = true; volver_a_formulario(args)}, true);
+    span.appendChild(btnDescargarVideo);
+    span.appendChild(btnDescargarWebVTT);
+    span.appendChild(btnVolver);
+    bloque.appendChild(span);
+});
 
-    if (args.volver == undefined && contador == 0) {
-        span.appendChild(btnDescargarVideo);
-        span.appendChild(btnDescargarWebVTT);
-        span.appendChild(btnVolver);
-        bloque.appendChild(span);
+ipcRenderer.on('carga_datos', (event, arg) => {
+    datos = arg;
+    let video = document.querySelector('.custom-player');
+    if (arg.ruta_mod) {
+        video.src = arg.ruta_mod;
+    }
+    else {
+        let vid_src = arg.filter((element) => {
+            if (typeof element === 'string' && element.includes('mod_')) {
+                return element[0];
+            }
+         });
 
-        contador += 1;
+    video.src = vid_src[0];
     }
 });

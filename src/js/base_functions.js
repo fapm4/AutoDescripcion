@@ -1,4 +1,5 @@
 const { ipcRenderer } = require('electron');
+const say = require('say');
 
 function eventosNav() {
     let nav = document.querySelector('.nav');
@@ -77,4 +78,10 @@ function tiempoEnSegundos(tiempo) {
     return horas * 3600 + minutos * 60 + segundos;
 }
 
-module.exports = { redirige, queryAncestorSelector,  convierteTiempo, getIndex, tiempoEnMilisegundos, tiempoEnSegundos, eventosNav};
+async function sintetiza(event, voz) {
+    let btn = event.currentTarget;
+    let input = btn.previousElementSibling;
+    say.speak(input.value, voz);
+}
+
+module.exports = { redirige, queryAncestorSelector, convierteTiempo, getIndex, tiempoEnMilisegundos, tiempoEnSegundos, eventosNav, sintetiza };
