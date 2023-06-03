@@ -14,10 +14,6 @@ let audiosGenerados = [];
 let silencios = [];
 let datos_audio;
 
-ipcRenderer.on('actualiza_silencios', (event, arg) => {
-    silenciosRenderer = arg;
-});
-
 ipcRenderer.on('concatenar_sintesis', async (event, arg) => {
     silencios = arg.silenciosRenderer;
     datos_audio = arg.datos_audio;

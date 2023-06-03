@@ -67,6 +67,9 @@ function añadirSilencios(event, modo, volver) {
         else {
             let idDescripcion = `desc${silenciosRenderer.length}`;
             let tr = creaTr(idDescripcion, start, end, modo);
+
+            console.log(start, end);
+            console.log(tiempoEnSegundos(end) - tiempoEnSegundos(start));
             // Añadir los eventos de los botones
             let obj = {
                 start: start,
@@ -76,10 +79,12 @@ function añadirSilencios(event, modo, volver) {
             };
 
             silenciosRenderer.push(obj);
+            
+            ipcRenderer.send('actualiza_silencios', silenciosRenderer);
             let tablaSilencios = document.querySelector('#tablaSilencios');
             tablaSilencios.appendChild(tr);
 
-            actualizaBotones();
+            // actualizaBotones();
 
             inputs.forEach(input => {
                 input.value = '';
@@ -134,6 +139,7 @@ function borrarSilencio(event, tr) {
     }
 
     ipcRenderer.send('borrar_descripcion', objs);
+    ipcRenderer.send('actualiza_silencios', silenciosRenderer);
 }
 
 function creaTr(idDescripcion, start, end, modo) {
@@ -312,6 +318,7 @@ function mostrarFormulario(arg) {
             else {
                 var i = 0;
                 silenciosRenderer.forEach(silencio => {
+                    console.log(silencio);
                     let idDescripcion = `desc${i}`;
                     let start = silencio.start;
                     let end = silencio.end;
