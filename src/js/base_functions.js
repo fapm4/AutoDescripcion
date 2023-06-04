@@ -13,7 +13,6 @@ function eventosNav() {
 
 function redirige(event) {
     const currentTarget = event.currentTarget;
-
     switch (currentTarget.id) {
         case 'btnInicio':
             ipcRenderer.send('redirige_pagina', 'index.html');
@@ -25,6 +24,10 @@ function redirige(event) {
 
         case 'btnDescr':
             ipcRenderer.send('redirige_pagina', 'sube_ficheros.html');
+            break;
+
+        case 'guia':
+            ipcRenderer.send('redirige_pagina', 'guia.html');
             break;
 
         default:

@@ -2,6 +2,31 @@ body {
     font-family: Ubuntu;
 }
 
+a {
+    color: white;
+    text-decoration: none;
+}
+
+.ayuda {
+    text-align: center;
+}
+
+#guia {
+    color: salmon;
+    text-decoration: underline;
+}
+
+img {
+    width: 50%;
+    height: auto;
+
+}
+#guia:hover {
+    color: #fff;
+    background-color: salmon;
+    cursor: pointer;
+}
+
 nav {
     background-color: salmon;
     padding: 10px 10px;

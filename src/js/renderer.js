@@ -15,6 +15,9 @@ ipcRenderer.on('carga_finalizada', (event, args) => {
         boton.removeEventListener('click', redirige, false);
         boton.addEventListener('click', redirige, false);
     });
+
+    let guia = document.querySelector('#guia');
+    guia.addEventListener('click', redirige, false);
 });
 
 function generaWebVTT(datos) {
