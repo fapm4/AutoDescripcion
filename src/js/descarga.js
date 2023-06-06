@@ -1,7 +1,11 @@
 const { ipcRenderer } = require('electron');
 const { getIndex } = require('../js/base_functions.js');
+const { generaWebVTT } = require('../js/base_functions.js');
+const { eventosNav } = require('../js/base_functions.js');
 
 let datos;
+let videoSrc;
+
 const clickVolver = () => {
     let audios_actuales = datos.actuales;
     let silenciosActualizados = []
@@ -34,6 +38,7 @@ const clickVolver = () => {
 
 ipcRenderer.once('pagina_descarga_cargada', (event, arg) => {
     let bloque = document.querySelector('.bloquePrincipal');
+    eventosNav();
 
     let span = document.createElement('span');
     span.className = "botonesVoz";
@@ -42,18 +47,20 @@ ipcRenderer.once('pagina_descarga_cargada', (event, arg) => {
     let btnDescargarVideo = document.createElement('button');
     btnDescargarVideo.className = "boton botonR";
     btnDescargarVideo.innerHTML = "Descargar video";
-    btnDescargarVideo.addEventListener('click', () => ipcRenderer.send('descarga_contenido', videoSrc), true);
+    btnDescargarVideo.addEventListener('click', () => ipcRenderer.send('descarga_contenido', videoSrc), false);
 
 
     let btnDescargarWebVTT = document.createElement('button');
     btnDescargarWebVTT.className = "boton botonR";
     btnDescargarWebVTT.innerHTML = "Descargar WEBVTT";
-    btnDescargarWebVTT.addEventListener('click', () => generaWebVTT(arg.slice(0, arg.length - 1)), true);
+
+    btnDescargarWebVTT.removeEventListener('click', generaWebVTT, false);
+    btnDescargarWebVTT.addEventListener('click', () => { generaWebVTT(datos, datos.datos_audio.modo) }, false);
 
     let btnVolver = document.createElement('button');
     btnVolver.className = "boton botonR";
     btnVolver.innerHTML = "Volver";
-    btnVolver.addEventListener('click', clickVolver, true);
+    btnVolver.addEventListener('click', clickVolver, false);
 
     span.appendChild(btnDescargarVideo);
     span.appendChild(btnDescargarWebVTT);
@@ -76,4 +83,6 @@ ipcRenderer.on('carga_datos', (event, arg) => {
 
     video.src = vid_src[0];
     }
+
+    videoSrc = video.src;
 });

@@ -1,5 +1,6 @@
 const { ipcRenderer } = require('electron');
 const say = require('say');
+const fs = require('fs');
 
 function eventosNav() {
     let nav = document.querySelector('.nav');
@@ -87,4 +88,33 @@ async function sintetiza(event, voz) {
     say.speak(input.value, voz);
 }
 
-module.exports = { redirige, queryAncestorSelector, convierteTiempo, getIndex, tiempoEnMilisegundos, tiempoEnSegundos, eventosNav, sintetiza };
+function generaWebVTT(datos, modo) {
+    console.log(datos, modo);
+    let vtt = 'WEBVTT\n\n';
+
+    let ruta_vtt = datos[0][0].split('\\').slice(0, -1).join('\\') + '\\subtitulos.vtt';
+    if(modo == '1'){
+        datos.forEach((dato, i) => {
+            let fichero = dato[0];
+            let start = dato[1] + '.000';
+            let end = dato[2] + '.000';
+            let texto = dato[3];
+
+            vtt += `${i + 1}\n`;
+            vtt += `${start} --> ${end}\n`;
+            vtt += `${texto}\n\n`;
+
+        });
+    }
+
+    else {
+
+    }
+
+    fs.writeFile(ruta_vtt, vtt, (err) => {
+        if (err) console.log(err);
+        // else ipcRenderer.send('descarga_contenido', ruta_vtt);
+    });
+}
+
+module.exports = { redirige, queryAncestorSelector, convierteTiempo, getIndex, tiempoEnMilisegundos, tiempoEnSegundos, eventosNav, sintetiza, generaWebVTT};

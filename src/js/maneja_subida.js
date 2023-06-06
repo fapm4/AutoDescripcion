@@ -8,7 +8,6 @@ function pedir_fichero() {
 ipcRenderer.on('subir_ficheros', (event, arg) => {
     eventosNav();
     // 2.2 Cuando se pulse el botón de subir fichero, se abre el diálogo para seleccionar el fichero
-    console.log('Main 2 - Renderer 1 -> Añado evento para subir fichero');
     const botonS = document.querySelector('.botonS');
     if (botonS != undefined) {
         botonS.removeEventListener('click', pedir_fichero);

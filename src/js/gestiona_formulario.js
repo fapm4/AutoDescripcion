@@ -2,6 +2,7 @@ const { ipcRenderer } = require('electron');
 const { convierteTiempo } = require('../js/base_functions.js');
 const { tiempoEnSegundos } = require('../js/base_functions.js');
 const { actualizaBotones } = require('../js/procesa_grabacion.js');
+const { eventosNav } = require('../js/base_functions.js');
 
 let vuelto = false;
 
@@ -359,14 +360,9 @@ function mostrarFormulario(arg) {
 let cargaInicial = true;
 
 ipcRenderer.once('cargar_tabla', (event, arg) => {
-    vuelto = false;
-    if (cargaInicial) {
-        cargaInicial = false;
-    }
+    // eventosNav();
+    // console.log(arg);
 
-    // if (arg.volver) {
-    //     ipcRenderer.removeListener('cargar_tabla', (event, arg) => { });
-    // }
     mostrarFormulario(arg);
     if (arg.modo == 2) {
         ipcRenderer.send('cambia_archivo_js', arg);
