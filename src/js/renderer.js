@@ -1,9 +1,8 @@
 const { ipcRenderer } = require('electron');
 const { redirige } = require('../js/base_functions.js');
-/////////////////////////// Este código afecta a -> index.html ///////////////////////////
-// 1. Añado evento a los botones de la página index.html
-ipcRenderer.on('carga_finalizada', (event, args) => {
-    // Saco los botones de Inicio, Informaciónn y Describir
+
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('Carga finalizada');
     const botones = document.querySelectorAll('.boton');
     
     botones.forEach(boton => {
@@ -12,5 +11,8 @@ ipcRenderer.on('carga_finalizada', (event, args) => {
     });
 
     let guia = document.querySelector('#guia');
-    guia.addEventListener('click', redirige, false);
+    if(guia){
+        guia.removeEventListener('click', redirige, false);
+        guia.addEventListener('click', redirige, false);
+    }
 });

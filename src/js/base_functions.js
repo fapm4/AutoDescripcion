@@ -92,7 +92,7 @@ function generaWebVTT(datos, modo) {
     console.log(datos, modo);
     let vtt = 'WEBVTT\n\n';
 
-    let ruta_vtt = datos[0][0].split('\\').slice(0, -1).join('\\') + '\\subtitulos.vtt';
+    let ruta_vtt = datos.actuales[0][0].split('\\').slice(0, -1).join('\\') + '\\subtitulos.vtt';
     if(modo == '1'){
         datos.forEach((dato, i) => {
             let fichero = dato[0];

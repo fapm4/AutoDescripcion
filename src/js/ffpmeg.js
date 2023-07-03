@@ -8,17 +8,19 @@ const { convierteTiempo } = require('../js/base_functions.js');
 
 // 4.2 Si no se ha seleccionado ningún fichero, envío un mensaje de error
 ipcRenderer.once('busca_silencios', (event, arg) => {
+    let start = Date.now();
     // Comienzo a procesar el fichero
     console.log('Procesando fichero...');
     console.log(arg);
 
-    let ruta_org = arg.ruta_org;
-    let nombre_fichero = arg.nombre_fichero;
+    let ruta_org = arg.ruta_org.replace(' ', '_');
+    let nombre_fichero = arg.nombre_fichero.replace(' ', '_');
     let modo = arg.modo;
     let voz = arg.voz;
 
     let nombre_video = arg.ruta_org.split('\\').pop().split('.')[0];
     const audio_extraido = `src\\contenido\\${nombre_video.substring(4, nombre_video.length)}\\${nombre_video}.mp3`;
+    
 
     // 6. Mando un evento para mostrar la pantalla de carga - Por hacer
     let datos_audio = {
@@ -44,10 +46,14 @@ ipcRenderer.once('busca_silencios', (event, arg) => {
                 .then(silencios => {                
                     datos_audio.silencios = silencios;
                     console.log(datos_audio);
+
         
                     // 7. Silencios detectados, enviamos evento para  cargar la pantalla del formulario
                     // para añadir el texto
                     ipcRenderer.send('audio_analizado', datos_audio);
+                    // let end = Date.now();
+                    // console.log(threshold_value);
+                    // console.log('Tiempo de ejecución: ' + (end - start) / 1000 + 's');
                 });
         })
         .on('error', (err) => {
@@ -77,8 +83,8 @@ async function obtenIntervalos(filePath, silenceThreshold) {
                 resolve(silences);
             } else {
                 for (var i = 0; i < silenceStart.length && i < silenceEnd.length; i++) {
-                    let start = convierteTiempo(silenceStart[i].split(' ')[1]);
-                    let end = convierteTiempo(silenceEnd[i].split(' ')[1]);
+                    let start = convierteTiempo(silenceEnd[i].split(' ')[1]);
+                    let end = convierteTiempo(silenceStart[i].split(' ')[1]);
                     let duration = (silenceEnd[i].split(' ')[1] - silenceStart[i].split(' ')[1]).toFixed(1);
                     let obj = {
                         start,
@@ -98,11 +104,20 @@ async function obtenIntervalos(filePath, silenceThreshold) {
 async function ruidoMedio(output) {
     return new Promise((resolve, reject) => {
         let command = `${ffmpegPath} -i ${output} -vn -filter_complex "ebur128=peak=true" -f null -`;
-        exec(command, (err, stdout, stderr) => {
+        console.log(command);
+
+        const options = {
+            maxBuffer: 1024 * 1024 * 10
+        }
+
+        exec(command, options, (err, stdout, stderr) => {
             if (err) {
-                console.err(err);
+                console.log(err);
                 return;
             }
+
+            console.log(stderr);
+            console.log(stdout);
 
             const regex = /I:         -?\d+\.\d+ LUFS/gm;
             const match = stderr.match(regex);
@@ -111,6 +126,9 @@ async function ruidoMedio(output) {
                 let regexValue = /-?\d+\.\d+/gm;
                 const matchValue = result.match(regexValue);
                 resolve(parseFloat(matchValue[0]));
+            }
+            else{
+                console.log('No se ha podido obtener el ruido medio');
             }
         });
     });

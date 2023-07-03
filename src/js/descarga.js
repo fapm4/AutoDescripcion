@@ -36,7 +36,7 @@ const clickVolver = () => {
     ipcRenderer.send('volver_a_formulario', datos);
 }
 
-ipcRenderer.once('pagina_descarga_cargada', (event, arg) => {
+ipcRenderer.on('pagina_descarga_cargada', (event, arg) => {
     let bloque = document.querySelector('.bloquePrincipal');
     eventosNav();
 

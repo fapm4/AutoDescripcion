@@ -4,7 +4,6 @@
 // Electron
 const { app, BrowserWindow, Menu, ipcMain, dialog, systemPreferences } = require('electron');
 const { download } = require('electron-dl');
-const { spawn } = require('child_process');
 
 // URL
 const url = require('url');

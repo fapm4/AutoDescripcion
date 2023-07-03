@@ -245,6 +245,7 @@ function mostrarFormulario(arg) {
     let divForm = document.querySelector('.form');
 
     let argsToSend;
+    console.log(arg);
 
     // Llamo desde la página de descargar
     if (cargaInicial == false && arg.volver == true) {

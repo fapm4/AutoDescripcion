@@ -13,8 +13,10 @@ let audiosGenerados = [];
 
 let silencios = [];
 let datos_audio;
+let start;
 
 ipcRenderer.on('concatenar_sintesis', async (event, arg) => {
+    start = Date.now();
     silencios = arg.silenciosRenderer;
     datos_audio = arg.datos_audio;
 
@@ -66,7 +68,6 @@ async function concatena(audios, silencios, textos) {
     let data = [];
     data.actuales = [];
 
-    console.log(audios);
     for (let i = 0; i < audios.length; i++) {
         let audio = audios[i];
         let indice = getIndex(audio);
@@ -104,29 +105,10 @@ async function concatena(audios, silencios, textos) {
 
     try {
         const stdout = execSync(command);
-        console.log(data);
+        let end = Date.now();
+        console.log('Tiempo de ejecución: ' + (end - start) / 1000 + 's');
         ipcRenderer.send('video_concatenado', data);
     } catch (error) {
         console.error(error);
     }
 }
-
-// function actualizaTiempo(event) {
-//     let tecla = event.key;
-
-//     if (tecla == 'Enter') {
-//         let plataforma = process.platform;
-//         let duracion = 0;
-//         const velocidad = plataforma === 'darwin' ? 175 : 100;
-//         let texto = event.currentTarget.value;
-
-//         say.speak(texto, elegidoIdioma, velocidad, { volume: 0.0 }, (err) => {
-//             if (err) {
-//                 console.log(err);
-//             }
-//             else {
-//                 duracion = Math.ceil(texto.length / velocidad) * 1000;
-//             }
-//         });
-//     }
-// }
