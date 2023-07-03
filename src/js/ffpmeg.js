@@ -83,8 +83,8 @@ async function obtenIntervalos(filePath, silenceThreshold) {
                 resolve(silences);
             } else {
                 for (var i = 0; i < silenceStart.length && i < silenceEnd.length; i++) {
-                    let start = convierteTiempo(silenceEnd[i].split(' ')[1]);
-                    let end = convierteTiempo(silenceStart[i].split(' ')[1]);
+                    let start = convierteTiempo(silenceStart[i].split(' ')[1]);
+                    let end = convierteTiempo(silenceEnd[i].split(' ')[1]);
                     let duration = (silenceEnd[i].split(' ')[1] - silenceStart[i].split(' ')[1]).toFixed(1);
                     let obj = {
                         start,

@@ -7,33 +7,21 @@ const { eventosNav } = require('../js/base_functions.js');
 let vuelto = false;
 
 function getCurrentSecond(event) {
+    console.log('getting');
     let btn = event.currentTarget;
-    let input = btn.previousSibling;
+    let input = btn.parentElement.querySelector('input');
     let player = document.querySelector('video');
     let currentTime = player.currentTime;
     input.value = convierteTiempo(currentTime);
 }
 
 function añadeStartEnd() {
-    let td = document.createElement('td');
-    let span = document.createElement('span');
-    span.className = 'spanNuevoSilencio';
+    let botonesAdd = document.querySelectorAll('.btnAddCurrentTime');
 
-    let input = document.createElement('input');
-    input.type = 'text';
-    input.class = 'inputNuevoSilencio';
-
-    let btnGetCurrentSecond = document.createElement('button');
-    btnGetCurrentSecond.className = 'btnAddCurrentTime';
-    btnGetCurrentSecond.innerHTML = '+';
-
-    btnGetCurrentSecond.addEventListener('click', () => getCurrentSecond(event)), true;
-
-    span.appendChild(input);
-    span.appendChild(btnGetCurrentSecond);
-    td.appendChild(span);
-
-    return td;
+    botonesAdd.forEach(boton => {
+        boton.removeEventListener('click', () => getCurrentSecond(event));
+        boton.addEventListener('click', () => getCurrentSecond(event));
+    });
 }
 
 function getTablaActual(silencios) {
@@ -42,8 +30,7 @@ function getTablaActual(silencios) {
     let trs = tabla.querySelectorAll('tr');
 }
 
-// Añadir comprobaciones
-function añadirSilencios(event, modo, volver) {
+function añadeSilencios(modo) {
     let tabla = document.querySelector('#tablaNuevoSilencio');
     let inputs = tabla.querySelectorAll('input');
 
@@ -68,9 +55,6 @@ function añadirSilencios(event, modo, volver) {
         else {
             let idDescripcion = `desc${silenciosRenderer.length}`;
             let tr = creaTr(idDescripcion, start, end, modo);
-
-            console.log(start, end);
-            console.log(tiempoEnSegundos(end) - tiempoEnSegundos(start));
             // Añadir los eventos de los botones
             let obj = {
                 start: start,
@@ -80,7 +64,7 @@ function añadirSilencios(event, modo, volver) {
             };
 
             silenciosRenderer.push(obj);
-            
+
             ipcRenderer.send('actualiza_silencios', silenciosRenderer);
             let tablaSilencios = document.querySelector('#tablaSilencios');
             tablaSilencios.appendChild(tr);
@@ -92,38 +76,6 @@ function añadirSilencios(event, modo, volver) {
             });
         }
     }
-}
-
-function tablaAñadirSilencio(divForm, modo) {
-    // Añado form de añadir silencios
-    let divNuevosSilencios = document.createElement('div');
-    divNuevosSilencios.id = 'divNuevosSilencios';
-
-    let tablaNuevoSilencio = document.createElement('table');
-    tablaNuevoSilencio.className = 'tablaSilencios';
-    tablaNuevoSilencio.id = 'tablaNuevoSilencio';
-    tablaNuevoSilencio.innerHTML = '<tr><th>Inicio</th><th>Fin</th></tr>';
-
-    let tr = document.createElement('tr');
-
-    let tdStart = añadeStartEnd();
-    let tdEnd = añadeStartEnd();
-
-    tr.appendChild(tdStart);
-    tr.appendChild(tdEnd);
-
-    tablaNuevoSilencio.appendChild(tr);
-    divNuevosSilencios.appendChild(tablaNuevoSilencio);
-
-    let btnAñadirSilencios = document.createElement('button');
-    btnAñadirSilencios.className = 'botonR boton';
-    btnAñadirSilencios.innerHTML = 'Añadir silencio';
-    btnAñadirSilencios.id = 'btnAñadirSilencios';
-
-    divNuevosSilencios.appendChild(btnAñadirSilencios);
-    btnAñadirSilencios.addEventListener('click', () => añadirSilencios(event, modo), true);
-
-    divForm.appendChild(divNuevosSilencios);
 }
 let silenciosRenderer;
 
@@ -239,54 +191,29 @@ function enviarAudios(datos_audio, modo) {
 
 // ESTO
 let voz;
+
 function mostrarFormulario(arg) {
     let modo;
     let video = document.querySelector('video');
     let divForm = document.querySelector('.form');
 
-    let argsToSend;
-    console.log(arg);
-
-    // Llamo desde la página de descargar
-    if (cargaInicial == false && arg.volver == true) {
-        document.querySelector('#btnEnviar').remove();
-        document.querySelector('#tablaSilencios').remove();
-
-        modo = arg.datos_audio.modo;
-        voz = arg.datos_audio.voz;
-        video.src = arg.datos_audio.ruta_org;
+    if (arg.volver) {
         silenciosRenderer = arg.datos_audio.silencios;
-        argsToSend = arg.datos_audio;
-        argsToSend.volver = true;
     }
     else {
-        modo = arg.modo;
-        voz = arg.voz;
-        video.src = arg.ruta_org;
         silenciosRenderer = arg.silencios;
-        argsToSend = arg;
-        argsToSend.volver = false;
-
-        silenciosRenderer.forEach((silencio, index) => {
-            silencio.index = index;
-        });
     }
+    video.src = arg.ruta_org;
+    modo = arg.modo;
+    voz = arg.voz;
 
-    let tabla = document.createElement('table');
-    tabla.id = 'tablaSilencios';
-    tabla.innerHTML = '<tr><th>Inicio</th><th>Fin</th><th>Descripción</th></tr>';
+    let btnEnviar = document.querySelector('#btnEnviar');
+    btnEnviar.removeEventListener('click', () => enviarAudios(arg), true);
+    btnEnviar.addEventListener('click', () => enviarAudios(arg), true);
 
-    if (document.querySelector('#tablaSilencios') == undefined && !arg.volver) {
-        tablaAñadirSilencio(divForm, modo);
-    }
+    let tableSilencios = document.querySelector('#tablaSilencios');
 
-    let btnEnviar = document.createElement('button');
-    btnEnviar.innerHTML = 'Enviar';
-    btnEnviar.className = 'botonR';
-    btnEnviar.id = 'btnEnviar';
-
-    btnEnviar.removeEventListener('click', () => enviarAudios(argsToSend), true);
-    btnEnviar.addEventListener('click', () => enviarAudios(argsToSend), true);
+    console.log(arg);
 
     if (silenciosRenderer.length == 0) {
         Swal.fire({
@@ -296,64 +223,134 @@ function mostrarFormulario(arg) {
             confirmButtonText: 'Ok'
         });
     }
-
     else {
-        if (arg.volver == true) {
-            if (modo == 1) {
-                silenciosRenderer.forEach(silencio => {
-                    let idDescripcion = `desc${silencio.index}`;
-                    let start = silencio.start;
-                    let end = silencio.end;
-                    let texto = silencio.texto;
+        if (arg.volver == undefined || arg.volver == false) {
+            silenciosRenderer.forEach((silencio, index) => {
+                silencio.index = index;
+            });
 
-                    let tr = document.querySelector(`.${idDescripcion}`);
-                    if (tr) {
-                        tr.querySelector('input').value = texto;
-                    }
-                    else {
-                        let tr = creaTr(idDescripcion, start, end, modo);
-                        tr.querySelector('input').value = texto;
-                        tabla.appendChild(tr);
-                    }
-                });
-            }
-            else {
-                var i = 0;
-                silenciosRenderer.forEach(silencio => {
-                    console.log(silencio);
-                    let idDescripcion = `desc${i}`;
-                    let start = silencio.start;
-                    let end = silencio.end;
-                    let tr = creaTr(idDescripcion, start, end, modo);
-                    tabla.appendChild(tr);
-                    i += 1;
-                });
-            }
-        }
-        else {
-            // console.log(Date.now().toString());
             var i = 0;
             silenciosRenderer.forEach(silencio => {
                 let idDescripcion = `desc${i}`;
                 let start = silencio.start;
                 let end = silencio.end;
                 let tr = creaTr(idDescripcion, start, end, modo);
-                tabla.appendChild(tr);
+                tableSilencios.appendChild(tr);
                 i += 1;
             });
         }
     }
 
-    let divBotones = document.createElement('div');
+    // let argsToSend;
+    // console.log(arg);
 
-    divForm.appendChild(tabla);
-    divForm.appendChild(divBotones);
-    divBotones.appendChild(btnEnviar);
-    // Los meto al DOM
-    if (divForm.querySelector('#tablaSilencios') == undefined) {
-        divBotones.appendChild(btnEnviar);
-        divForm.appendChild(divBotones);
-    }
+    // // Llamo desde la página de descargar
+    // if (cargaInicial == false && arg.volver == true) {
+    //     document.querySelector('#btnEnviar').remove();
+    //     document.querySelector('#tablaSilencios').remove();
+
+    //     modo = arg.datos_audio.modo;
+    //     voz = arg.datos_audio.voz;
+    //     video.src = arg.datos_audio.ruta_org;
+    //     silenciosRenderer = arg.datos_audio.silencios;
+    //     argsToSend = arg.datos_audio;
+    //     argsToSend.volver = true;
+    // }
+    // else {
+    //     modo = arg.modo;
+    //     voz = arg.voz;
+    //     video.src = arg.ruta_org;
+    //     silenciosRenderer = arg.silencios;
+    //     argsToSend = arg;
+    //     argsToSend.volver = false;
+
+    //     silenciosRenderer.forEach((silencio, index) => {
+    //         silencio.index = index;
+    //     });
+    // }
+
+    // let tabla = document.createElement('table');
+    // tabla.id = 'tablaSilencios';
+    // tabla.innerHTML = '<tr><th>Inicio</th><th>Fin</th><th>Descripción</th></tr>';
+
+    // // if (document.querySelector('#tablaSilencios') == undefined && !arg.volver) {
+    // //     tablaAñadirSilencio(divForm, modo);
+    // // }
+
+    // let btnEnviar = document.createElement('button');
+    // btnEnviar.innerHTML = 'Enviar';
+    // btnEnviar.className = 'botonR';
+    // btnEnviar.id = 'btnEnviar';
+
+    // btnEnviar.removeEventListener('click', () => enviarAudios(argsToSend), true);
+    // btnEnviar.addEventListener('click', () => enviarAudios(argsToSend), true);
+
+    // if (silenciosRenderer.length == 0) {
+    //     Swal.fire({
+    //         icon: 'warning',
+    //         title: 'Oops...',
+    //         text: 'No se han encontrado silencios en el fichero',
+    //         confirmButtonText: 'Ok'
+    //     });
+    // }
+
+    // else {
+    //     if (arg.volver == true) {
+    //         if (modo == 1) {
+    //             silenciosRenderer.forEach(silencio => {
+    //                 let idDescripcion = `desc${silencio.index}`;
+    //                 let start = silencio.start;
+    //                 let end = silencio.end;
+    //                 let texto = silencio.texto;
+
+    //                 let tr = document.querySelector(`.${idDescripcion}`);
+    //                 if (tr) {
+    //                     tr.querySelector('input').value = texto;
+    //                 }
+    //                 else {
+    //                     let tr = creaTr(idDescripcion, start, end, modo);
+    //                     tr.querySelector('input').value = texto;
+    //                     tabla.appendChild(tr);
+    //                 }
+    //             });
+    //         }
+    //         else {
+    //             var i = 0;
+    //             silenciosRenderer.forEach(silencio => {
+    //                 console.log(silencio);
+    //                 let idDescripcion = `desc${i}`;
+    //                 let start = silencio.start;
+    //                 let end = silencio.end;
+    //                 let tr = creaTr(idDescripcion, start, end, modo);
+    //                 tabla.appendChild(tr);
+    //                 i += 1;
+    //             });
+    //         }
+    //     }
+    //     else {
+    //         // console.log(Date.now().toString());
+    //         var i = 0;
+    //         silenciosRenderer.forEach(silencio => {
+    //             let idDescripcion = `desc${i}`;
+    //             let start = silencio.start;
+    //             let end = silencio.end;
+    //             let tr = creaTr(idDescripcion, start, end, modo);
+    //             tabla.appendChild(tr);
+    //             i += 1;
+    //         });
+    //     }
+    // }
+
+    // let divBotones = document.createElement('div');
+
+    // divForm.appendChild(tabla);
+    // divForm.appendChild(divBotones);
+    // divBotones.appendChild(btnEnviar);
+    // // Los meto al DOM
+    // if (divForm.querySelector('#tablaSilencios') == undefined) {
+    //     divBotones.appendChild(btnEnviar);
+    //     divForm.appendChild(divBotones);
+    // }
 }
 
 // TERMINAR ESTO -> AL VOLVER NO COGE EL TEXTO NUEVO
@@ -361,13 +358,19 @@ function mostrarFormulario(arg) {
 let cargaInicial = true;
 
 ipcRenderer.once('cargar_tabla', (event, arg) => {
-    // eventosNav();
-    // console.log(arg);
 
+    // Añado los eventos de los botones de +
+    añadeStartEnd();
+
+    // Añado el evento al botón de añadir silencio
+    let btnAñadirSilencio = document.querySelector('#btnAñadirSilencios');
+    btnAñadirSilencio.addEventListener('click', () => añadeSilencios(arg.modo));
+
+    // Cargo el formulario con los datos
     mostrarFormulario(arg);
-    if (arg.modo == 2) {
-        ipcRenderer.send('cambia_archivo_js', arg);
-    }
+    // if (arg.modo == 2) {
+    //     ipcRenderer.send('cambia_archivo_js', arg);
+    // }
 });
 
 ipcRenderer.on('cargar_tabla_volver', (event, arg) => {
