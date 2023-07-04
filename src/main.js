@@ -200,7 +200,7 @@ ipcMain.on('audio_analizado', (event, arg) => {
         slashes: true,
     }));
 
-    console.log(arg);
+    arg.volver = false;
     // 7.1 Creo el formulario
     ventanaPrincipal.webContents.on('did-finish-load', () => {
         ventanaPrincipal.webContents.send('cargar_tabla', arg);
@@ -272,9 +272,6 @@ ipcMain.on('volver_a_formulario', (event, arg) => {
         protocol: 'file',
         slashes: true,
     }));
-
-    let paso = arg;
-    console.log(paso);
     
     ventanaPrincipal.webContents.on('did-finish-load', () => {
         ventanaPrincipal.webContents.send('cargar_tabla_volver', paso);

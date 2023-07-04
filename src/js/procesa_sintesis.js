@@ -15,13 +15,11 @@ let silencios = [];
 let datos_audio;
 let start;
 
-ipcRenderer.on('concatenar_sintesis', async (event, arg) => {
+ipcRenderer.once('concatenar_sintesis', async (event, arg) => {
     start = Date.now();
     silencios = arg.silenciosRenderer;
     datos_audio = arg.datos_audio;
 
-    console.log(datos_audio);
-    console.log(silencios);
     await preComprobacion()
         .then(() => {
             let inputs = document.querySelectorAll(".inputSilencio");
@@ -33,10 +31,18 @@ async function preComprobacion() {
     let inputs = document.querySelectorAll('.inputSilencio');
     let promesas = [];
 
-    console.log(inputs);
     for (const input of inputs) {
         if (input.value != "") {
-            let output = datos_audio.audio_extraido.split('org')[0] + input.id.split('_')[0] + '.mp3';
+    
+            let output;
+            if (datos_audio.audio_extraido == undefined){
+                output = datos_audio.ruta_mod.split('mod')[0];
+            }
+            else{
+                output = datos_audio.audio_extraido.split('org')[0];
+            }
+            
+            output += input.id.split('_')[0] + '.mp3';
             audiosGenerados.push(output);
 
             let promesa = new Promise((resolve, reject) => {
@@ -59,7 +65,15 @@ async function preComprobacion() {
 
 async function concatena(audios, silencios, textos) {
     let ruta_video = datos_audio.ruta_org;
-    let ruta_video_output = ruta_video.replace('org_', 'mod_');
+    let ruta_video_output;
+    
+    if(ruta_video == undefined){
+        ruta_video_output = datos_audio.ruta_mod;
+        ruta_video = datos_audio.ruta_mod.replace('mod_', 'org_');
+    }
+    else{
+        ruta_video_output = ruta_video.replace('org_', 'mod_');
+    }
 
     let inputs = '';
     let filter = '';

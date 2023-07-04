@@ -24,11 +24,6 @@ function añadeStartEnd() {
     });
 }
 
-function getTablaActual(silencios) {
-    let tabla = document.querySelector('#tablaSilencios');
-    console.log(tabla);
-    let trs = tabla.querySelectorAll('tr');
-}
 
 function añadeSilencios(modo) {
     let tabla = document.querySelector('#tablaNuevoSilencio');
@@ -65,7 +60,7 @@ function añadeSilencios(modo) {
 
             silenciosRenderer.push(obj);
 
-            ipcRenderer.send('actualiza_silencios', silenciosRenderer);
+            // ipcRenderer.send('actualiza_silencios', silenciosRenderer);
             let tablaSilencios = document.querySelector('#tablaSilencios');
             tablaSilencios.appendChild(tr);
 
@@ -197,23 +192,24 @@ function mostrarFormulario(arg) {
     let video = document.querySelector('video');
     let divForm = document.querySelector('.form');
 
+    silenciosRenderer = arg.silencios;
+
     if (arg.volver) {
-        silenciosRenderer = arg.datos_audio.silencios;
+        video.src = arg.datos_audio.ruta_org;
+        modo = arg.datos_audio.modo;
+        voz = arg.datos_audio.voz;
     }
     else {
-        silenciosRenderer = arg.silencios;
+        video.src = arg.ruta_org;
+        modo = arg.modo;
+        voz = arg.voz;
     }
-    video.src = arg.ruta_org;
-    modo = arg.modo;
-    voz = arg.voz;
 
     let btnEnviar = document.querySelector('#btnEnviar');
     btnEnviar.removeEventListener('click', () => enviarAudios(arg), true);
     btnEnviar.addEventListener('click', () => enviarAudios(arg), true);
 
     let tableSilencios = document.querySelector('#tablaSilencios');
-
-    console.log(arg);
 
     if (silenciosRenderer.length == 0) {
         Swal.fire({
@@ -224,7 +220,7 @@ function mostrarFormulario(arg) {
         });
     }
     else {
-        if (arg.volver == undefined || arg.volver == false) {
+        if (arg.volver == undefined || arg.volver == false || modo == 2) {
             silenciosRenderer.forEach((silencio, index) => {
                 silencio.index = index;
             });
@@ -238,6 +234,29 @@ function mostrarFormulario(arg) {
                 tableSilencios.appendChild(tr);
                 i += 1;
             });
+        }
+        else if (arg.volver == true) {
+            if (modo == 1) {
+                var i = 0;
+                console.log(silenciosRenderer);
+                silenciosRenderer.forEach(silencio => {
+                    let idDescripcion = `desc${i}`;
+                    let start = silencio.start;
+                    let end = silencio.end;
+                    let texto = silencio.texto;
+
+                    let tr = document.querySelector(`.${idDescripcion}`);
+                    if (tr) {
+                        tr.querySelector('input').value = texto;
+                    }
+                    else {
+                        let tr = creaTr(idDescripcion, start, end, modo);
+                        tr.querySelector('input').value = texto;
+                        tableSilencios.appendChild(tr);
+                    }
+                    i += 1;
+                });
+            }
         }
     }
 
@@ -355,10 +374,7 @@ function mostrarFormulario(arg) {
 
 // TERMINAR ESTO -> AL VOLVER NO COGE EL TEXTO NUEVO
 
-let cargaInicial = true;
-
 ipcRenderer.once('cargar_tabla', (event, arg) => {
-
     // Añado los eventos de los botones de +
     añadeStartEnd();
 
@@ -366,16 +382,12 @@ ipcRenderer.once('cargar_tabla', (event, arg) => {
     let btnAñadirSilencio = document.querySelector('#btnAñadirSilencios');
     btnAñadirSilencio.addEventListener('click', () => añadeSilencios(arg.modo));
 
-    // Cargo el formulario con los datos
-    mostrarFormulario(arg);
-    // if (arg.modo == 2) {
-    //     ipcRenderer.send('cambia_archivo_js', arg);
-    // }
+    if(arg.volver == false){
+        mostrarFormulario(arg);
+        console.log('Carga inicial');
+    }
 });
 
-ipcRenderer.on('cargar_tabla_volver', (event, arg) => {
-    vuelto = true;
-    silenciosRenderer = arg.datos_audio.silencios;
-    console.log('vuelvo');
+ipcRenderer.once('cargar_tabla_volver', (event, arg) => {
     mostrarFormulario(arg);
 });

@@ -33,39 +33,27 @@ const clickVolver = () => {
     datos.silencios = silenciosActualizados;
     datos.volver = true;
 
-    // ipcRenderer.send('volver_a_formulario', datos);
+    console.log(datos);
+
+    ipcRenderer.send('volver_a_formulario', datos);
 }
 
-ipcRenderer.on('pagina_descarga_cargada', (event, arg) => {
-    let bloque = document.querySelector('.bloquePrincipal');
+ipcRenderer.once('pagina_descarga_cargada', (event, arg) => {
     eventosNav();
 
     let span = document.createElement('span');
     span.className = "botonesVoz";
     span.id = "botonesDescarga";
 
-    let btnDescargarVideo = document.createElement('button');
-    btnDescargarVideo.className = "boton botonR";
-    btnDescargarVideo.innerHTML = "Descargar video";
+    let btnDescargarVideo = document.querySelector('#btnDescargaVideo');
     btnDescargarVideo.addEventListener('click', () => ipcRenderer.send('descarga_contenido', videoSrc), false);
 
-
-    let btnDescargarWebVTT = document.createElement('button');
-    btnDescargarWebVTT.className = "boton botonR";
-    btnDescargarWebVTT.innerHTML = "Descargar WEBVTT";
-
+    let btnDescargarWebVTT = document.querySelector('#btnDescargaVTT');
     btnDescargarWebVTT.removeEventListener('click', generaWebVTT, false);
     btnDescargarWebVTT.addEventListener('click', () => { generaWebVTT(datos, datos.datos_audio.modo) }, false);
 
-    let btnVolver = document.createElement('button');
-    btnVolver.className = "boton botonR";
-    btnVolver.innerHTML = "Volver";
+    let btnVolver = document.querySelector('#btnVolver');
     btnVolver.addEventListener('click', clickVolver, false);
-
-    span.appendChild(btnDescargarVideo);
-    span.appendChild(btnDescargarWebVTT);
-    span.appendChild(btnVolver);
-    bloque.appendChild(span);
 });
 
 ipcRenderer.on('carga_datos', (event, arg) => {
@@ -79,9 +67,9 @@ ipcRenderer.on('carga_datos', (event, arg) => {
             if (typeof element === 'string' && element.includes('mod_')) {
                 return element[0];
             }
-         });
+        });
 
-    video.src = vid_src[0];
+        video.src = vid_src[0];
     }
 
     videoSrc = video.src;

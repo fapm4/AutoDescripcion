@@ -30,9 +30,6 @@ function redirige(event) {
         case 'guia':
             ipcRenderer.send('redirige_pagina', 'guia.html');
             break;
-
-        default:
-            prompt('Error');
     };
 }
 
