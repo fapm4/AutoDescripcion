@@ -207,14 +207,8 @@ ipcMain.on('audio_analizado', (event, arg) => {
     });
 });
 
-ipcMain.on('cambia_archivo_js', (event, arg) => {
-    if (arg.modo == 2) {
-        ventanaPrincipal.webContents.send('cambiar_archivo_grabacion', arg);
-    }
-    else {
-        ventanaPrincipal.webContents.send('cambiar_archivo_sintesis', arg);
-    }
-
+ipcMain.on('cambiar_a_grabacion', (event, arg) => {
+    ventanaPrincipal.webContents.send('cambiar_archivo_grabacion', arg);
 });
 
 ipcMain.on('actualiza_silencios', (event, arg) => {
@@ -226,7 +220,6 @@ ipcMain.on('listo_para_concatenar', (event, arg) => {
         ventanaPrincipal.webContents.send('concatenar_grabacion', arg);
     }
     else {
-        console.log(arg);
         ventanaPrincipal.webContents.send('concatenar_sintesis', arg);
     }
 });
@@ -247,7 +240,6 @@ ipcMain.on('video_concatenado', (event, arg) => {
 
 ipcMain.on('descarga_contenido', async (event, arg) => {
     try {
-
         const savePath = await dialog.showSaveDialog(ventanaPrincipal, {
             title: 'Guardar como',
             defaultPath: arg
@@ -274,7 +266,7 @@ ipcMain.on('volver_a_formulario', (event, arg) => {
     }));
     
     ventanaPrincipal.webContents.on('did-finish-load', () => {
-        ventanaPrincipal.webContents.send('cargar_tabla_volver', paso);
+        ventanaPrincipal.webContents.send('cargar_tabla_volver', arg);
     });
 
 });

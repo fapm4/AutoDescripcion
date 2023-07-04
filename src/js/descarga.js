@@ -35,7 +35,7 @@ const clickVolver = () => {
 
     console.log(datos);
 
-    ipcRenderer.send('volver_a_formulario', datos);
+    // ipcRenderer.send('volver_a_formulario', datos);
 }
 
 ipcRenderer.once('pagina_descarga_cargada', (event, arg) => {

@@ -16,8 +16,11 @@ let silencios = [];
 var datos_audio = [];
 let silenciosRenderer = [];
 
-ipcRenderer.on('actualizar_silencios', (event, arg) => {
-    silenciosRenderer = arg;
+ipcRenderer.removeAllListeners('actualizar_silencios');
+ipcRenderer.once('actualizar_silencios', (event, arg) => {
+    datos_audio = arg;
+    silenciosRenderer = arg.silencios;
+    actualizaBotones();
 });
 
 function actualizaBotones() {
@@ -41,10 +44,11 @@ function actualizaBotones() {
     });
 }
 
+ipcRenderer.removeAllListeners('cambiar_archivo_grabacion');
 ipcRenderer.on('cambiar_archivo_grabacion', (event, arg) => {
     datos_audio = arg;
     silenciosRenderer = arg.silencios;
-    // actualizaBotones();
+    actualizaBotones();
 });
 
 let btnGrabarApretado = null;
@@ -104,10 +108,7 @@ function actualizaEstado(estado, buffer, id) {
 function pararVoz(event) {
     let btn = event.currentTarget;
 
-    // console.log(btn);
-    // Si no se ha dado a grabar, no hago nada
     if (btnGrabarApretado == null) {
-        // console.log('Apreta un botón de grabar primero');
         return;
     }
     // Si el botón de parar y grabar es el mismo
@@ -157,7 +158,7 @@ function createAudioBuffer(blob) {
 async function compruebaSilencios(output, blob) {
     const indice = getIndex(output);
     let silenceDuration;
-    // console.log(silenciosRenderer);
+
     silenceDuration = silenciosRenderer[indice].duration;
 
     try {
@@ -243,20 +244,20 @@ function obtenerDuracionBlob(blob) {
     });
 }
 
-async function concatena(audios, silencios) {
+async function concatena(audios, arg) {
+    console.log(arg);
     let almacenado = true;
-    let ruta_video = datos_audio.ruta_org;
+    let ruta_video = arg.datos_audio.ruta_org;
     let ruta_video_output = ruta_video.replace('org_', 'mod_');
 
-    console.log(silencios);
+    let silencios = arg.silenciosRenderer;
+
     let inputs = '';
     let filter = '';
     let preFiltro = '';
 
     let data = [];
     data.actuales = [];
-
-    console.log(audios);
 
     for (let i = 0; i < audios.length; i++) {
         let audio = audios[i][1];
@@ -267,16 +268,15 @@ async function concatena(audios, silencios) {
         let end = silencios.find(elem => elem.index == indice).end;
         let startM = tiempoEnMilisegundos(start);
 
-        data.actuales.push([audio.replace('.blob', '.mp3'), start, end, duracion]);
+        data.actuales.push([audio.replace('.blob', '.mp3'), start, end]);
 
         // Empiezo a crear el comando
         inputs += ` -i ${audio.replace('.blob', '.mp3')}`;
         // Empiezo con el filtro
         if (startM > 0) {
-            filter += `[${i + 1}:a]adelay=${startM}|${startM}[a${i + 1}];`;
-        }
-        else {
-            filter += `[${i + 1}:a]adelay=500|500[a${i + 1}];`;
+            filter += `[${i + 1}:a]adelay=${startM}|${startM},volume=2[a${i + 1}];`;
+        } else {
+            filter += `[${i + 1}:a]adelay=500|500,volume=2[a${i + 1}];`;
         }
 
         // Flags adicionales
@@ -293,7 +293,7 @@ async function concatena(audios, silencios) {
     console.log(command);
 
     try {
-        // const stdout = execSync(command);
+        const stdout = execSync(command);
         console.log(data);
         // ipcRenderer.send('video_concatenado', data);
     } catch (error) {
@@ -301,8 +301,8 @@ async function concatena(audios, silencios) {
     }
 }
 
+ipcRenderer.removeAllListeners('concatenar_grabacion');
 ipcRenderer.once('concatenar_grabacion', async (event, arg) => {
-    console.log(arg);
     try {
         // if (audioBlobs.length == 0) {
         //     Swal.fire({
@@ -315,8 +315,6 @@ ipcRenderer.once('concatenar_grabacion', async (event, arg) => {
         //     });
         //     return;
         // }
-
-        console.log(audioBlobs);
         var i = 0;
         for (i = 0; i < audioBlobs.length; i++) {
             let data = audioBlobs[i];
@@ -326,7 +324,7 @@ ipcRenderer.once('concatenar_grabacion', async (event, arg) => {
 
             let aux = output.substring(output.lastIndexOf('\\') + 1);
 
-            console.log(`--- Procesando ${aux} ---`);
+            // console.log(`--- Procesando ${aux} ---`);
             if (estado == false) {
                 const result = await Swal.fire({
                     title: '¡Atención!',
@@ -348,20 +346,20 @@ ipcRenderer.once('concatenar_grabacion', async (event, arg) => {
                 console.error(error);
             }
         }
-        await concatena(audioBlobs, arg.silenciosRenderer);
+        await concatena(audioBlobs, arg);
     }
     catch (err) {
-        // console.log(err);
+        console.log(err);
         // console.log(arg.datos_audio.vuelto);
-        if (arg.datos_audio.vuelto == undefined) {
-            Swal.fire({
-                title: '¡Error!',
-                text: 'Se ha producido un error al procesar las grabaciones. Por favor, inténtalo de nuevo más tarde.',
-                icon: 'error',
-                showCancelButton: false,
-                confirmButtonText: 'Aceptar',
-                cancelButtonText: 'Cancelar'
-            });
-        }
+        // if (arg.datos_audio.vuelto == undefined) {
+        //     Swal.fire({
+        //         title: '¡Error!',
+        //         text: 'Se ha producido un error al procesar las grabaciones. Por favor, inténtalo de nuevo más tarde.',
+        //         icon: 'error',
+        //         showCancelButton: false,
+        //         confirmButtonText: 'Aceptar',
+        //         cancelButtonText: 'Cancelar'
+        //     });
+        // }
     }
 });
