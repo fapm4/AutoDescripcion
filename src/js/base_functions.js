@@ -1,6 +1,7 @@
 const { ipcRenderer } = require('electron');
 const say = require('say');
 const fs = require('fs');
+const path = require('path');
 
 function eventosNav() {
     let nav = document.querySelector('.nav');
@@ -85,12 +86,11 @@ async function sintetiza(event, voz) {
     say.speak(input.value, voz);
 }
 
-function generaWebVTT(datos, modo) {
-    console.log(datos, modo);
+async function generaWebVTT(datos, modo) {
     let vtt = 'WEBVTT\n\n';
 
     let ruta_vtt = datos.actuales[0][0].split('\\').slice(0, -1).join('\\') + '\\subtitulos.vtt';
-    if(modo == '1'){
+    if (modo == '1') {
         datos.forEach((dato, i) => {
             let fichero = dato[0];
             let start = dato[1] + '.000';
@@ -105,7 +105,20 @@ function generaWebVTT(datos, modo) {
     }
 
     else {
+        let ficheros = fs.readdirSync(path.dirname(datos.datos_audio.audio_extraido)).filter(fichero => fichero.endsWith('.mp3') && fichero.startsWith('desc'));
+        let base_path = path.dirname(datos.datos_audio.audio_extraido);
 
+        let transcribir = datos.actuales.map(data => {
+            return [path.basename(data[0]), data[1], data[2]];
+        })
+            .filter(item => ficheros.includes(item[0]))
+            .map(item => {
+                return [path.join(base_path, item[0]), item[1], item[2]];
+            });
+
+        console.log(transcribir);
+
+        await transcribeAudio(transcribir);
     }
 
     fs.writeFile(ruta_vtt, vtt, (err) => {
@@ -114,4 +127,41 @@ function generaWebVTT(datos, modo) {
     });
 }
 
-module.exports = { redirige, queryAncestorSelector, convierteTiempo, getIndex, tiempoEnMilisegundos, tiempoEnSegundos, eventosNav, sintetiza, generaWebVTT};
+async function transcribeAudio(audioData) {
+    for (const audio of audioData) {
+        try {
+            const transcript = await recongnizeSpeech(audio[0]);
+            console.log(transcript);
+        }
+        catch (err) {
+            console.log(err);
+        }
+    }
+}
+
+async function recongnizeSpeech(audioPath) {
+    return new Promise((resolve, reject) => {
+        const recognition = new webkitSpeechRecognition() || new SpeechRecognition();
+
+        recognition.lang = 'es-ES';
+
+        recognition.onresult = (event) => {
+            const transcript = event.results[0][0].transcript;
+            resolve(transcript);
+        };
+
+        recognition.onerror = (event) => {
+            reject(event.error);
+        };
+
+        recognition.onend = () => {
+            reject(new Error('El reconocimiento de voz ha finalizado sin resultados.'));
+        };
+
+        recognition.audio = audioPath;
+        recognition.start();
+    });
+}
+
+
+module.exports = { redirige, queryAncestorSelector, convierteTiempo, getIndex, tiempoEnMilisegundos, tiempoEnSegundos, eventosNav, sintetiza, generaWebVTT };

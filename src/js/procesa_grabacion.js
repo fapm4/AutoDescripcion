@@ -295,7 +295,7 @@ async function concatena(audios, arg) {
     try {
         const stdout = execSync(command);
         console.log(data);
-        // ipcRenderer.send('video_concatenado', data);
+        ipcRenderer.send('video_concatenado', data);
     } catch (error) {
         console.error(error);
     }
