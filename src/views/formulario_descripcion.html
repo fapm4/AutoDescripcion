@@ -2,9 +2,13 @@
 
 <head>
     <title>AutoDescripcion</title>
+    
+    <script src="../js/procesa_grabacion.js" type="module"></script>
+    <script src="../js/procesa_sintesis.js" type="module"></script>
+    <script src="../js/gestiona_formulario.js"></script>
+    <script src="../js/renderer.js" type="module"></script>
+
     <link rel="stylesheet" href="../style.css">
-    <script src="../js/renderer.js"></script>
-    <script src="../js/ffpmeg.js"></script>
     <link rel="stylesheet" href="https://cdn.plyr.io/3.7.3/plyr.css" />
     <script src="https://cdn.plyr.io/3.7.3/plyr.polyfilled.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/sweetalert2@9.5.3/dist/sweetalert2.min.css">
@@ -26,11 +30,52 @@
     <main>
         <div class="bloquePrincipal">
             <div class="reproductor">
-                <video id="player" controls></video>
+                <video controls class="custom-player"></video>
+            </div>            
+            <div class="form">
+                <div id="divNuevosSilencios">
+                    <table class="tablaSilencios" id="tablaNuevoSilencio">
+                        <tr>
+                            <th>Inicio</th>
+                            <th>Fin</th>
+                        </tr>
+                        <tr>
+                            <td>
+                                <span class="spanNuevoSilencio">
+                                    <input type="text" class="inputNuevoSilencio">
+            
+                                    <button class="btnAddCurrentTime">
+                                        +
+                                    </button>
+                                </span>
+                            </td>
+                            <td>
+                                <span class="spanNuevoSilencio">
+                                    <input type="text" class="inputNuevoSilencio">
+                        
+                                    <button class="btnAddCurrentTime">
+                                        +
+                                    </button>
+                                </span>
+                            </td>
+                        </tr>
+                    </table>
+                    <button class="botonR boton" id="btnAñadirSilencios">
+                        Añadir silencio
+                    </button>
+                </div>
+                <table id="tablaSilencios">
+                    <tr>
+                        <th>Inicio</th>
+                        <th>Fin</th>
+                        <th>Descripción</th>
+                    </tr>
+                </table>
+                <button id="btnEnviar" class="botonR">
+                    Enviar
+                </button>
             </div>
-            <div class="form"></div>
         </div>
     </main>
 </body>
-
 </html>

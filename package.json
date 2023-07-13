@@ -2,19 +2,25 @@
   "name": "autodescripcion",
   "version": "1.0.0",
   "description": "TFG basado en crear una aplicación capaz de crear audiodescripciones",
-  "main": "index.js",
+  "main": "/src/main.js",
   "dependencies": {
     "@electron/remote": "^2.0.9",
     "audio-recorder-polyfill": "^0.4.1",
     "blob-polyfill": "^7.0.20220408",
     "browserfy": "^1.0.0",
     "buffer": "^6.0.3",
+    "deepspeech": "^0.9.3",
+    "ejs": "^3.1.9",
+    "electron-dl": "^3.5.0",
+    "ffmpeg": "0.0.4",
     "ffmpeg-static-electron": "^2.0.3",
     "ffprobe": "^1.1.2",
     "fluent-ffmpeg": "^2.1.2",
     "mysql": "^2.18.1",
     "node-ffprobe": "^3.0.0",
     "plyr": "^3.7.3",
+    "say": "^0.16.0",
+    "say.js": "^1.4.0",
     "speech-synthesis-recorder": "^1.2.1",
     "sweetalert": "^2.1.2",
     "wavefile": "^11.0.0"
@@ -24,11 +30,13 @@
     "speech-*"
   ],
   "devDependencies": {
-    "electron": "^22.3.2",
-    "electron-reload": "^2.0.0-alpha.1"
+    "electron-reload": "^2.0.0-alpha.1",
+    "electron-prebuilt-compile": "22.3.5"
   },
   "scripts": {
-    "start": "electron src/main.js"
+    "start": "electron-forge start",
+    "package": "electron-forge package",
+    "make": "electron-forge make"
   },
   "repository": {
     "type": "git",

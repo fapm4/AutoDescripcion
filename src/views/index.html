@@ -2,7 +2,7 @@
 <head>
     <title>AutoDescripcion</title>
     <link rel="stylesheet" href="../style.css">
-    <script src="../js/renderer.js"></script>
+    <script src="../js/renderer.js" type="module"></script>
 </head>
 <body>
     <div class="navbar">
@@ -30,19 +30,25 @@
             </p>
             <div class="formas">
                 <p>
-                    La aplicación permite a los usuarios crear audiodescripciones de sus propios videos, de tres formas:
+                    La aplicación permite a los usuarios crear audiodescripciones de sus propios videos, de dos formas:
                 </p>
                 <ol>
-                    <li>
-                        Que el propio usuario grabe su voz en los instantes donde no haya sonido.
-                    </li>
                     <li>
                         Rellenar un formulario con el texto que se quiera utilizar y que un reproductor de audio lo añada al vídeo.
                     </li>
                     <li>
-                        Que automáticamente, a partir de un fotograma, se genera la audiodescripción.
+                        Que el propio usuario grabe su voz en los instantes donde no haya sonido.
                     </li>
                 </ol>
+                <!-- <p>
+                    ¿Cómo se utiliza?
+                    <ol>
+                        <li>
+                            Sube un archivo de video a la plataforma.
+                            <img src="../assets/subida_ficheros.PNG" alt="Subir archivo">
+                        </li>
+                    </ol>
+                </p> --> 
             </div>
         </div>
         <div class="contenedorBoton">
@@ -50,7 +56,13 @@
                 Comienza a trabajar!
             </button>
         </div>
-        <div class="ayuda"></div>
+        <hr>
+        <div class="ayuda">
+            <h2>¿Necesitas ayuda?</h2>
+            <p>
+                Si tienes alguna duda sobre el funcionamiento de la aplicación, puedes consultar la <span id="guia">guía de uso</span>.
+            </p>
+        </div>
     </main>
 </body>
 </html>

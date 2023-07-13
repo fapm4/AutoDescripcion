@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+
+<head>
+    <title>AutoDescripcion</title>
+    <script src="../js/descarga.js" type="module"></script>    
+    <link rel="stylesheet" href="../style.css">
+    <link rel="stylesheet" href="https://cdn.plyr.io/3.7.3/plyr.css" />
+    <script src="https://cdn.plyr.io/3.7.3/plyr.polyfilled.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/sweetalert2@9.5.3/dist/sweetalert2.min.css">
+    <script src="https://unpkg.com/sweetalert2@9.5.3/dist/sweetalert2.all.min.js"></script>
+    <!-- <script src="https://code.responsivevoice.org/responsivevoice.js?key=1mys9qG5"></script> -->
+</head>
+
+<body>
+    <div class="navbar">
+        <nav class="nav">
+            <button class="nav-button boton" id="btnInicio">
+                Inicio
+            </button>
+            <button class="nav-button boton" id="btnInfo">
+                Información
+            </button>
+        </nav>
+    </div>
+    <main>
+        <div class="bloquePrincipal">
+            <div class="reproductor">
+                <video controls class="custom-player"></video>
+            </div>
+            <span class="botonesVoz" id="botonesDescarga">
+                <button class="boton botonR" id="btnDescargaVideo">
+                    Descargar vídeo
+                </button>
+                <button class="boton botonR" id="btnDescargaVTT">
+                    Descargar WebVTT
+                </button>
+                <button class="boton botonR" id="btnVolver">
+                    Volver
+            </span>
+        </div>
+    </main>
+</body>
+</html>

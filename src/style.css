@@ -2,6 +2,31 @@ body {
     font-family: Ubuntu;
 }
 
+a {
+    color: white;
+    text-decoration: none;
+}
+
+.ayuda {
+    text-align: center;
+}
+
+#guia {
+    color: salmon;
+    text-decoration: underline;
+}
+
+img {
+    width: 50%;
+    height: auto;
+
+}
+#guia:hover {
+    color: #fff;
+    background-color: salmon;
+    cursor: pointer;
+}
+
 nav {
     background-color: salmon;
     padding: 10px 10px;
@@ -55,6 +80,10 @@ nav {
     text-align: left;
 }
 
+.formas p {
+    margin-top: 40px;
+}
+
 li {
     margin-top: 5px;
 }
@@ -86,15 +115,36 @@ a {
     cursor: pointer;
 }
 
-.botonR {
-    margin-top: 10px;
-    color: white;
+.divPrueba {
+    margin-top: 30px 10px;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+
+.btnPlay {
+    font-size: 14px;
 }
 
 .botonR:hover {
     background-color: #fff;
     color: salmon;
     border-color: salmon;
+}
+
+.botonR_i {
+    color: salmon;
+    background-color: #fff;
+    border-style: solid;
+    border-color: salmon;
+    padding: 10px 20px;
+    text-align: center;
+    display: inline-block;
+    font-size: 16px;
+    margin: 4px 2px;
+    cursor: pointer;
 }
 
 .container {
@@ -141,6 +191,60 @@ a {
 
 .opcion li:hover {
     background-color: #FFEBE9;
+}
+
+#btnConf {
+    text-align: center;
+}
+
+.btnGuardar {
+    margin-top: 30px;
+}
+
+.configuraciones {
+    margin-top: 10px;
+    text-align: center;
+    align-items: center;
+}
+
+#threshold_value {
+    margin: 10px 0;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    cursor: pointer;
+}
+
+hr {
+    margin: 20px 0;
+}
+
+#liVoces {
+    display: block;
+}
+
+.configuraciones span {
+    display: block;
+}
+
+.configuraciones .voces li {
+    text-align: center;
+}
+
+/* .inputSilencio {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 5px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+} */
+
+.inputPrueba {
+    width: 15%;
+    box-sizing: border-box;
+    padding: 5px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
 }
 
 input[type='radio'] {
@@ -205,22 +309,28 @@ input[type='radio'] {
     }
 }
 
-#player {
-    margin-top: 20px !important;
-    width: 30% !important;
-    height: 20% !important;
+.custom-player {
+    width: 30%;
+    height: auto;
 }
 
-#tablaSilencios {
+
+#tablaSilencios,
+#tablaNuevoSilencio {
     border-collapse: collapse;
     width: 60%;
-    margin-top: 50px;
+    margin-top: 30px;
     text-align: center;
     margin-left: auto;
     margin-right: auto;
 }
 
-#tablaSilencios th {
+#tablaNuevoSilencio {
+    margin-top: 10px;
+}
+
+#tablaSilencios th,
+#tablaNuevoSilencio th {
     background-color: #eee;
     color: #666;
     font-weight: bold;
@@ -228,7 +338,8 @@ input[type='radio'] {
     text-align: center;
 }
 
-#tablaSilencios td {
+#tablaSilencios td,
+#tablaNuevoSilencio td {
     padding: 10px;
     border: 1px solid #ccc;
 }
@@ -239,6 +350,16 @@ input[type='radio'] {
     padding: 5px;
     border-radius: 5px;
     border: 1px solid #ccc;
+}
+
+.inputNuevoSilencio {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 5px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    display: inline;
+    margin-right: 10px;
 }
 
 .btnComprobar {
@@ -258,4 +379,89 @@ input[type='radio'] {
     display: flex;
     justify-content: center;
     margin-top: 10px;
+}
+
+.spanNuevoSilencio {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 10px;
+    margin-right: 10px;
+}
+
+.btnAddCurrentTime {
+    width: 25px;
+    height: 25px;
+    border-radius: 50%;
+    background-color: salmon;
+    color: white;
+    font-size: 25px;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    line-height: 25px;
+    position: relative;
+    margin-left: 10px;
+}
+
+.btnAddCurrentTime:hover {
+    background-color: white;
+    color: salmon;
+}
+
+.btnAddCurrentTime::after {
+    content: '+';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.btnBorrarSilencio {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background-color: salmon;
+    color: white;
+    font-size: 25px;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    line-height: 25px;
+    margin-left: 10px;
+}
+
+.btnBorrarSilencio:hover {
+    background-color: white;
+    color: salmon;
+}
+
+.btnBorrarSilencio::after {
+    content: 'x';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+#divNuevosSilencios {
+    display: block;
+    justify-content: center;
+}
+
+#btnAñadirSilencios {
+    width: 100px;
+    height: 60px;
+}
+
+#buttonPrueba {
+    width: 40px;
+    height: 40px;
 }

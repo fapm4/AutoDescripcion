@@ -1,22 +1,19 @@
 <!DOCTYPE html>
 <head lang="es">
     <title>AutoDescripcion</title>
+    <script src="../js/maneja_subida.js" type="module"></script>
     <link rel="stylesheet" href="../style.css">
-    <script src="../js/renderer.js"></script>
-    <script src="../js/ffpmeg.js"></script>
+    <script src="https://unpkg.com/sweetalert2@9.5.3/dist/sweetalert2.all.min.js"></script>
 </head>
 <body>
     <div class="navbar">
         <nav class="nav">
-            <a href="index.html">
-                <button class="nav-button" id="btnInicio">
-                    Inicio
-                </button>
-             <a href="info.html">
-                <button class="nav-button" id="btnInfo">
-                    Información
-                </button>
-            </a>
+             <button class="nav-button boton" id="btnInicio">
+                 Inicio
+             </button>
+             <button class="nav-button boton" id="btnInfo">
+                 Información
+             </button>
         </nav>
      </div>
      <div class="container">
@@ -42,15 +39,11 @@
                         <input type="radio" name="modo" value="2">
                         <label for="modo2">Modo 2: Grabar el contenido</label>
                     </li>
-                    <li>
-                        <input type="radio" name="modo" value="3">
-                        <label for="modo3">Modo 3: Gerenación automática de la descripción</label>
+                    <li id="btnConf">
+                        Configuración
                     </li>
                 </ul>
             </div>
-            <button class="botonR">
-                Describe!
-            </button>
         </div>
      </div>
 </body>

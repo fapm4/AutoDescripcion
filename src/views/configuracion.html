@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<head>
+    <title>AutoDescripcion</title>
+    <script src="../js/configurar.js" type="module"></script>
+    <script src="../js/renderer.js" type="module"></script>
+    <script src="../js/ffpmeg.js" type="module"></script>
+    <link rel="stylesheet" href="../style.css">
+    <script src="https://unpkg.com/sweetalert2@9.5.3/dist/sweetalert2.all.min.js"></script>
+</head>
+<body>
+    <div class="navbar">
+        <nav class="nav">
+            <button class="nav-button boton" id="btnInicio">
+                Inicio
+            </button>
+            <button class="nav-button boton" id="btnInfo">
+                Información
+            </button>
+        </nav>
+    </div>
+    <main>
+        <div class="bloquePrincipal">
+            <p>
+                En esta sección podrás establecer las diferentes configuraciones para usar la aplicación.
+                El treshold es el porcentaje de similitud que se debe alcanzar para que se considere que
+                la voz es la misma.
+            </p>
+            <div class="configuraciones">
+                <div class="threshold">
+                    <h1>Threshold</h1>
+                    <div class="opcion">
+                        <ul>
+                            <li>
+                                <input type="radio" id="threshold_automatico" name="threshold" value="1" checked>
+                                Automático
+                            </li>
+                            <li>
+                                <input type="radio" id="threshold_manual" name="threshold" value="2">
+                                Manual
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <hr>
+                <div class="voces">
+                    <h1>Voces disponibles para probar</h1>
+                    <div class="opcion">
+                        <ul>
+                            <li id="liVoces">
+                                <span>Cargando voces</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="btnGuardar">
+                    <button class="botonR" id="btnGuardar">
+                        Guardar
+                    </button>
+                </div>
+            </div>
+    </main>
+</body>
+</html>
