@@ -137,7 +137,7 @@ function pararVoz(event) {
     }
 }
 // New-Alias -Name ns -Value C:\Users\francip\Desktop\Repos\AutoDescripcion\script.ps1
-// New-Alias -Name ns -Value C:\Users\panch\Desktop\TFG\AutoDescripcion\script.ps1
+// New-Alias -Name ns -Value script.ps1
 
 function createAudioBuffer(blob) {
     return new Promise((resolve, reject) => {

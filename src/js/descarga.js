@@ -29,13 +29,12 @@ const clickVolver = () => {
     });
 
     delete datos.actuales;
-    // delete arg.datos_audio.silencios;
     datos.silencios = silenciosActualizados;
     datos.volver = true;
 
     console.log(datos);
 
-    // ipcRenderer.send('volver_a_formulario', datos);
+    ipcRenderer.send('volver_a_formulario', datos);
 }
 
 ipcRenderer.once('pagina_descarga_cargada', (event, arg) => {

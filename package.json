@@ -2,7 +2,7 @@
   "name": "autodescripcion",
   "version": "1.0.0",
   "description": "TFG basado en crear una aplicación capaz de crear audiodescripciones",
-  "main": "index.js",
+  "main": "/src/main.js",
   "dependencies": {
     "@electron/remote": "^2.0.9",
     "audio-recorder-polyfill": "^0.4.1",
@@ -30,11 +30,13 @@
     "speech-*"
   ],
   "devDependencies": {
-    "electron": "^22.3.2",
-    "electron-reload": "^2.0.0-alpha.1"
+    "electron-reload": "^2.0.0-alpha.1",
+    "electron-prebuilt-compile": "22.3.5"
   },
   "scripts": {
-    "start": "electron src/main.js"
+    "start": "electron-forge start",
+    "package": "electron-forge package",
+    "make": "electron-forge make"
   },
   "repository": {
     "type": "git",
