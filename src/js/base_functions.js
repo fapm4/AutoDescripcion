@@ -2,6 +2,7 @@ const { ipcRenderer } = require('electron');
 const say = require('say');
 const fs = require('fs');
 const path = require('path');
+const { execSync } = require('child_process');
 
 function eventosNav() {
     let nav = document.querySelector('.nav');
@@ -86,10 +87,12 @@ async function sintetiza(event, voz) {
     say.speak(input.value, voz);
 }
 
-async function generaWebVTT(datos, modo) {
+ipcRenderer.on('swal_cargado', (event, datos) => {
     let vtt = 'WEBVTT\n\n';
 
     let ruta_vtt = datos.actuales[0][0].split('\\').slice(0, -1).join('\\') + '\\subtitulos.vtt';
+    let modo = datos.datos_audio.modo;
+    
     if (modo == '1') {
         datos.forEach((dato, i) => {
             let fichero = dato[0];
@@ -103,7 +106,6 @@ async function generaWebVTT(datos, modo) {
 
         });
     }
-
     else {
         let ficheros = fs.readdirSync(path.dirname(datos.datos_audio.audio_extraido)).filter(fichero => fichero.endsWith('.mp3') && fichero.startsWith('desc'));
         let base_path = path.dirname(datos.datos_audio.audio_extraido);
@@ -116,52 +118,36 @@ async function generaWebVTT(datos, modo) {
                 return [path.join(base_path, item[0]), item[1], item[2]];
             });
 
-        console.log(transcribir);
+        transcribir.forEach(fichero => {
+            const exec = `whisper ${fichero[0]} --language Spanish --output_format txt --output_dir ${base_path}/texts`;
+            execSync(exec);
 
-        await transcribeAudio(transcribir);
+            let temp = fs.readFileSync(path.join(base_path, 'texts', path.basename(fichero[0], '.mp3') + '.txt'), 'utf8');
+            let texto = temp.split('\n').filter(linea => linea != '').join(' ');
+
+            vtt += `${path.basename(fichero[0])}\n`;
+            vtt += `${fichero[1]} --> ${fichero[2]}\n`;
+            vtt += `${texto}\n\n`;
+        });
     }
+
+    Swal.close();
 
     fs.writeFile(ruta_vtt, vtt, (err) => {
         if (err) console.log(err);
-        // else ipcRenderer.send('descarga_contenido', ruta_vtt);
+        else ipcRenderer.send('descarga_contenido', ruta_vtt);
     });
-}
+});
 
-async function transcribeAudio(audioData) {
-    for (const audio of audioData) {
-        try {
-            const transcript = await recongnizeSpeech(audio[0]);
-            console.log(transcript);
-        }
-        catch (err) {
-            console.log(err);
-        }
-    }
-}
+async function generaWebVTT(datos) {
 
-async function recongnizeSpeech(audioPath) {
-    return new Promise((resolve, reject) => {
-        const recognition = new webkitSpeechRecognition() || new SpeechRecognition();
-
-        recognition.lang = 'es-ES';
-
-        recognition.onresult = (event) => {
-            const transcript = event.results[0][0].transcript;
-            resolve(transcript);
-        };
-
-        recognition.onerror = (event) => {
-            reject(event.error);
-        };
-
-        recognition.onend = () => {
-            reject(new Error('El reconocimiento de voz ha finalizado sin resultados.'));
-        };
-
-        recognition.audio = audioPath;
-        recognition.start();
+    const alert = Swal.fire({
+        icon: 'info',
+        title: 'Procesando...',
+        text: 'Se está procesando el audio para generar los subtítulos, cuando termine, podrás descargarl el archivo',
     });
-}
 
+    ipcRenderer.send('swal_cargado', datos);
+}
 
 module.exports = { redirige, queryAncestorSelector, convierteTiempo, getIndex, tiempoEnMilisegundos, tiempoEnSegundos, eventosNav, sintetiza, generaWebVTT };

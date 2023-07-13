@@ -288,7 +288,11 @@ ipcMain.on('borrar_descripcion', (event, arg) => {
     }
 
     ventanaPrincipal.webContents.send('actualiza_silencios', arg.silenciosRederer);
-})
+});
+
+ipcMain.on('swal_cargado', (event, arg) => {
+    ventanaPrincipal.webContents.send('swal_cargado', arg);
+});
 
 app.on('window-all-closed', () => {
     if (process.platform !== 'darwin') {
