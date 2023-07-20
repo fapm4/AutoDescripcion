@@ -11,6 +11,7 @@
     "buffer": "^6.0.3",
     "deepspeech": "^0.9.3",
     "ejs": "^3.1.9",
+    "electron": "^25.3.0",
     "electron-dl": "^3.5.0",
     "ffmpeg": "0.0.4",
     "ffmpeg-static-electron": "^2.0.3",
@@ -30,11 +31,11 @@
     "speech-*"
   ],
   "devDependencies": {
-    "electron-reload": "^2.0.0-alpha.1",
-    "electron-prebuilt-compile": "22.3.5"
+    "electron-prebuilt-compile": "^8.2.0",
+    "electron-reload": "^2.0.0-alpha.1"
   },
   "scripts": {
-    "start": "electron-forge start",
+    "start": "electron src/main.js",
     "package": "electron-forge package",
     "make": "electron-forge make"
   },

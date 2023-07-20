@@ -37,7 +37,8 @@ const clickVolver = () => {
     ipcRenderer.send('volver_a_formulario', datos);
 }
 
-ipcRenderer.once('pagina_descarga_cargada', (event, arg) => {
+ipcRenderer.removeAllListeners('pagina_descarga_cargada');
+ipcRenderer.on('pagina_descarga_cargada', (event, arg) => {
     eventosNav();
 
     let span = document.createElement('span');

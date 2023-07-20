@@ -98,10 +98,9 @@ async function concatena(audios, silencios, textos) {
         inputs += ` -i ${audio.replace('.blob', '.mp3')}`;
         // Empiezo con el filtro
         if (startM > 0) {
-            filter += `[${i + 1}:a]adelay=${startM}|${startM}[a${i + 1}];`;
-        }
-        else {
-            filter += `[${i + 1}:a]adelay=500|500[a${i + 1}];`;
+            filter += `[${i + 1}:a]adelay=${startM}|${startM},volume=4[a${i + 1}];`;
+        } else {
+            filter += `[${i + 1}:a]adelay=500|500,volume=4[a${i + 1}];`;
         }
 
         // Flags adicionales

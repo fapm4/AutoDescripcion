@@ -94,7 +94,7 @@ ipcMain.on('redirige_pagina', (event, arg) => {
     }));
 
     // Si es la página de subir ficheros, se añade un evento para que se pueda subir el fichero
-    ventanaPrincipal.openDevTools();
+    // ventanaPrincipal.openDevTools();
 
     ventanaPrincipal.webContents.on('did-finish-load', () => {
         if (arg == 'sube_ficheros.html') {
@@ -211,8 +211,9 @@ ipcMain.on('cambiar_a_grabacion', (event, arg) => {
     ventanaPrincipal.webContents.send('cambiar_archivo_grabacion', arg);
 });
 
-ipcMain.on('actualiza_silencios', (event, arg) => {
-    ventanaPrincipal.webContents.send('actualizar_silencios', arg);
+ipcMain.on('actualiza_silencios', (event, silencios, arg) => {
+    console.log(silencios, arg);
+    ventanaPrincipal.webContents.send('actualizar_silencios', silencios, arg);
 });
 
 ipcMain.on('listo_para_concatenar', (event, arg) => {
@@ -246,11 +247,11 @@ ipcMain.on('descarga_contenido', async (event, arg) => {
         });
 
         if (savePath.filePath) {
-            await download(BrowserWindow.getFocusedWindow(), arg, {
-                directory: path.dirname(savePath.filePath),
-                filename: path.basename(savePath.filePath),
-                saveAs: false
-            });
+            // await download(BrowserWindow.getFocusedWindow(), arg, {
+            //     directory: path.dirname(savePath.filePath),
+            //     filename: path.basename(savePath.filePath),
+            //     saveAs: false
+            // });
         }
     }
     catch (err) {

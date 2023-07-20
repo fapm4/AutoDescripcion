@@ -237,7 +237,7 @@ function mostrarFormulario(arg) {
         else if (arg.volver == true) {
             if (modo == 1) {
                 var i = 0;
-                console.log(silenciosRenderer);
+            
                 silenciosRenderer.forEach(silencio => {
                     let idDescripcion = `desc${i}`;
                     let start = silencio.start;
@@ -280,6 +280,6 @@ ipcRenderer.once('cargar_tabla', (event, arg) => {
 });
 
 ipcRenderer.once('cargar_tabla_volver', (event, arg) => {
-    console.log('Carga volver');
+    // console.log('Carga volver');
     mostrarFormulario(arg);
 });

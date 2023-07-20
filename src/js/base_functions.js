@@ -92,9 +92,11 @@ ipcRenderer.on('swal_cargado', (event, datos) => {
 
     let ruta_vtt = datos.actuales[0][0].split('\\').slice(0, -1).join('\\') + '\\subtitulos.vtt';
     let modo = datos.datos_audio.modo;
+
+    console.log(datos);
     
     if (modo == '1') {
-        datos.forEach((dato, i) => {
+        datos.actuales.forEach((dato, i) => {
             let fichero = dato[0];
             let start = dato[1] + '.000';
             let end = dato[2] + '.000';
@@ -105,6 +107,8 @@ ipcRenderer.on('swal_cargado', (event, datos) => {
             vtt += `${texto}\n\n`;
 
         });
+
+        console.log(vtt);
     }
     else {
         let ficheros = fs.readdirSync(path.dirname(datos.datos_audio.audio_extraido)).filter(fichero => fichero.endsWith('.mp3') && fichero.startsWith('desc'));
@@ -132,7 +136,7 @@ ipcRenderer.on('swal_cargado', (event, datos) => {
     }
 
     Swal.close();
-
+    
     fs.writeFile(ruta_vtt, vtt, (err) => {
         if (err) console.log(err);
         else ipcRenderer.send('descarga_contenido', ruta_vtt);

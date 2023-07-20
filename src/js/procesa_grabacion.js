@@ -17,9 +17,11 @@ var datos_audio = [];
 let silenciosRenderer = [];
 
 ipcRenderer.removeAllListeners('actualizar_silencios');
-ipcRenderer.once('actualizar_silencios', (event, arg) => {
+ipcRenderer.once('actualizar_silencios', (event, silencios, arg) => {
     datos_audio = arg;
-    silenciosRenderer = arg.silencios;
+    silenciosRenderer = silencios;
+
+    console.log(datos_audio, silencios);
     actualizaBotones();
 });
 
@@ -115,6 +117,8 @@ function pararVoz(event) {
     if (btnGrabarApretado.id.split('_')[0] == btn.id.split('_')[0]) {
         recorder.stop();
         // console.log('Parando...');
+
+
         let output = datos_audio.audio_extraido.split('org')[0] + btn.id.split("_")[0] + '.blob';
 
         recorder.ondataavailable = async e => {
@@ -137,7 +141,7 @@ function pararVoz(event) {
     }
 }
 // New-Alias -Name ns -Value C:\Users\francip\Desktop\Repos\AutoDescripcion\script.ps1
-// New-Alias -Name ns -Value script.ps1
+// New-Alias -Name ns -Value C:\Users\panch\Desktop\TFG\AutoDescripcion\script.ps1
 
 function createAudioBuffer(blob) {
     return new Promise((resolve, reject) => {
@@ -159,6 +163,7 @@ async function compruebaSilencios(output, blob) {
     const indice = getIndex(output);
     let silenceDuration;
 
+    // console.log(indice);
     silenceDuration = silenciosRenderer[indice].duration;
 
     try {
@@ -245,7 +250,7 @@ function obtenerDuracionBlob(blob) {
 }
 
 async function concatena(audios, arg) {
-    console.log(arg);
+    // console.log(arg);
     let almacenado = true;
     let ruta_video = arg.datos_audio.ruta_org;
     let ruta_video_output = ruta_video.replace('org_', 'mod_');
@@ -274,9 +279,9 @@ async function concatena(audios, arg) {
         inputs += ` -i ${audio.replace('.blob', '.mp3')}`;
         // Empiezo con el filtro
         if (startM > 0) {
-            filter += `[${i + 1}:a]adelay=${startM}|${startM},volume=2[a${i + 1}];`;
+            filter += `[${i + 1}:a]adelay=${startM}|${startM},volume=4[a${i + 1}];`;
         } else {
-            filter += `[${i + 1}:a]adelay=500|500,volume=2[a${i + 1}];`;
+            filter += `[${i + 1}:a]adelay=500|500,volume=4[a${i + 1}];`;
         }
 
         // Flags adicionales
@@ -294,7 +299,7 @@ async function concatena(audios, arg) {
 
     try {
         const stdout = execSync(command);
-        console.log(data);
+        // console.log(data);
         ipcRenderer.send('video_concatenado', data);
     } catch (error) {
         console.error(error);
